@@ -2686,43 +2686,6 @@
 
         let daten = ladeDaten();
 
-        // TEST-BUILD: eigene, immer aktuelle Demo-Eintraege nur im separaten Test-Speicher.
-        // Alte Demo-Eintraege koennen ausserhalb der 7-Tage-Ansicht liegen. Deshalb werden
-        // ausschliesslich die Test-Demos bei jedem Start neu datiert; normale Testdaten bleiben erhalten.
-        (() => {
-            const iso = d => {
-                const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), t=String(d.getDate()).padStart(2,"0");
-                return `${y}-${m}-${t}`;
-            };
-            const ago = n => { const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()-n); return d; };
-            const demos = [
-                ["Haushalt", "test-demo-haushalt-einkauf", 0, "Wocheneinkauf", 42.80, "Einkauf"],
-                ["Haushalt", "test-demo-haushalt-tanken", 1, "Tanken", 65.00, "Tanken"],
-                ["Freizeit", "test-demo-freizeit-cafe", 0, "Cafe mit Freunden", 18.50, "Essen / Trinken"],
-                ["Freizeit", "test-demo-freizeit-geschenk", 2, "Geburtstagsgeschenk", 30.00, "Geschenke"]
-            ];
-
-            // Fruehere automatisch erzeugte Test-Demos entfernen, damit keine unsichtbaren Alt-Demos
-            // die Erzeugung aktueller Eintraege blockieren.
-            ["Haushalt", "Freizeit"].forEach(bereich => {
-                const store = daten?.[bereich];
-                if (!store || typeof store !== "object") return;
-                Object.keys(store).forEach(monat => {
-                    if (!Array.isArray(store[monat])) return;
-                    store[monat] = store[monat].filter(e => !String(e?.id || "").startsWith("test-"));
-                });
-            });
-
-            demos.forEach(([bereich,id,tage,text,betrag,kategorie]) => {
-                const d = ago(tage);
-                const monat = d.getMonth()+1;
-                daten[bereich] ??= {};
-                daten[bereich][monat] ??= [];
-                daten[bereich][monat].push({id,text,betrag,kategorie,datum:iso(d),warnung:false,warnTage:14});
-            });
-            try { localStorage.setItem("kostenApp_Test",JSON.stringify(daten)); } catch (_) {}
-        })();
-
         // 🔥 WICHTIGER MIGRATIONS-FIX:
         // Falls "Laufende Kosten" früher als Array gespeichert wurde, wird es jetzt sauber
         // in { fix: [...] } umgewandelt. Sonst würde JSON.stringify die fix-Einträge verlieren.
@@ -2893,6 +2856,40 @@
             daten.Haushalt[i] ??= [];
             daten.Freizeit[i] ??= [];
         }
+
+        // TEST-BUILD: Demo-Eintraege ERST NACH der Datenmigration erzeugen.
+        // Sonst koennen alte Test-Datenstrukturen die frisch erzeugten Demos direkt wieder ueberschreiben.
+        (() => {
+            const iso = d => {
+                const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), t=String(d.getDate()).padStart(2,"0");
+                return `${y}-${m}-${t}`;
+            };
+            const ago = n => { const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()-n); return d; };
+            const demos = [
+                ["Haushalt", "test-demo-haushalt-einkauf", 0, "Wocheneinkauf", 42.80, "Einkauf"],
+                ["Haushalt", "test-demo-haushalt-tanken", 1, "Tanken", 65.00, "Tanken"],
+                ["Freizeit", "test-demo-freizeit-cafe", 0, "Cafe mit Freunden", 18.50, "Essen / Trinken"],
+                ["Freizeit", "test-demo-freizeit-geschenk", 2, "Geburtstagsgeschenk", 30.00, "Geschenke"]
+            ];
+
+            ["Haushalt", "Freizeit"].forEach(bereich => {
+                const store = daten[bereich];
+                Object.keys(store).forEach(monat => {
+                    if (!Array.isArray(store[monat])) return;
+                    store[monat] = store[monat].filter(e => !String(e?.id || "").startsWith("test-demo-"));
+                });
+            });
+
+            demos.forEach(([bereich,id,tage,text,betrag,kategorie]) => {
+                const d = ago(tage);
+                const monat = d.getMonth()+1;
+                daten[bereich][monat] ??= [];
+                daten[bereich][monat].push({id,text,betrag,kategorie,datum:iso(d),warnung:false,warnTage:14});
+            });
+
+            try { localStorage.setItem("kostenApp_Test", JSON.stringify(daten)); }
+            catch (error) { console.error("Test-Demos konnten nicht gespeichert werden:", error); }
+        })();
 
         // Unterkategorien für bestehende Einträge ergänzen.
         Object.values(daten.Haushalt).forEach(liste => {
