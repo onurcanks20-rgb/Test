@@ -23,7 +23,7 @@
             let mode = "system";
             let saved = null;
             try {
-                saved = JSON.parse(localStorage.getItem("kostenApp_Test_v2") || "null");
+                saved = JSON.parse(localStorage.getItem("kostenApp_Test") || "null");
                 const candidate = saved?.Einstellungen?.designModus;
                 if (["dunkel", "hell", "system"].includes(candidate)) mode = candidate;
             } catch (_) {}
@@ -2677,7 +2677,7 @@
 
         function ladeDaten() {
             try {
-                return JSON.parse(localStorage.getItem("kostenApp_Test_v2")) || structuredClone(STANDARD_DATEN);
+                return JSON.parse(localStorage.getItem("kostenApp_Test")) || structuredClone(STANDARD_DATEN);
             } catch (error) {
                 console.error("Gespeicherte Daten konnten nicht gelesen werden:", error);
                 return structuredClone(STANDARD_DATEN);
@@ -2686,28 +2686,41 @@
 
         let daten = ladeDaten();
 
-        // TEST-BUILD: Demo-Eintraege nur im separaten Test-Speicher.
+        // TEST-BUILD: eigene, immer aktuelle Demo-Eintraege nur im separaten Test-Speicher.
+        // Alte Demo-Eintraege koennen ausserhalb der 7-Tage-Ansicht liegen. Deshalb werden
+        // ausschliesslich die Test-Demos bei jedem Start neu datiert; normale Testdaten bleiben erhalten.
         (() => {
-            const hasEntries = [daten?.Haushalt, daten?.Freizeit].some(store =>
-                store && typeof store === "object" && Object.values(store).some(list => Array.isArray(list) && list.length)
-            );
-            if (hasEntries) return;
             const iso = d => {
                 const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), t=String(d.getDate()).padStart(2,"0");
                 return `${y}-${m}-${t}`;
             };
-            const ago = n => { const d=new Date(); d.setDate(d.getDate()-n); return d; };
-            const addDemo = (bereich,d,text,betrag,kategorie) => {
+            const ago = n => { const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()-n); return d; };
+            const demos = [
+                ["Haushalt", "test-demo-haushalt-einkauf", 0, "Wocheneinkauf", 42.80, "Einkauf"],
+                ["Haushalt", "test-demo-haushalt-tanken", 1, "Tanken", 65.00, "Tanken"],
+                ["Freizeit", "test-demo-freizeit-cafe", 0, "Cafe mit Freunden", 18.50, "Essen / Trinken"],
+                ["Freizeit", "test-demo-freizeit-geschenk", 2, "Geburtstagsgeschenk", 30.00, "Geschenke"]
+            ];
+
+            // Fruehere automatisch erzeugte Test-Demos entfernen, damit keine unsichtbaren Alt-Demos
+            // die Erzeugung aktueller Eintraege blockieren.
+            ["Haushalt", "Freizeit"].forEach(bereich => {
+                const store = daten?.[bereich];
+                if (!store || typeof store !== "object") return;
+                Object.keys(store).forEach(monat => {
+                    if (!Array.isArray(store[monat])) return;
+                    store[monat] = store[monat].filter(e => !String(e?.id || "").startsWith("test-"));
+                });
+            });
+
+            demos.forEach(([bereich,id,tage,text,betrag,kategorie]) => {
+                const d = ago(tage);
+                const monat = d.getMonth()+1;
                 daten[bereich] ??= {};
-                const monat=d.getMonth()+1;
                 daten[bereich][monat] ??= [];
-                daten[bereich][monat].push({id:`test-${bereich.toLowerCase()}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,text,betrag,kategorie,datum:iso(d),warnung:false,warnTage:14});
-            };
-            addDemo("Haushalt",ago(0),"Wocheneinkauf",42.80,"Einkauf");
-            addDemo("Haushalt",ago(1),"Tanken",65.00,"Tanken");
-            addDemo("Freizeit",ago(0),"Cafe mit Freunden",18.50,"Essen / Trinken");
-            addDemo("Freizeit",ago(2),"Geburtstagsgeschenk",30.00,"Geschenke");
-            try { localStorage.setItem("kostenApp_Test_v2",JSON.stringify(daten)); } catch (_) {}
+                daten[bereich][monat].push({id,text,betrag,kategorie,datum:iso(d),warnung:false,warnTage:14});
+            });
+            try { localStorage.setItem("kostenApp_Test",JSON.stringify(daten)); } catch (_) {}
         })();
 
         // 🔥 WICHTIGER MIGRATIONS-FIX:
@@ -2862,7 +2875,7 @@
 
         // Migration direkt speichern, damit alte kaputte Strukturen nicht wiederkommen.
         try {
-            localStorage.setItem("kostenApp_Test_v2", JSON.stringify(daten));
+            localStorage.setItem("kostenApp_Test", JSON.stringify(daten));
         } catch (error) {
             console.error("Migration konnte nicht gespeichert werden:", error);
         }
@@ -3086,7 +3099,7 @@
 
         function speichern() {
             try {
-                localStorage.setItem("kostenApp_Test_v2", JSON.stringify(daten));
+                localStorage.setItem("kostenApp_Test", JSON.stringify(daten));
             } catch (error) {
                 console.error("Speichern fehlgeschlagen:", error);
                 alert("Speichern im Browser ist fehlgeschlagen. Öffne die heruntergeladene HTML-Datei direkt im Browser und nicht nur in einer Vorschau.");
@@ -3173,7 +3186,7 @@
                 }
 
                 const neueDaten = parsed.daten ?? parsed;
-                localStorage.setItem("kostenApp_Test_v2", JSON.stringify(neueDaten));
+                localStorage.setItem("kostenApp_Test", JSON.stringify(neueDaten));
                 setBackupStatus("Backup wurde wiederhergestellt. Die App wird neu geladen …");
                 setTimeout(() => location.reload(), 400);
             } catch (error) {
@@ -4982,7 +4995,7 @@
 
             if (geaendert) {
                 daten["Geplante Ausgaben"] = offen;
-                try { localStorage.setItem("kostenApp_Test_v2", JSON.stringify(daten)); } catch (_) {}
+                try { localStorage.setItem("kostenApp_Test", JSON.stringify(daten)); } catch (_) {}
             }
             return geaendert;
         }
