@@ -18,12 +18,16 @@
     <title>Kostentracker</title>
 
     <script>
+        // Test-Repository sauber von der produktiven App trennen.
+        // Unter /Test/ wird ein eigener localStorage-Key verwendet.
+        window.KOSTENTRACKER_STORAGE_KEY = location.pathname.toLowerCase().startsWith("/test/") ? "kostenApp_Test" : "kostenApp";
+
         // Design so frueh wie moeglich anwenden, damit beim Start nichts kurz aufblitzt.
         (() => {
             let mode = "system";
             let saved = null;
             try {
-                saved = JSON.parse(localStorage.getItem("kostenApp") || "null");
+                saved = JSON.parse(localStorage.getItem(window.KOSTENTRACKER_STORAGE_KEY) || "null");
                 const candidate = saved?.Einstellungen?.designModus;
                 if (["dunkel", "hell", "system"].includes(candidate)) mode = candidate;
             } catch (_) {}
@@ -2647,9 +2651,31 @@
 
         // PWA / Offline-Unterstützung
         if ("serviceWorker" in navigator) {
-            window.addEventListener("load", () => {
+            window.addEventListener("load", async () => {
+                const isTestBuild = location.pathname.toLowerCase().startsWith("/test/");
+                if (isTestBuild) {
+                    // In der Test-App bewusst keinen Offline-Cache verwenden, damit neue index.html-Versionen sofort sichtbar sind.
+                    try {
+                        const regs = await navigator.serviceWorker.getRegistrations();
+                        await Promise.all(regs.filter(reg => {
+                            try { return new URL(reg.scope).pathname.toLowerCase().startsWith("/test/"); } catch (_) { return false; }
+                        }).map(reg => reg.unregister()));
+                    } catch (error) {
+                        console.warn("Test-Service-Worker konnte nicht entfernt werden:", error);
+                    }
+                    return;
+                }
                 navigator.serviceWorker.register("./service-worker.js")
                     .catch(error => console.warn("Service Worker konnte nicht registriert werden:", error));
+            });
+        }
+
+
+        if (location.pathname.toLowerCase().startsWith("/test/")) {
+            document.title = "Kostentracker Test";
+            window.addEventListener("DOMContentLoaded", () => {
+                const title = document.querySelector("#home .topbar h2");
+                if (title && !title.textContent.includes("TEST")) title.textContent = "💸 Kostentracker · TEST";
             });
         }
 
@@ -2680,7 +2706,7 @@
 
         function ladeDaten() {
             try {
-                return JSON.parse(localStorage.getItem("kostenApp")) || structuredClone(STANDARD_DATEN);
+                return JSON.parse(localStorage.getItem(window.KOSTENTRACKER_STORAGE_KEY)) || structuredClone(STANDARD_DATEN);
             } catch (error) {
                 console.error("Gespeicherte Daten konnten nicht gelesen werden:", error);
                 return structuredClone(STANDARD_DATEN);
@@ -2841,7 +2867,7 @@
 
         // Migration direkt speichern, damit alte kaputte Strukturen nicht wiederkommen.
         try {
-            localStorage.setItem("kostenApp", JSON.stringify(daten));
+            localStorage.setItem(window.KOSTENTRACKER_STORAGE_KEY, JSON.stringify(daten));
         } catch (error) {
             console.error("Migration konnte nicht gespeichert werden:", error);
         }
@@ -3065,7 +3091,7 @@
 
         function speichern() {
             try {
-                localStorage.setItem("kostenApp", JSON.stringify(daten));
+                localStorage.setItem(window.KOSTENTRACKER_STORAGE_KEY, JSON.stringify(daten));
             } catch (error) {
                 console.error("Speichern fehlgeschlagen:", error);
                 alert("Speichern im Browser ist fehlgeschlagen. Öffne die heruntergeladene HTML-Datei direkt im Browser und nicht nur in einer Vorschau.");
@@ -3152,7 +3178,7 @@
                 }
 
                 const neueDaten = parsed.daten ?? parsed;
-                localStorage.setItem("kostenApp", JSON.stringify(neueDaten));
+                localStorage.setItem(window.KOSTENTRACKER_STORAGE_KEY, JSON.stringify(neueDaten));
                 setBackupStatus("Backup wurde wiederhergestellt. Die App wird neu geladen …");
                 setTimeout(() => location.reload(), 400);
             } catch (error) {
@@ -4961,7 +4987,7 @@
 
             if (geaendert) {
                 daten["Geplante Ausgaben"] = offen;
-                try { localStorage.setItem("kostenApp", JSON.stringify(daten)); } catch (_) {}
+                try { localStorage.setItem(window.KOSTENTRACKER_STORAGE_KEY, JSON.stringify(daten)); } catch (_) {}
             }
             return geaendert;
         }
