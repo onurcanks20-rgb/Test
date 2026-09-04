@@ -2706,7 +2706,51 @@
 
         function ladeDaten() {
             try {
-                return JSON.parse(localStorage.getItem(window.KOSTENTRACKER_STORAGE_KEY)) || structuredClone(STANDARD_DATEN);
+                const gespeichert = JSON.parse(localStorage.getItem(window.KOSTENTRACKER_STORAGE_KEY));
+
+                // Nur in /Test/: beim ersten Start ein paar harmlose Demo-Eintraege anlegen,
+                // damit Wischen, Halten, Bearbeiten und Verschieben sofort getestet werden koennen.
+                if (location.pathname.toLowerCase().startsWith("/test/") && !localStorage.getItem("kostenApp_Test_demo_seeded_v1")) {
+                    const demo = gespeichert && typeof gespeichert === "object" && !Array.isArray(gespeichert)
+                        ? gespeichert
+                        : structuredClone(STANDARD_DATEN);
+
+                    demo.Haushalt ??= {};
+                    demo.Freizeit ??= {};
+
+                    const heute = new Date();
+                    const iso = (d) => {
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, "0");
+                        const day = String(d.getDate()).padStart(2, "0");
+                        return `${y}-${m}-${day}`;
+                    };
+                    const tageZurueck = (n) => {
+                        const d = new Date(heute);
+                        d.setDate(d.getDate() - n);
+                        return d;
+                    };
+                    const fuegeDemoHinzu = (bereich, d, eintrag) => {
+                        const monat = d.getMonth() + 1;
+                        demo[bereich][monat] ??= [];
+                        demo[bereich][monat].push({
+                            id: `demo-${bereich.toLowerCase()}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+                            datum: iso(d),
+                            ...eintrag
+                        });
+                    };
+
+                    fuegeDemoHinzu("Haushalt", tageZurueck(0), { text:"Wocheneinkauf", betrag:42.80, kategorie:"Einkauf" });
+                    fuegeDemoHinzu("Haushalt", tageZurueck(1), { text:"Tanken", betrag:65.00, kategorie:"Tanken" });
+                    fuegeDemoHinzu("Freizeit", tageZurueck(0), { text:"Cafe mit Freunden", betrag:18.50, kategorie:"Essen / Trinken" });
+                    fuegeDemoHinzu("Freizeit", tageZurueck(2), { text:"Geburtstagsgeschenk", betrag:30.00, kategorie:"Geschenke" });
+
+                    localStorage.setItem(window.KOSTENTRACKER_STORAGE_KEY, JSON.stringify(demo));
+                    localStorage.setItem("kostenApp_Test_demo_seeded_v1", "1");
+                    return demo;
+                }
+
+                return gespeichert || structuredClone(STANDARD_DATEN);
             } catch (error) {
                 console.error("Gespeicherte Daten konnten nicht gelesen werden:", error);
                 return structuredClone(STANDARD_DATEN);
