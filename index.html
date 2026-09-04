@@ -2708,12 +2708,16 @@
             try {
                 const gespeichert = JSON.parse(localStorage.getItem(window.KOSTENTRACKER_STORAGE_KEY));
 
-                // Nur in /Test/: beim ersten Start ein paar harmlose Demo-Eintraege anlegen,
-                // damit Wischen, Halten, Bearbeiten und Verschieben sofort getestet werden koennen.
-                if (location.pathname.toLowerCase().startsWith("/test/") && !localStorage.getItem("kostenApp_Test_demo_seeded_v1")) {
-                    const demo = gespeichert && typeof gespeichert === "object" && !Array.isArray(gespeichert)
-                        ? gespeichert
-                        : structuredClone(STANDARD_DATEN);
+                // Nur in /Test/: Demo-Eintraege sicherstellen, solange der Test-Speicher noch leer ist.
+                // Die fruehere Seed-Markierung konnte gesetzt sein, obwohl keine sichtbaren Eintraege vorhanden waren.
+                const istTestApp = location.pathname.toLowerCase().startsWith("/test/");
+                const vorhandeneDemoDaten = gespeichert && typeof gespeichert === "object" && !Array.isArray(gespeichert) ? gespeichert : null;
+                const hatTestEintraege = !!vorhandeneDemoDaten && (
+                    Object.values(vorhandeneDemoDaten.Haushalt || {}).some(l => Array.isArray(l) && l.length) ||
+                    Object.values(vorhandeneDemoDaten.Freizeit || {}).some(l => Array.isArray(l) && l.length)
+                );
+                if (istTestApp && !hatTestEintraege) {
+                    const demo = vorhandeneDemoDaten || structuredClone(STANDARD_DATEN);
 
                     demo.Haushalt ??= {};
                     demo.Freizeit ??= {};
@@ -2746,7 +2750,7 @@
                     fuegeDemoHinzu("Freizeit", tageZurueck(2), { text:"Geburtstagsgeschenk", betrag:30.00, kategorie:"Geschenke" });
 
                     localStorage.setItem(window.KOSTENTRACKER_STORAGE_KEY, JSON.stringify(demo));
-                    localStorage.setItem("kostenApp_Test_demo_seeded_v1", "1");
+                    localStorage.removeItem("kostenApp_Test_demo_seeded_v1");
                     return demo;
                 }
 
