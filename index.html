@@ -18,16 +18,12 @@
     <title>Kostentracker</title>
 
     <script>
-        // Test-Repository sauber von der produktiven App trennen.
-        // Unter /Test/ wird ein eigener localStorage-Key verwendet.
-        window.KOSTENTRACKER_STORAGE_KEY = location.pathname.toLowerCase().startsWith("/test/") ? "kostenApp_Test" : "kostenApp";
-
         // Design so frueh wie moeglich anwenden, damit beim Start nichts kurz aufblitzt.
         (() => {
             let mode = "system";
             let saved = null;
             try {
-                saved = JSON.parse(localStorage.getItem(window.KOSTENTRACKER_STORAGE_KEY) || "null");
+                saved = JSON.parse(localStorage.getItem("kostenApp_Test_v2") || "null");
                 const candidate = saved?.Einstellungen?.designModus;
                 if (["dunkel", "hell", "system"].includes(candidate)) mode = candidate;
             } catch (_) {}
@@ -1706,29 +1702,13 @@
         }
 
 
-        /* ===== WISCHGESTEN ===== */
-        .swipe-action-backdrop {
-            position:fixed; inset:0; z-index:120; background:rgba(0,0,0,.48);
-            display:flex; align-items:flex-end; justify-content:center; padding:12px;
-        }
-        .swipe-action-backdrop.hidden { display:none; }
-        .swipe-action-sheet {
-            width:min(100%,520px); background:var(--card); border-radius:22px; padding:12px;
-            box-shadow:0 -10px 30px rgba(0,0,0,.35);
-        }
-        .swipe-action-title { font-size:13px; opacity:.62; text-align:center; margin:2px 0 8px; }
-        .swipe-action-list { display:grid; gap:8px; }
-        .swipe-action-list button { margin:0; min-height:52px; font-size:16px; }
-        .swipe-action-list button.swipe-neutral { background:#3a3a3c; }
-        .swipe-action-list button.swipe-danger { background:var(--danger); }
-        .swipe-action-cancel { margin:10px 0 0; background:#3a3a3c; }
-        .item { -webkit-touch-callout:none; }
-        .edge-swipe-hint {
-            position:fixed; left:0; top:50%; transform:translateY(-50%); width:4px; height:72px;
-            border-radius:0 6px 6px 0; background:rgba(52,152,219,.45); opacity:0;
-            pointer-events:none; z-index:119; transition:opacity .12s ease;
-        }
-        .edge-swipe-hint.show { opacity:1; }
+        .gesture-menu-backdrop{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.48);display:flex;align-items:flex-end;justify-content:center;padding:12px;}
+        .gesture-menu-backdrop.hidden{display:none;}
+        .gesture-menu{width:min(100%,520px);background:var(--card);border-radius:22px;padding:12px;box-shadow:0 -10px 30px rgba(0,0,0,.35);}
+        .gesture-menu button{margin:6px 0 0;min-height:50px;}
+        .gesture-menu .cancel{background:#3a3a3c;}
+        .gesture-edge-hint{position:fixed;left:0;top:50%;width:4px;height:72px;transform:translateY(-50%);border-radius:0 6px 6px 0;background:rgba(52,152,219,.55);opacity:0;pointer-events:none;z-index:299;}
+        .gesture-edge-hint.show{opacity:1;}
 
 </style>
 </head>
@@ -2648,36 +2628,27 @@
 
 
     <script>
-
-        // PWA / Offline-Unterstützung
+        // TEST-BUILD: kein Service Worker / kein Offline-Cache.
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", async () => {
-                const isTestBuild = location.pathname.toLowerCase().startsWith("/test/");
-                if (isTestBuild) {
-                    // In der Test-App bewusst keinen Offline-Cache verwenden, damit neue index.html-Versionen sofort sichtbar sind.
-                    try {
-                        const regs = await navigator.serviceWorker.getRegistrations();
-                        await Promise.all(regs.filter(reg => {
-                            try { return new URL(reg.scope).pathname.toLowerCase().startsWith("/test/"); } catch (_) { return false; }
-                        }).map(reg => reg.unregister()));
-                    } catch (error) {
-                        console.warn("Test-Service-Worker konnte nicht entfernt werden:", error);
+                try {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map(reg => reg.unregister()));
+                    if (window.caches) {
+                        const names = await caches.keys();
+                        await Promise.all(names.map(name => caches.delete(name)));
                     }
-                    return;
+                } catch (error) {
+                    console.warn("Test-Cache konnte nicht komplett geleert werden:", error);
                 }
-                navigator.serviceWorker.register("./service-worker.js")
-                    .catch(error => console.warn("Service Worker konnte nicht registriert werden:", error));
             });
         }
 
-
-        if (location.pathname.toLowerCase().startsWith("/test/")) {
+        document.addEventListener("DOMContentLoaded", () => {
             document.title = "Kostentracker Test";
-            window.addEventListener("DOMContentLoaded", () => {
-                const title = document.querySelector("#home .topbar h2");
-                if (title && !title.textContent.includes("TEST")) title.textContent = "💸 Kostentracker · TEST";
-            });
-        }
+            const title = document.querySelector("#home .topbar h2");
+            if (title) title.textContent = "Kostentracker - TEST";
+        });
 
         /* DATEN */
         const STANDARD_DATEN = {
@@ -2706,55 +2677,7 @@
 
         function ladeDaten() {
             try {
-                const gespeichert = JSON.parse(localStorage.getItem(window.KOSTENTRACKER_STORAGE_KEY));
-
-                // Nur in /Test/: Demo-Eintraege sicherstellen, solange der Test-Speicher noch leer ist.
-                // Die fruehere Seed-Markierung konnte gesetzt sein, obwohl keine sichtbaren Eintraege vorhanden waren.
-                const istTestApp = location.pathname.toLowerCase().startsWith("/test/");
-                const vorhandeneDemoDaten = gespeichert && typeof gespeichert === "object" && !Array.isArray(gespeichert) ? gespeichert : null;
-                const hatTestEintraege = !!vorhandeneDemoDaten && (
-                    Object.values(vorhandeneDemoDaten.Haushalt || {}).some(l => Array.isArray(l) && l.length) ||
-                    Object.values(vorhandeneDemoDaten.Freizeit || {}).some(l => Array.isArray(l) && l.length)
-                );
-                if (istTestApp && !hatTestEintraege) {
-                    const demo = vorhandeneDemoDaten || structuredClone(STANDARD_DATEN);
-
-                    demo.Haushalt ??= {};
-                    demo.Freizeit ??= {};
-
-                    const heute = new Date();
-                    const iso = (d) => {
-                        const y = d.getFullYear();
-                        const m = String(d.getMonth() + 1).padStart(2, "0");
-                        const day = String(d.getDate()).padStart(2, "0");
-                        return `${y}-${m}-${day}`;
-                    };
-                    const tageZurueck = (n) => {
-                        const d = new Date(heute);
-                        d.setDate(d.getDate() - n);
-                        return d;
-                    };
-                    const fuegeDemoHinzu = (bereich, d, eintrag) => {
-                        const monat = d.getMonth() + 1;
-                        demo[bereich][monat] ??= [];
-                        demo[bereich][monat].push({
-                            id: `demo-${bereich.toLowerCase()}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
-                            datum: iso(d),
-                            ...eintrag
-                        });
-                    };
-
-                    fuegeDemoHinzu("Haushalt", tageZurueck(0), { text:"Wocheneinkauf", betrag:42.80, kategorie:"Einkauf" });
-                    fuegeDemoHinzu("Haushalt", tageZurueck(1), { text:"Tanken", betrag:65.00, kategorie:"Tanken" });
-                    fuegeDemoHinzu("Freizeit", tageZurueck(0), { text:"Cafe mit Freunden", betrag:18.50, kategorie:"Essen / Trinken" });
-                    fuegeDemoHinzu("Freizeit", tageZurueck(2), { text:"Geburtstagsgeschenk", betrag:30.00, kategorie:"Geschenke" });
-
-                    localStorage.setItem(window.KOSTENTRACKER_STORAGE_KEY, JSON.stringify(demo));
-                    localStorage.removeItem("kostenApp_Test_demo_seeded_v1");
-                    return demo;
-                }
-
-                return gespeichert || structuredClone(STANDARD_DATEN);
+                return JSON.parse(localStorage.getItem("kostenApp_Test_v2")) || structuredClone(STANDARD_DATEN);
             } catch (error) {
                 console.error("Gespeicherte Daten konnten nicht gelesen werden:", error);
                 return structuredClone(STANDARD_DATEN);
@@ -2762,6 +2685,30 @@
         }
 
         let daten = ladeDaten();
+
+        // TEST-BUILD: Demo-Eintraege nur im separaten Test-Speicher.
+        (() => {
+            const hasEntries = [daten?.Haushalt, daten?.Freizeit].some(store =>
+                store && typeof store === "object" && Object.values(store).some(list => Array.isArray(list) && list.length)
+            );
+            if (hasEntries) return;
+            const iso = d => {
+                const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), t=String(d.getDate()).padStart(2,"0");
+                return `${y}-${m}-${t}`;
+            };
+            const ago = n => { const d=new Date(); d.setDate(d.getDate()-n); return d; };
+            const addDemo = (bereich,d,text,betrag,kategorie) => {
+                daten[bereich] ??= {};
+                const monat=d.getMonth()+1;
+                daten[bereich][monat] ??= [];
+                daten[bereich][monat].push({id:`test-${bereich.toLowerCase()}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,text,betrag,kategorie,datum:iso(d),warnung:false,warnTage:14});
+            };
+            addDemo("Haushalt",ago(0),"Wocheneinkauf",42.80,"Einkauf");
+            addDemo("Haushalt",ago(1),"Tanken",65.00,"Tanken");
+            addDemo("Freizeit",ago(0),"Cafe mit Freunden",18.50,"Essen / Trinken");
+            addDemo("Freizeit",ago(2),"Geburtstagsgeschenk",30.00,"Geschenke");
+            try { localStorage.setItem("kostenApp_Test_v2",JSON.stringify(daten)); } catch (_) {}
+        })();
 
         // 🔥 WICHTIGER MIGRATIONS-FIX:
         // Falls "Laufende Kosten" früher als Array gespeichert wurde, wird es jetzt sauber
@@ -2915,7 +2862,7 @@
 
         // Migration direkt speichern, damit alte kaputte Strukturen nicht wiederkommen.
         try {
-            localStorage.setItem(window.KOSTENTRACKER_STORAGE_KEY, JSON.stringify(daten));
+            localStorage.setItem("kostenApp_Test_v2", JSON.stringify(daten));
         } catch (error) {
             console.error("Migration konnte nicht gespeichert werden:", error);
         }
@@ -3139,7 +3086,7 @@
 
         function speichern() {
             try {
-                localStorage.setItem(window.KOSTENTRACKER_STORAGE_KEY, JSON.stringify(daten));
+                localStorage.setItem("kostenApp_Test_v2", JSON.stringify(daten));
             } catch (error) {
                 console.error("Speichern fehlgeschlagen:", error);
                 alert("Speichern im Browser ist fehlgeschlagen. Öffne die heruntergeladene HTML-Datei direkt im Browser und nicht nur in einer Vorschau.");
@@ -3226,7 +3173,7 @@
                 }
 
                 const neueDaten = parsed.daten ?? parsed;
-                localStorage.setItem(window.KOSTENTRACKER_STORAGE_KEY, JSON.stringify(neueDaten));
+                localStorage.setItem("kostenApp_Test_v2", JSON.stringify(neueDaten));
                 setBackupStatus("Backup wurde wiederhergestellt. Die App wird neu geladen …");
                 setTimeout(() => location.reload(), 400);
             } catch (error) {
@@ -5035,7 +4982,7 @@
 
             if (geaendert) {
                 daten["Geplante Ausgaben"] = offen;
-                try { localStorage.setItem(window.KOSTENTRACKER_STORAGE_KEY, JSON.stringify(daten)); } catch (_) {}
+                try { localStorage.setItem("kostenApp_Test_v2", JSON.stringify(daten)); } catch (_) {}
             }
             return geaendert;
         }
@@ -6066,6 +6013,7 @@
 
         function deleteLaufendeKosten(id) {
 
+            if (!confirm("Wirklich löschen?")) return;
             beginUndoDelete("Fixkosten-Eintrag gelöscht");
 
             if (!daten["Laufende Kosten"] || !Array.isArray(daten["Laufende Kosten"].fix)) return;
@@ -6215,6 +6163,7 @@
 
         function deleteEintrag(k, i) {
 
+            if (!confirm("Eintrag wirklich löschen?")) return;
             beginUndoDelete("Reiseausgabe gelöscht");
 
             if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
@@ -6494,6 +6443,7 @@
                         //Versicherung löschen 🗑️
         function deleteVersicherung(id) {
 
+            if (!confirm("Versicherung löschen?")) return;
             beginUndoDelete("Versicherung gelöscht");
 
             if (!Array.isArray(daten.Versicherungen)) {
@@ -6971,6 +6921,7 @@
         }
 
         function deleteEinnahme(id) {
+            if (!confirm("Einnahme wirklich löschen?")) return;
             beginUndoDelete("Einnahme gelöscht");
             daten.Einnahmen = (daten.Einnahmen || []).filter(e => String(e.id) !== String(id));
             speichern();
@@ -7781,6 +7732,7 @@
 
         function deleteHaushalt(id) {
 
+            if (!confirm("Eintrag löschen?")) return;
             beginUndoDelete("Haushalt-Eintrag gelöscht");
 
             if (!daten.Haushalt) return;
@@ -7981,6 +7933,7 @@
         }
 
         function deleteFreizeit(id){
+            if(!confirm('Eintrag löschen?')) return;
             beginUndoDelete("Freizeit-Eintrag gelöscht");
             for(const monat in daten.Freizeit){ const liste=daten.Freizeit[monat]; if(!Array.isArray(liste)) continue; const i=liste.findIndex(e=>String(e.id)===String(id)); if(i!==-1){liste.splice(i,1);break;} }
             speichern(); renderFreizeit(); finishUndoDelete("Freizeit-Eintrag gelöscht");
@@ -9169,235 +9122,33 @@
         }
 
 
-        /* ===== WISCHGESTEN + LANGES HALTEN (iPhone-freundlich) ===== */
-        let swipeTouchStartX = 0;
-        let swipeTouchStartY = 0;
-        let swipeTouchTarget = null;
-        let swipeStartedAtEdge = false;
-        let entryHoldTimer = null;
-        let entryHoldItem = null;
-        let entryHoldTriggered = false;
-        let suppressEntryClickUntil = 0;
-        const ENTRY_HOLD_MS = 520;
-        const ENTRY_MOVE_TOLERANCE = 12;
 
-        function getVisibleAppViewId(){
-            const ids=[
-                'home','reisen','land','haushaltView','freizeitView','ausgabenArchivView','globalArchivView',
-                'geplanteAusgabenView','sparenInvestierenView','einnahmenView','kostenView','versicherungenView',
-                'uebersichtView','grafikView','settingsView','settingsBudgetView','settingsQuickAddView',
-                'settingsWarningsView','settingsDesignView','settingsBackupView'
-            ];
-            return ids.find(id=>{const el=document.getElementById(id);return el && !el.classList.contains('hidden');}) || 'home';
-        }
-
-        function closeTopOverlayForSwipe(){
-            if(!document.getElementById('swipeActionBackdrop')?.classList.contains('hidden')){ closeSwipeActions(); return true; }
-            const overlays=[
-                ['addSheet',()=>closeAddSheet()],
-                ['startQuickAddSheet',()=>closeStartQuickAdd()],
-                ['reiseAuswahlSheet',()=>closeReiseAuswahlSheet()],
-                ['moveSheet',()=>closeMoveSheet()],
-                ['weekPreviewSheet',()=>closeWeekPreview()]
-            ];
-            for(const [id,fn] of overlays){
-                const el=document.getElementById(id);
-                if(el && !el.classList.contains('hidden')){ try{fn();}catch(_){el.classList.add('hidden');} return true; }
-            }
-            const openPanel=document.querySelector('.category-add-panel:not(.hidden)');
-            if(openPanel){ closeCategoryAddPanels(); return true; }
-            return false;
-        }
-
-        function handleEdgeSwipeBack(){
-            if(closeTopOverlayForSwipe()) return;
-            const id=getVisibleAppViewId();
-            const backMap={
-                land:()=>backToReisen(),
-                ausgabenArchivView:()=>closeAusgabenArchiv(),
-                globalArchivView:()=>openSettings(),
-                settingsBudgetView:()=>openSettings(),
-                settingsQuickAddView:()=>openSettings(),
-                settingsWarningsView:()=>openSettings(),
-                settingsDesignView:()=>openSettings(),
-                settingsBackupView:()=>openSettings(),
-                haushaltView:()=>openUebersicht(),
-                freizeitView:()=>openUebersicht(),
-                geplanteAusgabenView:()=>openUebersicht(),
-                sparenInvestierenView:()=>openUebersicht(),
-                einnahmenView:()=>openUebersicht(),
-                kostenView:()=>openUebersicht(),
-                versicherungenView:()=>openUebersicht(),
-                reisen:()=>openUebersicht(),
-                uebersichtView:()=>goHome(),
-                grafikView:()=>goHome(),
-                settingsView:()=>goHome()
-            };
-            if(backMap[id]) backMap[id]();
-        }
-
-        function swipeActionLabel(btn){
-            const txt=(btn.textContent||'').trim();
-            const title=(btn.getAttribute('title')||'').trim();
-            if(btn.classList.contains('delete') || /löschen|🗑️/i.test(txt+title)) return {label:'🗑️ Löschen', danger:true, type:'delete'};
-            if(btn.classList.contains('edit') || /bearbeiten|✏️/i.test(txt+title)) return {label:'✏️ Bearbeiten', type:'edit'};
-            if(/verschieben|↪️/i.test(txt+title)) return {label:'↪️ Verschieben', type:'move'};
-            return {label:title || txt || 'Aktion', type:'other'};
-        }
-
-        function getGestureEntryItem(target){
-            const item=target?.closest?.('.item');
-            if(!item || item.querySelector('input,select,textarea')) return null;
-            const actionBox=item.querySelector('.actions');
-            if(!actionBox) return null;
-            const deleteBtn=[...actionBox.querySelectorAll('button')].find(b=>swipeActionLabel(b).type==='delete');
-            if(!deleteBtn) return null;
-            const handler=deleteBtn.getAttribute('onclick') || '';
-            // Nur echte Buchungs-/Ausgaben-Einträge, keine Reise- oder Kategorie-Karten.
-            if(!/delete(?:SparenInvestieren|GeplanteAusgabe|Eintrag|LaufendeKosten|Versicherung|Einnahme|Haushalt|Freizeit)\s*\(/.test(handler)) return null;
-            return item;
-        }
-
-        function getEntryActionButtons(item){
-            const actionBox=item?.querySelector('.actions');
-            if(!actionBox) return [];
-            return [...actionBox.querySelectorAll('button')].filter(b=>!b.disabled);
-        }
-
-        function openHoldActions(item){
-            const sourceButtons=getEntryActionButtons(item).filter(source=>{
-                const type=swipeActionLabel(source).type;
-                return type==='edit' || type==='move';
-            });
-            if(!sourceButtons.length) return false;
-            const backdrop=document.getElementById('swipeActionBackdrop');
-            const list=document.getElementById('swipeActionList');
-            const title=document.querySelector('.swipe-action-title');
-            if(!backdrop||!list) return false;
-            if(title) title.textContent='Eintrag bearbeiten';
-            list.innerHTML='';
-            // Bearbeiten zuerst, Verschieben danach.
-            sourceButtons.sort((a,b)=>{
-                const order={edit:0,move:1};
-                return (order[swipeActionLabel(a).type]??9)-(order[swipeActionLabel(b).type]??9);
-            }).forEach(source=>{
-                const meta=swipeActionLabel(source);
-                const b=document.createElement('button');
-                b.type='button';
-                b.textContent=meta.label;
-                b.className='swipe-neutral';
-                b.addEventListener('click',()=>{ closeSwipeActions(); suppressEntryClickUntil=0; source.click(); });
-                list.appendChild(b);
-            });
-            backdrop.classList.remove('hidden');
-            return true;
-        }
-
-        function deleteEntryBySwipe(item){
-            const deleteBtn=getEntryActionButtons(item).find(b=>swipeActionLabel(b).type==='delete');
-            if(!deleteBtn) return false;
-            deleteBtn.click();
-            return true;
-        }
-
-        function closeSwipeActions(){
-            document.getElementById('swipeActionBackdrop')?.classList.add('hidden');
-        }
-
-        function clearEntryHold(){
-            if(entryHoldTimer){ clearTimeout(entryHoldTimer); entryHoldTimer=null; }
-        }
-
-        document.addEventListener('touchstart',event=>{
-            if(event.touches.length!==1) return;
-            const t=event.touches[0];
-            swipeTouchStartX=t.clientX; swipeTouchStartY=t.clientY;
-            swipeTouchTarget=event.target;
-            swipeStartedAtEdge=swipeTouchStartX<=24;
-            entryHoldTriggered=false;
-            entryHoldItem=null;
-            clearEntryHold();
-
-            if(swipeStartedAtEdge && getVisibleAppViewId()!=='home'){
-                document.getElementById('edgeSwipeHint')?.classList.add('show');
-                return;
-            }
-
-            if(swipeTouchTarget?.closest?.('button,input,select,textarea,a')) return;
-            entryHoldItem=getGestureEntryItem(swipeTouchTarget);
-            if(entryHoldItem){
-                entryHoldTimer=setTimeout(()=>{
-                    entryHoldTimer=null;
-                    if(openHoldActions(entryHoldItem)){
-                        entryHoldTriggered=true;
-                        suppressEntryClickUntil=Date.now()+700;
-                    }
-                },ENTRY_HOLD_MS);
-            }
-        },{passive:true});
-
-        document.addEventListener('touchmove',event=>{
-            if(!entryHoldTimer || event.touches.length!==1) return;
-            const t=event.touches[0];
-            const dx=t.clientX-swipeTouchStartX, dy=t.clientY-swipeTouchStartY;
-            if(Math.hypot(dx,dy)>ENTRY_MOVE_TOLERANCE) clearEntryHold();
-        },{passive:true});
-
-        document.addEventListener('touchend',event=>{
-            clearEntryHold();
-            document.getElementById('edgeSwipeHint')?.classList.remove('show');
-            const t=event.changedTouches?.[0];
-            if(!t) return;
-            if(entryHoldTriggered){
-                entryHoldTriggered=false;
-                return;
-            }
-            const dx=t.clientX-swipeTouchStartX, dy=t.clientY-swipeTouchStartY;
-            const horizontal=Math.abs(dx)>Math.abs(dy)*1.25;
-            if(!horizontal) return;
-            if(swipeStartedAtEdge && dx>72){
-                handleEdgeSwipeBack();
-                return;
-            }
-            if(dx<-72 && !swipeStartedAtEdge){
-                const interactive=swipeTouchTarget?.closest?.('button,input,select,textarea,a');
-                if(interactive) return;
-                const item=getGestureEntryItem(swipeTouchTarget);
-                if(item){
-                    deleteEntryBySwipe(item);
-                    suppressEntryClickUntil=Date.now()+700;
-                }
-            }
-        },{passive:true});
-
-        document.addEventListener('touchcancel',()=>{
-            clearEntryHold();
-            entryHoldTriggered=false;
-            document.getElementById('edgeSwipeHint')?.classList.remove('show');
-        },{passive:true});
-
-        // Verhindert, dass nach langem Halten oder Löschen per Wisch noch der normale Karten-Klick feuert.
-        document.addEventListener('click',event=>{
-            if(Date.now()<suppressEntryClickUntil && getGestureEntryItem(event.target)){
-                event.preventDefault();
-                event.stopPropagation();
-            }
-        },true);
-
-        document.addEventListener('contextmenu',event=>{
-            if(getGestureEntryItem(event.target)) event.preventDefault();
-        });
-
-
+        // TEST: Wischen + langes Halten nur auf echten Eintragskarten.
+        (() => {
+            let sx=0,sy=0,target=null,holdTimer=null,holdFired=false,edge=false;
+            const entryFromTarget=el=>{const item=el?.closest?.('.item');if(!item||!item.querySelector('.actions'))return null;return item;};
+            const buttonsFor=item=>[...(item?.querySelectorAll?.('.actions button')||[])];
+            const actionButtons=item=>buttonsFor(item).filter(b=>{const t=(b.textContent||'');return t.includes('Bearbeiten')||t.includes('Verschieben')||t.includes('\u270f')||t.includes('\u21aa');});
+            const deleteButton=item=>buttonsFor(item).find(b=>(b.textContent||'').includes('\ud83d\uddd1'));
+            window.closeGestureMenu=()=>document.getElementById('gestureMenuBackdrop')?.classList.add('hidden');
+            const openMenu=item=>{const btns=actionButtons(item);if(!btns.length)return false;const host=document.getElementById('gestureMenuActions'),back=document.getElementById('gestureMenuBackdrop');if(!host||!back)return false;host.innerHTML='';btns.forEach(original=>{const b=document.createElement('button');const edit=(original.textContent||'').includes('\u270f');b.textContent=edit?'Bearbeiten':'Verschieben';b.onclick=()=>{closeGestureMenu();original.click();};host.appendChild(b);});back.classList.remove('hidden');return true;};
+            const visibleView=()=>['home','uebersichtView','haushaltView','freizeitView','ausgabenArchivView','globalArchivView','reisen','land','geplanteAusgabenView','sparenInvestierenView','einnahmenView','kostenView','versicherungenView','grafikView','settingsView','settingsBudgetView','settingsQuickAddView','settingsWarningsView','settingsDesignView','settingsBackupView'].find(id=>{const el=document.getElementById(id);return el&&!el.classList.contains('hidden');})||'home';
+            const edgeBack=()=>{const id=visibleView();const map={haushaltView:()=>openUebersicht(),freizeitView:()=>openUebersicht(),einnahmenView:()=>openUebersicht(),kostenView:()=>openUebersicht(),versicherungenView:()=>openUebersicht(),geplanteAusgabenView:()=>openUebersicht(),sparenInvestierenView:()=>openUebersicht(),reisen:()=>openUebersicht(),ausgabenArchivView:()=>closeAusgabenArchiv(),globalArchivView:()=>openSettings(),land:()=>openReisen(),uebersichtView:()=>goHome(),grafikView:()=>goHome(),settingsView:()=>goHome(),settingsBudgetView:()=>openSettings(),settingsQuickAddView:()=>openSettings(),settingsWarningsView:()=>openSettings(),settingsDesignView:()=>openSettings(),settingsBackupView:()=>openSettings()};map[id]?.();};
+            document.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;const t=e.touches[0];sx=t.clientX;sy=t.clientY;target=e.target;edge=sx<=24;holdFired=false;if(holdTimer)clearTimeout(holdTimer);holdTimer=null;if(edge&&visibleView()!=='home'){document.getElementById('gestureEdgeHint')?.classList.add('show');return;}if(target?.closest?.('button,input,select,textarea,a'))return;const item=entryFromTarget(target);if(item)holdTimer=setTimeout(()=>{holdTimer=null;holdFired=openMenu(item);},550);},{passive:true});
+            document.addEventListener('touchmove',e=>{if(!holdTimer||e.touches.length!==1)return;const t=e.touches[0];if(Math.hypot(t.clientX-sx,t.clientY-sy)>14){clearTimeout(holdTimer);holdTimer=null;}},{passive:true});
+            document.addEventListener('touchend',e=>{if(holdTimer)clearTimeout(holdTimer);holdTimer=null;document.getElementById('gestureEdgeHint')?.classList.remove('show');const t=e.changedTouches?.[0];if(!t||holdFired)return;const dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)<=Math.abs(dy)*1.25)return;if(edge&&dx>72){edgeBack();return;}if(!edge&&dx<-72&&!target?.closest?.('button,input,select,textarea,a')){const del=deleteButton(entryFromTarget(target));if(del)del.click();}},{passive:true});
+            document.addEventListener('touchcancel',()=>{if(holdTimer)clearTimeout(holdTimer);holdTimer=null;holdFired=false;document.getElementById('gestureEdgeHint')?.classList.remove('show');},{passive:true});
+        })();
 </script>
 
 
-    <div id="edgeSwipeHint" class="edge-swipe-hint" aria-hidden="true"></div>
-    <div id="swipeActionBackdrop" class="swipe-action-backdrop hidden" onclick="if(event.target===this) closeSwipeActions()">
-        <div class="swipe-action-sheet">
-            <div class="swipe-action-title">Eintrag-Aktionen</div>
-            <div id="swipeActionList" class="swipe-action-list"></div>
-            <button type="button" class="swipe-action-cancel" onclick="closeSwipeActions()">Abbrechen</button>
+
+    <div id="gestureEdgeHint" class="gesture-edge-hint" aria-hidden="true"></div>
+    <div id="gestureMenuBackdrop" class="gesture-menu-backdrop hidden" onclick="if(event.target===this) closeGestureMenu()">
+        <div class="gesture-menu">
+            <div style="text-align:center;font-size:13px;opacity:.65;margin-bottom:8px;">Eintrag-Aktionen</div>
+            <div id="gestureMenuActions"></div>
+            <button type="button" class="cancel" onclick="closeGestureMenu()">Abbrechen</button>
         </div>
     </div>
 
