@@ -10,7 +10,6 @@
     <meta name="apple-mobile-web-app-title" content="Kostentracker">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Kostentracker">
-    <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -2650,14 +2649,6 @@
 
     <script>
 
-        // PWA / Offline-Unterstützung
-        if ("serviceWorker" in navigator) {
-            window.addEventListener("load", () => {
-                navigator.serviceWorker.register("./service-worker.js")
-                    .catch(error => console.warn("Service Worker konnte nicht registriert werden:", error));
-            });
-        }
-
         /* DATEN */
         const STANDARD_DATEN = {
             Reisen: {},
@@ -2852,6 +2843,14 @@
         }
 
         // Farbkonstanten muessen vor dem ersten applyDesignTheme()-Aufruf initialisiert sein.
+        const DEFAULT_ACTION_COLOR = "#3498db";
+        const DEFAULT_ACTION_COLORS = {
+            hinzufuegen: DEFAULT_ACTION_COLOR,
+            bearbeiten: DEFAULT_ACTION_COLOR,
+            verschieben: DEFAULT_ACTION_COLOR,
+            schalter: DEFAULT_ACTION_COLOR
+        };
+
         applyDesignTheme();
         if (window.matchMedia) {
             const designMedia = window.matchMedia("(prefers-color-scheme: dark)");
@@ -3513,14 +3512,6 @@
             speichern();
             applyDesignTheme();
         }
-
-        const DEFAULT_ACTION_COLOR = "#3498db";
-        const DEFAULT_ACTION_COLORS = {
-            hinzufuegen: DEFAULT_ACTION_COLOR,
-            bearbeiten: DEFAULT_ACTION_COLOR,
-            verschieben: DEFAULT_ACTION_COLOR,
-            schalter: DEFAULT_ACTION_COLOR
-        };
 
         function normalizeActionColor(value) {
             const color = String(value || "").trim();
