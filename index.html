@@ -10,6 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Kostentracker">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Kostentracker">
+    <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -1701,36 +1702,6 @@
         }
 
 </style>
-
-<script>
-(function(){
-  function show(msg){
-    var box=document.getElementById('diagnoseBox');
-    if(!box){
-      box=document.createElement('div');
-      box.id='diagnoseBox';
-      box.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483647;background:#111;color:#0f0;padding:10px;border-radius:10px;font:12px/1.35 -apple-system,monospace;white-space:pre-wrap;max-height:42vh;overflow:auto;box-shadow:0 4px 20px rgba(0,0,0,.5)';
-      box.textContent='DIAGNOSE\n';
-      document.addEventListener('DOMContentLoaded',function(){document.body.appendChild(box);});
-      if(document.body) document.body.appendChild(box);
-    }
-    box.textContent += msg+'\n';
-  }
-  window.__diag=show;
-  window.addEventListener('error',function(e){ show('ERROR: '+(e.message||'unbekannt')+' @ '+(e.filename||'')+':'+(e.lineno||'')); });
-  window.addEventListener('unhandledrejection',function(e){ show('PROMISE: '+String(e.reason)); });
-  try{
-    show('Start: '+new Date().toISOString());
-    show('UA: '+navigator.userAgent);
-    show('standalone: '+String(!!navigator.standalone));
-    show('structuredClone: '+typeof structuredClone);
-    show('CSS.escape: '+String(!!(window.CSS&&CSS.escape)));
-    show('serviceWorker: '+String('serviceWorker' in navigator));
-    try{ localStorage.setItem('__kt_test__','1'); var ok=localStorage.getItem('__kt_test__')==='1'; localStorage.removeItem('__kt_test__'); show('localStorage: '+(ok?'OK':'FEHLER')); }catch(err){ show('localStorage ERROR: '+err); }
-  }catch(err){ show('DIAG ERROR: '+err); }
-})();
-</script>
-
 </head>
 
 <body>
@@ -2649,6 +2620,14 @@
 
     <script>
 
+        // PWA / Offline-Unterstützung
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("./service-worker.js")
+                    .catch(error => console.warn("Service Worker konnte nicht registriert werden:", error));
+            });
+        }
+
         /* DATEN */
         const STANDARD_DATEN = {
             Reisen: {},
@@ -2842,7 +2821,7 @@
             console.error("Migration konnte nicht gespeichert werden:", error);
         }
 
-        // Farbkonstanten muessen vor dem ersten applyDesignTheme()-Aufruf initialisiert sein.
+
         const DEFAULT_ACTION_COLOR = "#3498db";
         const DEFAULT_ACTION_COLORS = {
             hinzufuegen: DEFAULT_ACTION_COLOR,
@@ -3512,6 +3491,7 @@
             speichern();
             applyDesignTheme();
         }
+
 
         function normalizeActionColor(value) {
             const color = String(value || "").trim();
@@ -9103,6 +9083,226 @@
         <span id="undoToastText">Eintrag gelöscht</span>
         <button type="button" onclick="undoDelete()">↩️ Rückgängig</button>
     </div>
+
+
+    <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
+    <style>
+        .swipe-entry-ready {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+        }
+        .swipe-entry-ready > .swipe-action-rail {
+            position: absolute;
+            z-index: 1;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 5px 6px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .12s ease;
+        }
+        .swipe-entry-ready.swipe-entry-open > .swipe-action-rail,
+        .swipe-entry-ready.swipe-entry-dragging > .swipe-action-rail {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .swipe-action-rail button {
+            width: 46px !important;
+            min-width: 46px !important;
+            height: 46px !important;
+            min-height: 46px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border-radius: 13px !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px !important;
+            flex: 0 0 46px;
+        }
+        .swipe-entry-ready .swipe-original-actions {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        .swipe-entry-movable {
+            will-change: transform;
+            transition: transform .18s ease;
+        }
+        .swipe-entry-dragging .swipe-entry-movable {
+            transition: none !important;
+        }
+    </style>
+    <script>
+        (() => {
+            const touchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
+            if (!touchDevice) return;
+
+            let active = null;
+            let startX = 0;
+            let startY = 0;
+            let startOffset = 0;
+            let horizontal = false;
+            let openItem = null;
+
+            function closeSwipe(item = openItem, animate = true) {
+                if (!item) return;
+                item.classList.remove('swipe-entry-open', 'swipe-entry-dragging');
+                item.querySelectorAll('.swipe-entry-movable').forEach(el => {
+                    if (!animate) el.style.transition = 'none';
+                    el.style.transform = 'translateX(0px)';
+                    if (!animate) requestAnimationFrame(() => { el.style.transition = ''; });
+                });
+                if (openItem === item) openItem = null;
+            }
+
+            function railWidth(item) {
+                const rail = item.querySelector(':scope > .swipe-action-rail');
+                return Math.max(58, rail ? rail.getBoundingClientRect().width : 0);
+            }
+
+            function topChildContaining(item, node) {
+                let cur = node;
+                while (cur && cur.parentElement !== item) cur = cur.parentElement;
+                return cur && cur.parentElement === item ? cur : null;
+            }
+
+            function enhanceItem(item) {
+                if (!item || item.classList.contains('swipe-entry-ready')) return;
+                if (item.querySelector('input, select, textarea')) return;
+
+                const actions = item.querySelector('.actions');
+                if (!actions || !actions.querySelector('button')) return;
+
+                const rail = document.createElement('div');
+                rail.className = 'swipe-action-rail';
+                rail.setAttribute('aria-hidden', 'true');
+                actions.querySelectorAll('button').forEach(btn => {
+                    const clone = btn.cloneNode(true);
+                    clone.addEventListener('click', () => closeSwipe(item));
+                    rail.appendChild(clone);
+                });
+
+                const holder = topChildContaining(item, actions);
+                let movables = [];
+                if (actions.parentElement === item) {
+                    movables = Array.from(item.children).filter(el => el !== actions);
+                } else if (holder) {
+                    movables = [holder];
+                }
+                if (!movables.length) return;
+
+                actions.classList.add('swipe-original-actions');
+                movables.forEach(el => el.classList.add('swipe-entry-movable'));
+                item.appendChild(rail);
+                item.classList.add('swipe-entry-ready');
+            }
+
+            function enhanceAll(root = document) {
+                root.querySelectorAll('.item').forEach(enhanceItem);
+            }
+
+            document.addEventListener('touchstart', event => {
+                if (event.touches.length !== 1) return;
+                const item = event.target.closest('.swipe-entry-ready');
+
+                if (!item) {
+                    if (openItem) closeSwipe(openItem);
+                    active = null;
+                    return;
+                }
+
+                if (event.target.closest('.swipe-action-rail')) return;
+                if (openItem && openItem !== item) closeSwipe(openItem);
+
+                const touch = event.touches[0];
+                active = item;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                startOffset = item.classList.contains('swipe-entry-open') ? railWidth(item) : 0;
+                horizontal = false;
+            }, { passive: true });
+
+            document.addEventListener('touchmove', event => {
+                if (!active || event.touches.length !== 1) return;
+                const touch = event.touches[0];
+                const dx = touch.clientX - startX;
+                const dy = touch.clientY - startY;
+
+                if (!horizontal) {
+                    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+                    if (Math.abs(dy) > Math.abs(dx)) {
+                        active = null;
+                        return;
+                    }
+                    horizontal = true;
+                    active.classList.add('swipe-entry-dragging');
+                }
+
+                event.preventDefault();
+                const max = railWidth(active);
+                const offset = Math.max(0, Math.min(max, startOffset - dx));
+                active.querySelectorAll('.swipe-entry-movable').forEach(el => {
+                    el.style.transform = `translateX(${-offset}px)`;
+                });
+            }, { passive: false });
+
+            document.addEventListener('touchend', event => {
+                if (!active) return;
+                const item = active;
+                const touch = event.changedTouches && event.changedTouches[0];
+                const dx = touch ? touch.clientX - startX : 0;
+                const max = railWidth(item);
+                const offset = Math.max(0, Math.min(max, startOffset - dx));
+                const shouldOpen = horizontal && offset > Math.min(46, max * 0.32);
+
+                item.classList.remove('swipe-entry-dragging');
+                item.querySelectorAll('.swipe-entry-movable').forEach(el => {
+                    el.style.transform = `translateX(${shouldOpen ? -max : 0}px)`;
+                });
+                item.classList.toggle('swipe-entry-open', shouldOpen);
+                openItem = shouldOpen ? item : null;
+
+                active = null;
+                horizontal = false;
+            }, { passive: true });
+
+            document.addEventListener('touchcancel', () => {
+                if (active) closeSwipe(active);
+                active = null;
+                horizontal = false;
+            }, { passive: true });
+
+            document.addEventListener('click', event => {
+                if (openItem && !openItem.contains(event.target)) closeSwipe(openItem);
+            }, true);
+
+            const observer = new MutationObserver(mutations => {
+                mutations.forEach(mutation => {
+                    mutation.addedNodes.forEach(node => {
+                        if (!(node instanceof Element)) return;
+                        if (node.matches('.item')) enhanceItem(node);
+                        enhanceAll(node);
+                    });
+                });
+            });
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    enhanceAll();
+                    observer.observe(document.body, { childList: true, subtree: true });
+                }, { once: true });
+            } else {
+                enhanceAll();
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+        })();
+    </script>
 
 </body>
 
