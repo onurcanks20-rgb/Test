@@ -2851,7 +2851,7 @@
             console.error("Migration konnte nicht gespeichert werden:", error);
         }
 
-
+        // Farbkonstanten muessen vor dem ersten applyDesignTheme()-Aufruf initialisiert sein.
         applyDesignTheme();
         if (window.matchMedia) {
             const designMedia = window.matchMedia("(prefers-color-scheme: dark)");
