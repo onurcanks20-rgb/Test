@@ -9126,6 +9126,19 @@
             opacity: 1;
             pointer-events: auto;
         }
+        /* Beim deutlichen Weiterwischen wird der freigelegte Bereich rot.
+           Loslassen in diesem Zustand loescht den Eintrag direkt. */
+        .swipe-entry-shell.swipe-delete-progress,
+        .swipe-entry-shell.swipe-delete-armed {
+            background: #ff3b30;
+        }
+        .swipe-entry-shell.swipe-delete-armed > .swipe-action-rail button:not(.delete) {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .swipe-entry-shell.swipe-delete-armed > .swipe-action-rail button.delete {
+            transform: scale(1.08);
+        }
         .swipe-action-rail button {
             width: 46px !important;
             min-width: 46px !important;
@@ -9164,7 +9177,7 @@
             function closeSwipe(shell = openShell, animate = true) {
                 if (!shell) return;
                 const card = cardOf(shell);
-                shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging');
+                shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
                 if (card) {
                     if (!animate) card.style.transition = 'none';
                     card.style.transform = 'translateX(0px)';
@@ -9259,7 +9272,13 @@
 
                 event.preventDefault();
                 const max = railWidth(activeShell);
-                const offset = Math.max(0, Math.min(max, startOffset - dx));
+                const shellWidth = Math.max(max, activeShell.getBoundingClientRect().width);
+                const offset = Math.max(0, Math.min(shellWidth, startOffset - dx));
+                const deleteThreshold = Math.max(max + 56, shellWidth * 0.72);
+                const deleteProgress = offset > max + 18;
+                const deleteArmed = !!activeShell.querySelector('.swipe-action-rail .delete') && offset >= deleteThreshold;
+                activeShell.classList.toggle('swipe-delete-progress', deleteProgress);
+                activeShell.classList.toggle('swipe-delete-armed', deleteArmed);
                 const card = cardOf(activeShell);
                 if (card) card.style.transform = `translateX(${-offset}px)`;
             }, { passive: false });
@@ -9270,14 +9289,33 @@
                 const touch = event.changedTouches && event.changedTouches[0];
                 const dx = touch ? touch.clientX - startX : 0;
                 const max = railWidth(shell);
-                const offset = Math.max(0, Math.min(max, startOffset - dx));
-                const shouldOpen = horizontal && offset > Math.min(46, max * 0.32);
+                const shellWidth = Math.max(max, shell.getBoundingClientRect().width);
+                const offset = Math.max(0, Math.min(shellWidth, startOffset - dx));
+                const deleteThreshold = Math.max(max + 56, shellWidth * 0.72);
+                const deleteButton = shell.querySelector('.swipe-action-rail .delete');
+                const shouldDelete = horizontal && !!deleteButton && offset >= deleteThreshold;
+                const shouldOpen = !shouldDelete && horizontal && offset > Math.min(46, max * 0.32);
 
-                shell.classList.remove('swipe-entry-dragging');
-                const card = cardOf(shell);
-                if (card) card.style.transform = `translateX(${shouldOpen ? -max : 0}px)`;
-                shell.classList.toggle('swipe-entry-open', shouldOpen);
-                openShell = shouldOpen ? shell : null;
+                shell.classList.remove('swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
+
+                if (shouldDelete) {
+                    /* Voll-Swipe: dieselbe Loeschlogik wie beim roten Button,
+                       aber die Sicherheitsabfrage wird fuer genau diesen Aufruf uebersprungen.
+                       Dadurch bleiben bestehendes Rendering und Rueckgaengig-Funktion erhalten. */
+                    const oldConfirm = window.confirm;
+                    try {
+                        window.confirm = () => true;
+                        deleteButton.click();
+                    } finally {
+                        window.confirm = oldConfirm;
+                    }
+                    openShell = null;
+                } else {
+                    const card = cardOf(shell);
+                    if (card) card.style.transform = `translateX(${shouldOpen ? -max : 0}px)`;
+                    shell.classList.toggle('swipe-entry-open', shouldOpen);
+                    openShell = shouldOpen ? shell : null;
+                }
 
                 activeShell = null;
                 horizontal = false;
