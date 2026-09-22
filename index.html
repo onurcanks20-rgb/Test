@@ -5514,7 +5514,7 @@
                                 <div onclick="${state.multiSelect.reisen ? `toggleSelected('reisen','${e.id}',this)` : `toggleReiseDetails('${e.id}')`}"
                                      style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                     ${state.multiSelect.reisen ? `
-                                        <div data-selection-circle style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${reiseAusgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
+                                        <div data-selection-circle style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${reiseAusgewaehlt ? 'var(--action-switch)' : 'transparent'};flex-shrink:0;">
                                             ${reiseAusgewaehlt ? '✓' : ''}
                                         </div>` : ''}
                                     <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
@@ -5648,12 +5648,19 @@
             const selected = i === -1;
             if (selected) list.push(key); else list.splice(i, 1);
 
-            /* Auswahl nur visuell aktualisieren. Die komplette Liste wird hier bewusst
-               NICHT neu gerendert, damit die Swipe-Huellen der Eintraege erhalten bleiben. */
-            const circle = rowEl?.querySelector?.('[data-selection-circle]');
+            /* Nur den sichtbaren Auswahlkreis aktualisieren. Kein kompletter Listen-Render,
+               damit Auswahl und Swipe sich nicht gegenseitig zerlegen. */
+            let circle = null;
+            if (rowEl?.matches?.('[data-selection-circle], .select-dot')) {
+                circle = rowEl;
+            } else {
+                circle = rowEl?.querySelector?.('[data-selection-circle], .select-dot') || null;
+            }
             if (circle) {
-                circle.style.background = selected ? getAccentColor() : 'transparent';
+                circle.classList.toggle('selected', selected);
+                circle.style.background = selected ? 'var(--action-switch)' : 'transparent';
                 circle.textContent = selected ? '✓' : '';
+                circle.setAttribute('aria-checked', selected ? 'true' : 'false');
             }
 
             updateSelectionButton(type);
@@ -5662,7 +5669,7 @@
         function selectionDot(type, id) {
             if (!state.multiSelect[type]) return '';
             const selected = (state.selected[type] || []).includes(String(id));
-            return `<div class="select-dot ${selected ? 'selected' : ''}" onclick="event.stopPropagation(); toggleSelected('${type}','${String(id).replace(/'/g,"\'")}')">${selected ? '✓' : ''}</div>`;
+            return `<div class="select-dot ${selected ? 'selected' : ''}" data-selection-circle role="checkbox" aria-checked="${selected ? 'true' : 'false'}" onclick="event.stopPropagation(); toggleSelected('${type}','${String(id).replace(/'/g,"\'")}',this)">${selected ? '✓' : ''}</div>`;
         }
 
         function updateSelectionButton(type) {
@@ -5885,7 +5892,7 @@
                             <div onclick="${state.multiSelect.fixkosten ? `toggleSelected('fixkosten','${k.id}',this)` : `toggleFixkostenDetails('${k.id}')`}"
                                  style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                 ${state.multiSelect.fixkosten ? `
-                                    <div data-selection-circle style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
+                                    <div data-selection-circle style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? 'var(--action-switch)' : 'transparent'};flex-shrink:0;">
                                         ${ausgewaehlt ? '✓' : ''}
                                     </div>
                                 ` : ''}
@@ -7517,7 +7524,7 @@
                             <div onclick="${state.multiSelect?.[typ] ? `toggleSelected('${typ}','${e.id}',this)` : `toggleAlltagsDetails('${typ}','${e.id}')`}"
                                  style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                 ${state.multiSelect?.[typ] ? `
-                                    <div data-selection-circle style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
+                                    <div data-selection-circle style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? 'var(--action-switch)' : 'transparent'};flex-shrink:0;">
                                         ${ausgewaehlt ? '✓' : ''}
                                     </div>` : ''}
                                 <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
