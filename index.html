@@ -9159,11 +9159,6 @@
             visibility: hidden !important;
             pointer-events: none !important;
         }
-        .swipe-entry-ready {
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
     </style>
     <script>
         (() => {
@@ -9184,52 +9179,6 @@
             let frameId = 0;
             let deleteProgressState = false;
             let deleteArmedState = false;
-            let longPressTimer = 0;
-            let longPressTriggered = false;
-            let longPressMeta = null;
-            let longPressStartX = 0;
-            let longPressStartY = 0;
-            let suppressClickUntil = 0;
-
-            function clearLongPressTimer() {
-                if (longPressTimer) clearTimeout(longPressTimer);
-                longPressTimer = 0;
-            }
-
-            function getSelectionMeta(shell) {
-                if (!shell) return null;
-                const type = shell.dataset.selectType || '';
-                const id = shell.dataset.selectId || '';
-                return type && id ? { type, id } : null;
-            }
-
-            function beginLongPress(shell, x, y) {
-                clearLongPressTimer();
-                longPressTriggered = false;
-                longPressMeta = getSelectionMeta(shell);
-                if (!longPressMeta || state.multiSelect?.[longPressMeta.type]) return;
-                longPressStartX = x;
-                longPressStartY = y;
-                longPressTimer = window.setTimeout(() => {
-                    longPressTimer = 0;
-                    if (!activeShell || activeShell !== shell || horizontal) return;
-                    longPressTriggered = true;
-                    suppressClickUntil = Date.now() + 900;
-                }, 560);
-            }
-
-            function activateLongPressSelection(meta) {
-                if (!meta) return;
-                /* Zwei Frames warten: der iOS-Touch ist dann vollstaendig beendet und
-                   die Swipe-Shell kann gefahrlos durch den normalen Listen-Render ersetzt werden. */
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    if (openShell) closeSwipe(openShell, false);
-                    state.multiSelect[meta.type] = true;
-                    const selected = state.selected[meta.type] || (state.selected[meta.type] = []);
-                    if (!selected.includes(String(meta.id))) selected.push(String(meta.id));
-                    renderForSelection(meta.type);
-                }));
-            }
 
             function setCardOffset(shell, offset) {
                 latestOffset = offset;
@@ -9293,13 +9242,6 @@
                 const computed = getComputedStyle(item);
                 const shell = document.createElement('div');
                 shell.className = 'swipe-entry-shell';
-                const moveBtn = actions.querySelector('button[onclick*="moveAusgabe("]');
-                const moveCode = moveBtn?.getAttribute('onclick') || '';
-                const moveMatch = moveCode.match(/moveAusgabe\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)/);
-                if (moveMatch) {
-                    shell.dataset.selectType = moveMatch[1];
-                    shell.dataset.selectId = moveMatch[2];
-                }
                 shell.style.marginTop = computed.marginTop;
                 shell.style.marginRight = computed.marginRight;
                 shell.style.marginBottom = computed.marginBottom;
@@ -9357,7 +9299,6 @@
                 deleteProgressState = shell.classList.contains('swipe-delete-progress');
                 deleteArmedState = shell.classList.contains('swipe-delete-armed');
                 horizontal = false;
-                beginLongPress(shell, touch.clientX, touch.clientY);
             }, { passive: true });
 
             document.addEventListener('touchmove', event => {
@@ -9366,22 +9307,13 @@
                 const dx = touch.clientX - startX;
                 const dy = touch.clientY - startY;
 
-                if (longPressTimer && Math.hypot(touch.clientX - longPressStartX, touch.clientY - longPressStartY) > 9) {
-                    clearLongPressTimer();
-                    longPressMeta = null;
-                }
-
                 if (!horizontal) {
                     if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
                     if (Math.abs(dy) > Math.abs(dx)) {
-                        clearLongPressTimer();
-                        longPressMeta = null;
                         activeShell = null;
                         return;
                     }
                     horizontal = true;
-                    clearLongPressTimer();
-                    longPressMeta = null;
                     activeShell.classList.add('swipe-entry-dragging');
                 }
 
@@ -9394,28 +9326,6 @@
             }, { passive: false });
 
             document.addEventListener('touchend', event => {
-                clearLongPressTimer();
-                if (longPressTriggered) {
-                    const meta = longPressMeta;
-                    longPressTriggered = false;
-                    longPressMeta = null;
-                    cancelPendingFrame();
-                    if (activeShell) {
-                        const card = cardOf(activeShell);
-                        activeShell.classList.remove('swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed', 'swipe-entry-open');
-                        if (card) card.style.transform = 'translate3d(0,0,0)';
-                    }
-                    activeShell = null;
-                    horizontal = false;
-                    activeRailWidth = 0;
-                    activeShellWidth = 0;
-                    activeDeleteThreshold = 0;
-                    deleteProgressState = false;
-                    deleteArmedState = false;
-                    activateLongPressSelection(meta);
-                    return;
-                }
-                longPressMeta = null;
                 if (!activeShell) return;
                 const shell = activeShell;
                 const touch = event.changedTouches && event.changedTouches[0];
@@ -9461,9 +9371,6 @@
             }, { passive: true });
 
             document.addEventListener('touchcancel', () => {
-                clearLongPressTimer();
-                longPressTriggered = false;
-                longPressMeta = null;
                 if (activeShell) closeSwipe(activeShell);
                 activeShell = null;
                 horizontal = false;
@@ -9475,16 +9382,7 @@
             }, { passive: true });
 
             document.addEventListener('click', event => {
-                if (Date.now() < suppressClickUntil) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    return;
-                }
                 if (openShell && !openShell.contains(event.target)) closeSwipe(openShell);
-            }, true);
-
-            document.addEventListener('contextmenu', event => {
-                if (event.target.closest('.swipe-entry-shell')) event.preventDefault();
             }, true);
 
             const observer = new MutationObserver(mutations => {
@@ -9506,6 +9404,154 @@
                 enhanceAll();
                 observer.observe(document.body, { childList: true, subtree: true });
             }
+        })();
+    </script>
+
+
+    <!-- ===== TEST: LONG PRESS ERKENNUNG OHNE AUSWAHLMODUS ===== -->
+    <style>
+        .swipe-entry-shell > .item.swipe-entry-ready.longpress-test-active {
+            box-shadow: inset 0 0 0 2px var(--action-switch) !important;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .swipe-entry-shell > .item.swipe-entry-ready {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .longpress-test-toast {
+            position: fixed;
+            left: 50%;
+            bottom: calc(82px + env(safe-area-inset-bottom));
+            transform: translateX(-50%);
+            z-index: 10000;
+            max-width: calc(100% - 32px);
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(44,44,46,.96);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .14s ease;
+        }
+        .longpress-test-toast.show { opacity: 1; }
+        :root[data-theme="light"] .longpress-test-toast {
+            background: rgba(255,255,255,.97);
+            color: #111;
+            box-shadow: 0 6px 20px rgba(0,0,0,.16);
+        }
+    </style>
+    <script>
+        (() => {
+            const touchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
+            if (!touchDevice) return;
+
+            const HOLD_MS = 560;
+            const MOVE_TOLERANCE = 10;
+            let timer = 0;
+            let activeCard = null;
+            let startX = 0;
+            let startY = 0;
+            let triggered = false;
+            let lastLongPressCard = null;
+            let suppressClickUntil = 0;
+            let toastTimer = 0;
+
+            function clearTimer() {
+                if (timer) clearTimeout(timer);
+                timer = 0;
+            }
+
+            function cardFromTarget(target) {
+                if (!(target instanceof Element)) return null;
+                if (target.closest('.swipe-action-rail')) return null;
+                if (target.closest('button,input,select,textarea,a,label')) return null;
+
+                const shell = target.closest('.swipe-entry-shell');
+                if (!shell) return null;
+                return shell.querySelector(':scope > .item.swipe-entry-ready');
+            }
+
+            function showToast() {
+                let toast = document.getElementById('longpressTestToast');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.id = 'longpressTestToast';
+                    toast.className = 'longpress-test-toast';
+                    toast.textContent = 'Long Press erkannt ✓';
+                    document.body.appendChild(toast);
+                }
+                clearTimeout(toastTimer);
+                toast.classList.add('show');
+                toastTimer = setTimeout(() => toast.classList.remove('show'), 900);
+            }
+
+            function endPress() {
+                clearTimer();
+                if (triggered && activeCard) {
+                    lastLongPressCard = activeCard;
+                    suppressClickUntil = Date.now() + 750;
+                    const card = activeCard;
+                    setTimeout(() => card.classList.remove('longpress-test-active'), 420);
+                }
+                activeCard = null;
+                triggered = false;
+            }
+
+            document.addEventListener('touchstart', event => {
+                if (event.touches.length !== 1) return;
+                const card = cardFromTarget(event.target);
+                if (!card) {
+                    clearTimer();
+                    activeCard = null;
+                    triggered = false;
+                    return;
+                }
+
+                const touch = event.touches[0];
+                clearTimer();
+                activeCard = card;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                triggered = false;
+
+                timer = setTimeout(() => {
+                    if (!activeCard) return;
+                    triggered = true;
+                    activeCard.classList.add('longpress-test-active');
+                    showToast();
+                }, HOLD_MS);
+            }, { passive: true });
+
+            document.addEventListener('touchmove', event => {
+                if (!activeCard || event.touches.length !== 1) return;
+                const touch = event.touches[0];
+                const dx = touch.clientX - startX;
+                const dy = touch.clientY - startY;
+                if (Math.hypot(dx, dy) > MOVE_TOLERANCE) {
+                    clearTimer();
+                    if (!triggered) activeCard = null;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', endPress, { passive: true });
+            document.addEventListener('touchcancel', endPress, { passive: true });
+
+            document.addEventListener('contextmenu', event => {
+                if (cardFromTarget(event.target)) event.preventDefault();
+            }, { passive: false });
+
+            document.addEventListener('click', event => {
+                if (Date.now() > suppressClickUntil || !lastLongPressCard) return;
+                if (!lastLongPressCard.contains(event.target)) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }, true);
         })();
     </script>
 
