@@ -9408,9 +9408,9 @@
     </script>
 
 
-    <!-- ===== TEST: LONG PRESS ERKENNUNG OHNE AUSWAHLMODUS ===== -->
+    <!-- ===== TEST: LONG PRESS STARTET DIREKT DEN AUSWAHLMODUS ===== -->
     <style>
-        .swipe-entry-shell > .item.swipe-entry-ready.longpress-test-active {
+        .swipe-entry-shell > .item.swipe-entry-ready.longpress-hold-active {
             box-shadow: inset 0 0 0 2px var(--action-switch) !important;
             -webkit-user-select: none;
             user-select: none;
@@ -9421,30 +9421,6 @@
             user-select: none;
             -webkit-touch-callout: none;
         }
-        .longpress-test-toast {
-            position: fixed;
-            left: 50%;
-            bottom: calc(82px + env(safe-area-inset-bottom));
-            transform: translateX(-50%);
-            z-index: 10000;
-            max-width: calc(100% - 32px);
-            padding: 10px 14px;
-            border-radius: 999px;
-            background: rgba(44,44,46,.96);
-            color: #fff;
-            font-size: 13px;
-            font-weight: 700;
-            white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity .14s ease;
-        }
-        .longpress-test-toast.show { opacity: 1; }
-        :root[data-theme="light"] .longpress-test-toast {
-            background: rgba(255,255,255,.97);
-            color: #111;
-            box-shadow: 0 6px 20px rgba(0,0,0,.16);
-        }
     </style>
     <script>
         (() => {
@@ -9453,18 +9429,40 @@
 
             const HOLD_MS = 560;
             const MOVE_TOLERANCE = 10;
+            const SUPPORTED_TYPES = new Set(['haushalt', 'freizeit', 'einnahmen', 'versicherungen', 'fixkosten', 'reisen']);
+
             let timer = 0;
             let activeCard = null;
             let startX = 0;
             let startY = 0;
             let triggered = false;
-            let lastLongPressCard = null;
+            let pendingSelection = null;
             let suppressClickUntil = 0;
-            let toastTimer = 0;
 
             function clearTimer() {
                 if (timer) clearTimeout(timer);
                 timer = 0;
+            }
+
+            function resetPress() {
+                clearTimer();
+                if (activeCard) activeCard.classList.remove('longpress-hold-active');
+                activeCard = null;
+                triggered = false;
+                pendingSelection = null;
+            }
+
+            function selectionInfoFromCard(card) {
+                if (!card) return null;
+                const moveButton = card.querySelector('.actions button[onclick*="moveAusgabe("], .swipe-original-actions button[onclick*="moveAusgabe("]');
+                const code = moveButton?.getAttribute('onclick') || '';
+                const match = code.match(/moveAusgabe\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)/);
+                if (!match) return null;
+
+                const type = match[1];
+                const id = match[2];
+                if (!SUPPORTED_TYPES.has(type)) return null;
+                return { type, id: String(id) };
             }
 
             function cardFromTarget(target) {
@@ -9473,43 +9471,26 @@
                 if (target.closest('button,input,select,textarea,a,label')) return null;
 
                 const shell = target.closest('.swipe-entry-shell');
-                if (!shell) return null;
-                return shell.querySelector(':scope > .item.swipe-entry-ready');
+                if (!shell || shell.classList.contains('swipe-entry-open')) return null;
+                const card = shell.querySelector(':scope > .item.swipe-entry-ready');
+                return selectionInfoFromCard(card) ? card : null;
             }
 
-            function showToast() {
-                let toast = document.getElementById('longpressTestToast');
-                if (!toast) {
-                    toast = document.createElement('div');
-                    toast.id = 'longpressTestToast';
-                    toast.className = 'longpress-test-toast';
-                    toast.textContent = 'Long Press erkannt ✓';
-                    document.body.appendChild(toast);
-                }
-                clearTimeout(toastTimer);
-                toast.classList.add('show');
-                toastTimer = setTimeout(() => toast.classList.remove('show'), 900);
-            }
+            function startSelectionMode(info) {
+                if (!info || typeof state !== 'object' || typeof renderForSelection !== 'function') return;
+                if (!state.multiSelect || !state.selected) return;
 
-            function endPress() {
-                clearTimer();
-                if (triggered && activeCard) {
-                    lastLongPressCard = activeCard;
-                    suppressClickUntil = Date.now() + 750;
-                    const card = activeCard;
-                    setTimeout(() => card.classList.remove('longpress-test-active'), 420);
-                }
-                activeCard = null;
-                triggered = false;
+                state.multiSelect[info.type] = true;
+                state.selected[info.type] = [String(info.id)];
+                renderForSelection(info.type);
             }
 
             document.addEventListener('touchstart', event => {
                 if (event.touches.length !== 1) return;
+
                 const card = cardFromTarget(event.target);
                 if (!card) {
-                    clearTimer();
-                    activeCard = null;
-                    triggered = false;
+                    resetPress();
                     return;
                 }
 
@@ -9519,12 +9500,12 @@
                 startX = touch.clientX;
                 startY = touch.clientY;
                 triggered = false;
+                pendingSelection = selectionInfoFromCard(card);
 
                 timer = setTimeout(() => {
-                    if (!activeCard) return;
+                    if (!activeCard || !pendingSelection) return;
                     triggered = true;
-                    activeCard.classList.add('longpress-test-active');
-                    showToast();
+                    activeCard.classList.add('longpress-hold-active');
                 }, HOLD_MS);
             }, { passive: true });
 
@@ -9533,22 +9514,46 @@
                 const touch = event.touches[0];
                 const dx = touch.clientX - startX;
                 const dy = touch.clientY - startY;
-                if (Math.hypot(dx, dy) > MOVE_TOLERANCE) {
-                    clearTimer();
-                    if (!triggered) activeCard = null;
+
+                if (!triggered && Math.hypot(dx, dy) > MOVE_TOLERANCE) {
+                    resetPress();
                 }
             }, { passive: true });
 
-            document.addEventListener('touchend', endPress, { passive: true });
-            document.addEventListener('touchcancel', endPress, { passive: true });
+            document.addEventListener('touchend', () => {
+                clearTimer();
+
+                if (!triggered || !pendingSelection) {
+                    resetPress();
+                    return;
+                }
+
+                const info = pendingSelection;
+                if (activeCard) activeCard.classList.remove('longpress-hold-active');
+
+                /* Das synthetische iOS-Klickereignis nach dem Long Press darf nicht
+                   direkt den frisch gerenderten Auswahl-Eintrag wieder antippen. */
+                suppressClickUntil = Date.now() + 800;
+
+                activeCard = null;
+                triggered = false;
+                pendingSelection = null;
+
+                /* Erst nach dem kompletten touchend-Zyklus neu rendern. So kann die
+                   bestehende Swipe-Logik ihren Zustand vorher sauber beenden. */
+                setTimeout(() => startSelectionMode(info), 0);
+            }, { passive: true });
+
+            document.addEventListener('touchcancel', () => {
+                resetPress();
+            }, { passive: true });
 
             document.addEventListener('contextmenu', event => {
                 if (cardFromTarget(event.target)) event.preventDefault();
             }, { passive: false });
 
             document.addEventListener('click', event => {
-                if (Date.now() > suppressClickUntil || !lastLongPressCard) return;
-                if (!lastLongPressCard.contains(event.target)) return;
+                if (Date.now() >= suppressClickUntil) return;
                 event.preventDefault();
                 event.stopImmediatePropagation();
             }, true);
