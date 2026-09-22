@@ -8927,6 +8927,101 @@
             visibility: hidden !important;
             pointer-events: none !important;
         }
+
+        /* ===== LONG PRESS AUSWAHLMODUS =====
+           Die Auswahl liegt nur als DOM-Schicht ueber den bestehenden Karten.
+           Es wird beim An-/Abwaehlen NICHT neu gerendert. */
+        .swipe-entry-shell.swipe-selection-mode > .item.swipe-entry-ready {
+            padding-left: 50px !important;
+        }
+        .swipe-selection-dot {
+            position: absolute;
+            z-index: 4;
+            left: 14px;
+            top: 50%;
+            width: 25px;
+            height: 25px;
+            transform: translateY(-50%);
+            border: 2px solid rgba(255,255,255,.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            background: transparent;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 850;
+            line-height: 1;
+            box-shadow: 0 1px 4px rgba(0,0,0,.22);
+        }
+        .swipe-selection-dot::after {
+            content: "✓";
+            opacity: 0;
+            transform: scale(.7);
+            transition: opacity .12s ease, transform .12s ease;
+        }
+        .swipe-entry-shell.swipe-selection-selected .swipe-selection-dot {
+            background: var(--action-switch);
+            border-color: var(--action-switch);
+        }
+        .swipe-entry-shell.swipe-selection-selected .swipe-selection-dot::after {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .swipe-entry-shell.swipe-selection-mode > .swipe-action-rail {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .long-select-toolbar {
+            position: fixed;
+            z-index: 10020;
+            left: 50%;
+            bottom: calc(12px + env(safe-area-inset-bottom));
+            transform: translateX(-50%);
+            width: min(calc(100% - 24px), 520px);
+            padding: 8px;
+            display: grid;
+            grid-template-columns: minmax(0,1fr) auto auto;
+            gap: 8px;
+            align-items: center;
+            border-radius: 18px;
+            background: rgba(28,28,30,.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0,0,0,.42);
+        }
+        .long-select-toolbar-count {
+            min-width: 0;
+            padding-left: 8px;
+            font-size: 14px;
+            font-weight: 750;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .long-select-toolbar button {
+            width: auto;
+            min-width: 0;
+            min-height: 42px;
+            margin: 0;
+            padding: 9px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .long-select-toolbar-delete { background: #ff3b30; }
+        .long-select-toolbar-done { background: #3a3a3c; }
+        .long-select-toolbar-delete:disabled { opacity: .45; }
+        :root[data-theme="light"] .swipe-selection-dot {
+            border-color: rgba(0,0,0,.65);
+            color: #fff;
+        }
+        :root[data-theme="light"] .long-select-toolbar {
+            background: rgba(250,250,252,.97);
+            color: #111;
+            box-shadow: 0 10px 30px rgba(0,0,0,.16);
+        }
     </style>
     <script>
         (() => {
@@ -8947,6 +9042,18 @@
             let frameId = 0;
             let deleteProgressState = false;
             let deleteArmedState = false;
+
+
+            /* Long Press -> neuer, DOM-basierter Auswahlmodus.
+               Bewusst ohne App-Render beim Antippen, damit die Swipe-Wrapper stabil bleiben. */
+            let selectionMode = false;
+            const selectedShells = new Set();
+            let longPressTimer = 0;
+            let longPressStartX = 0;
+            let longPressStartY = 0;
+            let longPressShell = null;
+            let longPressTriggered = false;
+            let suppressClickUntil = 0;
 
             function setCardOffset(shell, offset) {
                 latestOffset = offset;
@@ -8998,6 +9105,160 @@
             function railWidth(shell) {
                 const rail = shell.querySelector(':scope > .swipe-action-rail');
                 return Math.max(58, rail ? rail.getBoundingClientRect().width : 0);
+            }
+
+
+            function clearLongPressTimer() {
+                if (longPressTimer) clearTimeout(longPressTimer);
+                longPressTimer = 0;
+                longPressShell = null;
+            }
+
+            function isVisibleShell(shell) {
+                if (!shell || !shell.isConnected) return false;
+                const rect = shell.getBoundingClientRect();
+                return rect.width > 0 && rect.height > 0;
+            }
+
+            function isSelectableShell(shell) {
+                return !!(shell && shell.querySelector(':scope > .swipe-action-rail .delete'));
+            }
+
+            function ensureSelectionDot(shell) {
+                if (!shell || shell.querySelector(':scope > .swipe-selection-dot')) return;
+                const dot = document.createElement('span');
+                dot.className = 'swipe-selection-dot';
+                dot.setAttribute('aria-hidden', 'true');
+                shell.appendChild(dot);
+            }
+
+            function updateSelectionToolbar() {
+                const toolbar = document.getElementById('longSelectToolbar');
+                if (!toolbar) return;
+                for (const shell of [...selectedShells]) {
+                    if (!shell.isConnected || !shell.classList.contains('swipe-selection-mode')) selectedShells.delete(shell);
+                }
+                const count = selectedShells.size;
+                const countEl = toolbar.querySelector('.long-select-toolbar-count');
+                const deleteBtn = toolbar.querySelector('.long-select-toolbar-delete');
+                if (countEl) countEl.textContent = `${count} ausgewählt`;
+                if (deleteBtn) {
+                    deleteBtn.disabled = count === 0;
+                    deleteBtn.textContent = count ? `🗑️ ${count}` : '🗑️';
+                }
+            }
+
+            function setShellSelected(shell, selected) {
+                if (!shell || !shell.classList.contains('swipe-selection-mode')) return;
+                shell.classList.toggle('swipe-selection-selected', selected);
+                if (selected) selectedShells.add(shell);
+                else selectedShells.delete(shell);
+                updateSelectionToolbar();
+            }
+
+            function toggleShellSelected(shell) {
+                if (!selectionMode || !shell?.classList.contains('swipe-selection-mode')) return;
+                setShellSelected(shell, !selectedShells.has(shell));
+            }
+
+            function createSelectionToolbar() {
+                document.getElementById('longSelectToolbar')?.remove();
+                const toolbar = document.createElement('div');
+                toolbar.id = 'longSelectToolbar';
+                toolbar.className = 'long-select-toolbar';
+                toolbar.setAttribute('role', 'toolbar');
+                toolbar.setAttribute('aria-label', 'Auswahlaktionen');
+                toolbar.innerHTML = `
+                    <div class="long-select-toolbar-count" aria-live="polite">0 ausgewählt</div>
+                    <button type="button" class="long-select-toolbar-delete" disabled>🗑️</button>
+                    <button type="button" class="long-select-toolbar-done">Fertig</button>`;
+                toolbar.querySelector('.long-select-toolbar-delete')?.addEventListener('click', deleteSelectedEntries);
+                toolbar.querySelector('.long-select-toolbar-done')?.addEventListener('click', () => exitSelectionMode());
+                document.body.appendChild(toolbar);
+            }
+
+            function enterSelectionMode(initialShell) {
+                if (!initialShell || !isSelectableShell(initialShell)) return;
+                if (openShell) closeSwipe(openShell, false);
+                if (activeShell) closeSwipe(activeShell, false);
+                cancelPendingFrame();
+
+                selectionMode = true;
+                selectedShells.clear();
+                document.querySelectorAll('.swipe-entry-shell').forEach(shell => {
+                    if (!isVisibleShell(shell) || !isSelectableShell(shell)) return;
+                    closeSwipe(shell, false);
+                    shell.classList.add('swipe-selection-mode');
+                    ensureSelectionDot(shell);
+                });
+                createSelectionToolbar();
+                setShellSelected(initialShell, true);
+            }
+
+            function exitSelectionMode() {
+                clearLongPressTimer();
+                selectionMode = false;
+                selectedShells.clear();
+                document.querySelectorAll('.swipe-entry-shell.swipe-selection-mode').forEach(shell => {
+                    shell.classList.remove('swipe-selection-mode', 'swipe-selection-selected');
+                    shell.querySelector(':scope > .swipe-selection-dot')?.remove();
+                });
+                document.getElementById('longSelectToolbar')?.remove();
+                activeShell = null;
+                horizontal = false;
+                activeRailWidth = 0;
+                activeShellWidth = 0;
+                activeDeleteThreshold = 0;
+                deleteProgressState = false;
+                deleteArmedState = false;
+            }
+
+            function deleteSelectedEntries() {
+                const shells = [...selectedShells].filter(shell => shell.isConnected && shell.classList.contains('swipe-selection-mode'));
+                if (!shells.length) return;
+                const buttons = shells.map(shell => shell.querySelector(':scope > .swipe-action-rail .delete')).filter(Boolean);
+                if (!buttons.length) return;
+                const count = buttons.length;
+                if (!confirm(`${count} ausgewählte ${count === 1 ? 'Position' : 'Positionen'} löschen?`)) return;
+
+                /* Ein gemeinsamer Undo-Snapshot fuer die komplette Mehrfachloeschung.
+                   Die vorhandenen Delete-Handler werden weiterverwendet, ihre einzelnen
+                   Confirm-/Undo-Aufrufe werden nur fuer diesen Batch unterdrueckt. */
+                const oldConfirm = window.confirm;
+                const oldBeginUndo = window.beginUndoDelete;
+                const oldFinishUndo = window.finishUndoDelete;
+                try {
+                    if (typeof oldBeginUndo === 'function') oldBeginUndo(`${count} Einträge gelöscht`);
+                    window.confirm = () => true;
+                    if (typeof oldBeginUndo === 'function') window.beginUndoDelete = () => {};
+                    if (typeof oldFinishUndo === 'function') window.finishUndoDelete = () => {};
+                    exitSelectionMode();
+                    buttons.forEach(button => button.click());
+                } finally {
+                    window.confirm = oldConfirm;
+                    if (typeof oldBeginUndo === 'function') window.beginUndoDelete = oldBeginUndo;
+                    if (typeof oldFinishUndo === 'function') window.finishUndoDelete = oldFinishUndo;
+                }
+                if (typeof oldFinishUndo === 'function') oldFinishUndo(`${count} Einträge gelöscht`);
+            }
+
+            function startLongPress(shell, x, y) {
+                clearLongPressTimer();
+                longPressTriggered = false;
+                if (selectionMode || !isSelectableShell(shell)) return;
+                longPressShell = shell;
+                longPressStartX = x;
+                longPressStartY = y;
+                longPressTimer = window.setTimeout(() => {
+                    const target = longPressShell;
+                    if (!target || !target.isConnected) return;
+                    longPressTriggered = true;
+                    suppressClickUntil = Date.now() + 850;
+                    enterSelectionMode(target);
+                    activeShell = null;
+                    horizontal = false;
+                    clearLongPressTimer();
+                }, 560);
             }
 
             function enhanceItem(item) {
@@ -9053,10 +9314,19 @@
                 }
 
                 if (event.target.closest('.swipe-action-rail')) return;
+
+                /* Im Auswahlmodus sind normale Taps nur Auswahl-Taps; Swipe bleibt aus. */
+                if (selectionMode) {
+                    activeShell = null;
+                    clearLongPressTimer();
+                    return;
+                }
+
                 if (openShell && openShell !== shell) closeSwipe(openShell);
 
                 const touch = event.touches[0];
                 activeShell = shell;
+                startLongPress(shell, touch.clientX, touch.clientY);
                 startX = touch.clientX;
                 startY = touch.clientY;
                 activeRailWidth = railWidth(shell);
@@ -9075,12 +9345,20 @@
                 const dx = touch.clientX - startX;
                 const dy = touch.clientY - startY;
 
+                if (longPressShell) {
+                    const ldx = touch.clientX - longPressStartX;
+                    const ldy = touch.clientY - longPressStartY;
+                    if (Math.hypot(ldx, ldy) > 10) clearLongPressTimer();
+                }
+
                 if (!horizontal) {
                     if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
                     if (Math.abs(dy) > Math.abs(dx)) {
+                        clearLongPressTimer();
                         activeShell = null;
                         return;
                     }
+                    clearLongPressTimer();
                     horizontal = true;
                     activeShell.classList.add('swipe-entry-dragging');
                 }
@@ -9094,6 +9372,18 @@
             }, { passive: false });
 
             document.addEventListener('touchend', event => {
+                clearLongPressTimer();
+                if (longPressTriggered) {
+                    longPressTriggered = false;
+                    activeShell = null;
+                    horizontal = false;
+                    activeRailWidth = 0;
+                    activeShellWidth = 0;
+                    activeDeleteThreshold = 0;
+                    deleteProgressState = false;
+                    deleteArmedState = false;
+                    return;
+                }
                 if (!activeShell) return;
                 const shell = activeShell;
                 const touch = event.changedTouches && event.changedTouches[0];
@@ -9139,6 +9429,8 @@
             }, { passive: true });
 
             document.addEventListener('touchcancel', () => {
+                clearLongPressTimer();
+                longPressTriggered = false;
                 if (activeShell) closeSwipe(activeShell);
                 activeShell = null;
                 horizontal = false;
@@ -9150,17 +9442,42 @@
             }, { passive: true });
 
             document.addEventListener('click', event => {
+                /* Den synthetischen Klick direkt nach einem Long Press schlucken,
+                   damit der gerade markierte Eintrag nicht sofort wieder abgewählt wird. */
+                if (Date.now() < suppressClickUntil && event.target.closest('.swipe-entry-shell')) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
+
+                if (event.target.closest('#longSelectToolbar')) return;
+
+                if (selectionMode) {
+                    const shell = event.target.closest('.swipe-entry-shell.swipe-selection-mode');
+                    if (shell) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        toggleShellSelected(shell);
+                    }
+                    return;
+                }
+
                 if (openShell && !openShell.contains(event.target)) closeSwipe(openShell);
             }, true);
 
             const observer = new MutationObserver(mutations => {
+                let listWasRendered = false;
                 mutations.forEach(mutation => {
                     mutation.addedNodes.forEach(node => {
                         if (!(node instanceof Element)) return;
+                        if (node.matches('.item') || node.querySelector?.('.item')) listWasRendered = true;
                         if (node.matches('.item')) enhanceItem(node);
                         enhanceAll(node);
                     });
                 });
+                /* Suche, Bearbeiten oder andere Renderer koennen die Liste austauschen.
+                   Dann lieber den Auswahlmodus sauber beenden als tote Referenzen behalten. */
+                if (selectionMode && listWasRendered) exitSelectionMode();
             });
 
             if (document.readyState === 'loading') {
