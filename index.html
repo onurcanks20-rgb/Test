@@ -9430,6 +9430,16 @@
                 shell.style.marginLeft = computed.marginLeft;
                 shell.style.borderRadius = computed.borderRadius;
 
+                /* Bei eingerueckten Eintraegen (z. B. im Archiv) darf die
+                   Swipe-Shell nicht zusaetzlich 100% breit bleiben, sonst ragt
+                   sie um den Einzug rechts aus dem Container. */
+                const horizontalMargin =
+                    (parseFloat(computed.marginLeft) || 0) +
+                    (parseFloat(computed.marginRight) || 0);
+                if (horizontalMargin > 0) {
+                    shell.style.width = `calc(100% - ${horizontalMargin}px)`;
+                }
+
                 const parent = item.parentNode;
                 parent.insertBefore(shell, item);
                 shell.appendChild(item);
