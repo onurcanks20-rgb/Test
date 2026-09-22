@@ -9508,6 +9508,31 @@
                     return;
                 }
 
+                /* Die komplette sichtbare Karte oeffnet/schliesst die Details.
+                   Ausgenommen bleiben echte Bedienelemente und die Swipe-Aktionsleiste.
+                   Klickt man bereits auf den bisherigen Detailbereich, darf dessen
+                   vorhandener onclick-Handler normal weiterlaufen. */
+                const card = event.target.closest('.item');
+                if (card && !event.target.closest('button, input, select, textarea, a, label, .actions, .swipe-action-rail')) {
+                    const detailSelector = [
+                        '[onclick*="toggleAlltagsDetails("]',
+                        '[onclick*="toggleFixkostenDetails("]',
+                        '[onclick*="toggleVersicherungDetails("]',
+                        '[onclick*="toggleEinnahmeDetails("]',
+                        '[onclick*="toggleReiseDetails("]'
+                    ].join(',');
+                    const directDetailTarget = event.target.closest(detailSelector);
+                    if (!directDetailTarget) {
+                        const detailTarget = card.querySelector(detailSelector);
+                        if (detailTarget) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            detailTarget.click();
+                            return;
+                        }
+                    }
+                }
+
                 if (openShell && !openShell.contains(event.target)) closeSwipe(openShell);
             }, true);
 
