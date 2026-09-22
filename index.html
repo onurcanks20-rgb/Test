@@ -5511,10 +5511,10 @@
                             sub.innerHTML = `
                         <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                             <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                                <div onclick="${state.multiSelect.reisen ? `toggleSelected('reisen','${e.id}')` : `toggleReiseDetails('${e.id}')`}"
+                                <div onclick="${state.multiSelect.reisen ? `toggleSelected('reisen','${e.id}',this)` : `toggleReiseDetails('${e.id}')`}"
                                      style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                     ${state.multiSelect.reisen ? `
-                                        <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${reiseAusgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
+                                        <div data-selection-circle style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${reiseAusgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
                                             ${reiseAusgewaehlt ? '✓' : ''}
                                         </div>` : ''}
                                     <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
@@ -5641,12 +5641,22 @@
             renderForSelection(type);
         }
 
-        function toggleSelected(type, id) {
+        function toggleSelected(type, id, rowEl = null) {
             const key = String(id);
             const list = state.selected[type] || (state.selected[type] = []);
             const i = list.indexOf(key);
-            if (i === -1) list.push(key); else list.splice(i, 1);
-            renderForSelection(type);
+            const selected = i === -1;
+            if (selected) list.push(key); else list.splice(i, 1);
+
+            /* Auswahl nur visuell aktualisieren. Die komplette Liste wird hier bewusst
+               NICHT neu gerendert, damit die Swipe-Huellen der Eintraege erhalten bleiben. */
+            const circle = rowEl?.querySelector?.('[data-selection-circle]');
+            if (circle) {
+                circle.style.background = selected ? getAccentColor() : 'transparent';
+                circle.textContent = selected ? '✓' : '';
+            }
+
+            updateSelectionButton(type);
         }
 
         function selectionDot(type, id) {
@@ -5872,10 +5882,10 @@
                     item = createItem(`
                     <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="${state.multiSelect.fixkosten ? `toggleSelected('fixkosten','${k.id}')` : `toggleFixkostenDetails('${k.id}')`}"
+                            <div onclick="${state.multiSelect.fixkosten ? `toggleSelected('fixkosten','${k.id}',this)` : `toggleFixkostenDetails('${k.id}')`}"
                                  style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                 ${state.multiSelect.fixkosten ? `
-                                    <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
+                                    <div data-selection-circle style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
                                         ${ausgewaehlt ? '✓' : ''}
                                     </div>
                                 ` : ''}
@@ -6239,7 +6249,7 @@
                 <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
 
                     <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; width:100%; gap:10px;">
-                        <div onclick="${state.multiSelect.versicherungen ? `toggleSelected('versicherungen','${v.id}')` : `toggleVersicherungDetails('${v.id}')`}"
+                        <div onclick="${state.multiSelect.versicherungen ? `toggleSelected('versicherungen','${v.id}',this)` : `toggleVersicherungDetails('${v.id}')`}"
                              style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                             ${selectionDot('versicherungen', v.id)}
                             <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
@@ -6824,7 +6834,7 @@
                     const istOffen = !!state.offeneEinnahmen[String(e.id)];
                     html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="${state.multiSelect.einnahmen ? `toggleSelected('einnahmen','${e.id}')` : `toggleEinnahmeDetails('${e.id}')`}" style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
+                            <div onclick="${state.multiSelect.einnahmen ? `toggleSelected('einnahmen','${e.id}',this)` : `toggleEinnahmeDetails('${e.id}')`}" style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                 ${selectionDot('einnahmen', e.id)}
                                 <span style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0;">
                                     <strong style="overflow-wrap:anywhere;">${escapeHtml(e.text || 'Einnahme')}</strong>
@@ -7504,10 +7514,10 @@
                     const istOffen = !!offenMap?.[String(e.id)];
                     html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="${state.multiSelect?.[typ] ? `toggleSelected('${typ}','${e.id}')` : `toggleAlltagsDetails('${typ}','${e.id}')`}"
+                            <div onclick="${state.multiSelect?.[typ] ? `toggleSelected('${typ}','${e.id}',this)` : `toggleAlltagsDetails('${typ}','${e.id}')`}"
                                  style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                 ${state.multiSelect?.[typ] ? `
-                                    <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
+                                    <div data-selection-circle style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
                                         ${ausgewaehlt ? '✓' : ''}
                                     </div>` : ''}
                                 <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
@@ -9404,162 +9414,6 @@
                 enhanceAll();
                 observer.observe(document.body, { childList: true, subtree: true });
             }
-        })();
-    </script>
-
-
-
-    <!-- ===== TEST: LONG PRESS LOEST NUR DEN VORHANDENEN AUSWAEHLEN-BUTTON AUS ===== -->
-    <style>
-        .swipe-entry-shell > .item.swipe-entry-ready.longpress-hold-active {
-            box-shadow: inset 0 0 0 2px var(--action-switch) !important;
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-        }
-        .swipe-entry-shell > .item.swipe-entry-ready {
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-        }
-    </style>
-    <script>
-        (() => {
-            const touchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
-            if (!touchDevice) return;
-
-            const HOLD_MS = 560;
-            const MOVE_TOLERANCE = 10;
-            const VIEW_TYPE_MAP = [
-                ['#haushaltView', 'haushalt'],
-                ['#freizeitView', 'freizeit'],
-                ['#einnahmenView', 'einnahmen'],
-                ['#versicherungenView', 'versicherungen'],
-                ['#kostenView', 'fixkosten'],
-                ['#land', 'reisen']
-            ];
-
-            let timer = 0;
-            let activeCard = null;
-            let pendingType = '';
-            let startX = 0;
-            let startY = 0;
-            let triggered = false;
-            let suppressClickUntil = 0;
-
-            function clearTimer() {
-                if (timer) clearTimeout(timer);
-                timer = 0;
-            }
-
-            function resetPress() {
-                clearTimer();
-                if (activeCard) activeCard.classList.remove('longpress-hold-active');
-                activeCard = null;
-                pendingType = '';
-                triggered = false;
-            }
-
-            function typeFromCard(card) {
-                if (!card) return '';
-                for (const [selector, type] of VIEW_TYPE_MAP) {
-                    if (card.closest(selector)) return type;
-                }
-                return '';
-            }
-
-            function selectButtonForType(type) {
-                if (!type) return null;
-                const expected = `toggleMultiSelect('${type}')`;
-                return Array.from(document.querySelectorAll('button[onclick]')).find(button =>
-                    (button.getAttribute('onclick') || '').trim() === expected
-                ) || null;
-            }
-
-            function cardFromTarget(target) {
-                if (!(target instanceof Element)) return null;
-                if (target.closest('.swipe-action-rail')) return null;
-                if (target.closest('button,input,select,textarea,a,label,.select-dot')) return null;
-
-                const shell = target.closest('.swipe-entry-shell');
-                if (!shell || shell.classList.contains('swipe-entry-open')) return null;
-                const card = shell.querySelector(':scope > .item.swipe-entry-ready');
-                return typeFromCard(card) ? card : null;
-            }
-
-            document.addEventListener('touchstart', event => {
-                if (event.touches.length !== 1) return;
-
-                const card = cardFromTarget(event.target);
-                if (!card) {
-                    resetPress();
-                    return;
-                }
-
-                const type = typeFromCard(card);
-                if (!selectButtonForType(type)) {
-                    resetPress();
-                    return;
-                }
-
-                const touch = event.touches[0];
-                clearTimer();
-                activeCard = card;
-                pendingType = type;
-                startX = touch.clientX;
-                startY = touch.clientY;
-                triggered = false;
-
-                timer = setTimeout(() => {
-                    if (!activeCard || !pendingType) return;
-                    triggered = true;
-                    activeCard.classList.add('longpress-hold-active');
-                }, HOLD_MS);
-            }, { passive: true });
-
-            document.addEventListener('touchmove', event => {
-                if (!activeCard || event.touches.length !== 1) return;
-                const touch = event.touches[0];
-                const dx = touch.clientX - startX;
-                const dy = touch.clientY - startY;
-                if (Math.hypot(dx, dy) > MOVE_TOLERANCE) resetPress();
-            }, { passive: true });
-
-            document.addEventListener('touchend', () => {
-                clearTimer();
-
-                if (!triggered || !pendingType) {
-                    resetPress();
-                    return;
-                }
-
-                const type = pendingType;
-                if (activeCard) activeCard.classList.remove('longpress-hold-active');
-
-                activeCard = null;
-                pendingType = '';
-                triggered = false;
-                suppressClickUntil = Date.now() + 800;
-
-                /* Absichtlich keine direkte Aenderung an state und kein eigener Render-Aufruf.
-                   Es wird exakt derselbe sichtbare Auswaehlen-Button ausgeloest, den man sonst antippt. */
-                setTimeout(() => {
-                    const button = selectButtonForType(type);
-                    if (button) button.click();
-                }, 0);
-            }, { passive: true });
-
-            document.addEventListener('touchcancel', resetPress, { passive: true });
-
-            document.addEventListener('contextmenu', event => {
-                if (cardFromTarget(event.target)) event.preventDefault();
-            }, { passive: false });
-
-            document.addEventListener('click', event => {
-                if (Date.now() >= suppressClickUntil) return;
-                event.preventDefault();
-                event.stopImmediatePropagation();
-            }, true);
         })();
     </script>
 
