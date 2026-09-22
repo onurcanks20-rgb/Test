@@ -9087,12 +9087,26 @@
 
     <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
     <style>
-        .swipe-entry-ready {
+        /* Die Karte selbst liegt als Vordergrund ueber der Aktionsleiste.
+           Beim Wischen bewegt sich dadurch wirklich der komplette Kasten
+           inklusive Beschreibung, Datum und Betrag nach links. */
+        .swipe-entry-shell {
             position: relative;
             overflow: hidden;
             isolation: isolate;
+            width: 100%;
         }
-        .swipe-entry-ready > .swipe-action-rail {
+        .swipe-entry-shell > .item.swipe-entry-ready {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            will-change: transform;
+            transition: transform .18s ease;
+        }
+        .swipe-entry-shell.swipe-entry-dragging > .item.swipe-entry-ready {
+            transition: none !important;
+        }
+        .swipe-entry-shell > .swipe-action-rail {
             position: absolute;
             z-index: 1;
             top: 0;
@@ -9107,8 +9121,8 @@
             opacity: 0;
             transition: opacity .12s ease;
         }
-        .swipe-entry-ready.swipe-entry-open > .swipe-action-rail,
-        .swipe-entry-ready.swipe-entry-dragging > .swipe-action-rail {
+        .swipe-entry-shell.swipe-entry-open > .swipe-action-rail,
+        .swipe-entry-shell.swipe-entry-dragging > .swipe-action-rail {
             opacity: 1;
             pointer-events: auto;
         }
@@ -9130,46 +9144,38 @@
             visibility: hidden !important;
             pointer-events: none !important;
         }
-        .swipe-entry-movable {
-            will-change: transform;
-            transition: transform .18s ease;
-        }
-        .swipe-entry-dragging .swipe-entry-movable {
-            transition: none !important;
-        }
     </style>
     <script>
         (() => {
             const touchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
             if (!touchDevice) return;
 
-            let active = null;
+            let activeShell = null;
             let startX = 0;
             let startY = 0;
             let startOffset = 0;
             let horizontal = false;
-            let openItem = null;
+            let openShell = null;
 
-            function closeSwipe(item = openItem, animate = true) {
-                if (!item) return;
-                item.classList.remove('swipe-entry-open', 'swipe-entry-dragging');
-                item.querySelectorAll('.swipe-entry-movable').forEach(el => {
-                    if (!animate) el.style.transition = 'none';
-                    el.style.transform = 'translateX(0px)';
-                    if (!animate) requestAnimationFrame(() => { el.style.transition = ''; });
-                });
-                if (openItem === item) openItem = null;
+            function cardOf(shell) {
+                return shell?.querySelector(':scope > .item.swipe-entry-ready') || null;
             }
 
-            function railWidth(item) {
-                const rail = item.querySelector(':scope > .swipe-action-rail');
+            function closeSwipe(shell = openShell, animate = true) {
+                if (!shell) return;
+                const card = cardOf(shell);
+                shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging');
+                if (card) {
+                    if (!animate) card.style.transition = 'none';
+                    card.style.transform = 'translateX(0px)';
+                    if (!animate) requestAnimationFrame(() => { card.style.transition = ''; });
+                }
+                if (openShell === shell) openShell = null;
+            }
+
+            function railWidth(shell) {
+                const rail = shell.querySelector(':scope > .swipe-action-rail');
                 return Math.max(58, rail ? rail.getBoundingClientRect().width : 0);
-            }
-
-            function topChildContaining(item, node) {
-                let cur = node;
-                while (cur && cur.parentElement !== item) cur = cur.parentElement;
-                return cur && cur.parentElement === item ? cur : null;
             }
 
             function enhanceItem(item) {
@@ -9179,28 +9185,35 @@
                 const actions = item.querySelector('.actions');
                 if (!actions || !actions.querySelector('button')) return;
 
+                const computed = getComputedStyle(item);
+                const shell = document.createElement('div');
+                shell.className = 'swipe-entry-shell';
+                shell.style.marginTop = computed.marginTop;
+                shell.style.marginRight = computed.marginRight;
+                shell.style.marginBottom = computed.marginBottom;
+                shell.style.marginLeft = computed.marginLeft;
+                shell.style.borderRadius = computed.borderRadius;
+
+                const parent = item.parentNode;
+                parent.insertBefore(shell, item);
+                shell.appendChild(item);
+
+                /* Die bisherigen Aussenabstaende liegen nun auf der Shell,
+                   damit die komplette sichtbare Karte ohne Layoutsprung gleitet. */
+                item.style.margin = '0';
+
                 const rail = document.createElement('div');
                 rail.className = 'swipe-action-rail';
                 rail.setAttribute('aria-hidden', 'true');
                 actions.querySelectorAll('button').forEach(btn => {
                     const clone = btn.cloneNode(true);
-                    clone.addEventListener('click', () => closeSwipe(item));
+                    clone.addEventListener('click', () => closeSwipe(shell));
                     rail.appendChild(clone);
                 });
 
-                const holder = topChildContaining(item, actions);
-                let movables = [];
-                if (actions.parentElement === item) {
-                    movables = Array.from(item.children).filter(el => el !== actions);
-                } else if (holder) {
-                    movables = [holder];
-                }
-                if (!movables.length) return;
-
                 actions.classList.add('swipe-original-actions');
-                movables.forEach(el => el.classList.add('swipe-entry-movable'));
-                item.appendChild(rail);
                 item.classList.add('swipe-entry-ready');
+                shell.appendChild(rail);
             }
 
             function enhanceAll(root = document) {
@@ -9209,27 +9222,27 @@
 
             document.addEventListener('touchstart', event => {
                 if (event.touches.length !== 1) return;
-                const item = event.target.closest('.swipe-entry-ready');
+                const shell = event.target.closest('.swipe-entry-shell');
 
-                if (!item) {
-                    if (openItem) closeSwipe(openItem);
-                    active = null;
+                if (!shell) {
+                    if (openShell) closeSwipe(openShell);
+                    activeShell = null;
                     return;
                 }
 
                 if (event.target.closest('.swipe-action-rail')) return;
-                if (openItem && openItem !== item) closeSwipe(openItem);
+                if (openShell && openShell !== shell) closeSwipe(openShell);
 
                 const touch = event.touches[0];
-                active = item;
+                activeShell = shell;
                 startX = touch.clientX;
                 startY = touch.clientY;
-                startOffset = item.classList.contains('swipe-entry-open') ? railWidth(item) : 0;
+                startOffset = shell.classList.contains('swipe-entry-open') ? railWidth(shell) : 0;
                 horizontal = false;
             }, { passive: true });
 
             document.addEventListener('touchmove', event => {
-                if (!active || event.touches.length !== 1) return;
+                if (!activeShell || event.touches.length !== 1) return;
                 const touch = event.touches[0];
                 const dx = touch.clientX - startX;
                 const dy = touch.clientY - startY;
@@ -9237,49 +9250,47 @@
                 if (!horizontal) {
                     if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
                     if (Math.abs(dy) > Math.abs(dx)) {
-                        active = null;
+                        activeShell = null;
                         return;
                     }
                     horizontal = true;
-                    active.classList.add('swipe-entry-dragging');
+                    activeShell.classList.add('swipe-entry-dragging');
                 }
 
                 event.preventDefault();
-                const max = railWidth(active);
+                const max = railWidth(activeShell);
                 const offset = Math.max(0, Math.min(max, startOffset - dx));
-                active.querySelectorAll('.swipe-entry-movable').forEach(el => {
-                    el.style.transform = `translateX(${-offset}px)`;
-                });
+                const card = cardOf(activeShell);
+                if (card) card.style.transform = `translateX(${-offset}px)`;
             }, { passive: false });
 
             document.addEventListener('touchend', event => {
-                if (!active) return;
-                const item = active;
+                if (!activeShell) return;
+                const shell = activeShell;
                 const touch = event.changedTouches && event.changedTouches[0];
                 const dx = touch ? touch.clientX - startX : 0;
-                const max = railWidth(item);
+                const max = railWidth(shell);
                 const offset = Math.max(0, Math.min(max, startOffset - dx));
                 const shouldOpen = horizontal && offset > Math.min(46, max * 0.32);
 
-                item.classList.remove('swipe-entry-dragging');
-                item.querySelectorAll('.swipe-entry-movable').forEach(el => {
-                    el.style.transform = `translateX(${shouldOpen ? -max : 0}px)`;
-                });
-                item.classList.toggle('swipe-entry-open', shouldOpen);
-                openItem = shouldOpen ? item : null;
+                shell.classList.remove('swipe-entry-dragging');
+                const card = cardOf(shell);
+                if (card) card.style.transform = `translateX(${shouldOpen ? -max : 0}px)`;
+                shell.classList.toggle('swipe-entry-open', shouldOpen);
+                openShell = shouldOpen ? shell : null;
 
-                active = null;
+                activeShell = null;
                 horizontal = false;
             }, { passive: true });
 
             document.addEventListener('touchcancel', () => {
-                if (active) closeSwipe(active);
-                active = null;
+                if (activeShell) closeSwipe(activeShell);
+                activeShell = null;
                 horizontal = false;
             }, { passive: true });
 
             document.addEventListener('click', event => {
-                if (openItem && !openItem.contains(event.target)) closeSwipe(openItem);
+                if (openShell && !openShell.contains(event.target)) closeSwipe(openShell);
             }, true);
 
             const observer = new MutationObserver(mutations => {
