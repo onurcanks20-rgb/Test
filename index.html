@@ -9159,6 +9159,11 @@
             visibility: hidden !important;
             pointer-events: none !important;
         }
+        .swipe-entry-ready {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
     </style>
     <script>
         (() => {
@@ -9180,54 +9185,50 @@
             let deleteProgressState = false;
             let deleteArmedState = false;
             let longPressTimer = 0;
+            let longPressTriggered = false;
+            let longPressMeta = null;
             let longPressStartX = 0;
             let longPressStartY = 0;
-            let longPressShell = null;
-            let longPressTriggered = false;
-            let pendingLongPressMeta = null;
             let suppressClickUntil = 0;
 
-            function entryMeta(shell) {
-                if (!shell) return null;
-                const moveBtn = shell.querySelector('.swipe-original-actions button[onclick*="moveAusgabe("]');
-                const code = moveBtn?.getAttribute('onclick') || '';
-                const match = code.match(/moveAusgabe\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)/);
-                return match ? { type: match[1], id: match[2] } : null;
-            }
-
-            function clearLongPress() {
+            function clearLongPressTimer() {
                 if (longPressTimer) clearTimeout(longPressTimer);
                 longPressTimer = 0;
-                longPressShell = null;
             }
 
-            function startLongPress(shell, x, y) {
-                clearLongPress();
-                const meta = entryMeta(shell);
-                if (!meta || state.multiSelect?.[meta.type]) return;
-                longPressShell = shell;
+            function getSelectionMeta(shell) {
+                if (!shell) return null;
+                const type = shell.dataset.selectType || '';
+                const id = shell.dataset.selectId || '';
+                return type && id ? { type, id } : null;
+            }
+
+            function beginLongPress(shell, x, y) {
+                clearLongPressTimer();
+                longPressTriggered = false;
+                longPressMeta = getSelectionMeta(shell);
+                if (!longPressMeta || state.multiSelect?.[longPressMeta.type]) return;
                 longPressStartX = x;
                 longPressStartY = y;
-                longPressTriggered = false;
                 longPressTimer = window.setTimeout(() => {
-                    if (!longPressShell) return;
-                    const currentMeta = entryMeta(longPressShell);
-                    if (!currentMeta) return;
-
-                    /* Den DOM waehrend eines noch aktiven Touches NICHT neu rendern.
-                       Auf iOS kann genau das dazu fuehren, dass die Liste verschwindet
-                       oder in einem kaputten Zwischenzustand bleibt. Stattdessen wird
-                       die Auswahl vorgemerkt und direkt beim Loslassen aktiviert. */
+                    longPressTimer = 0;
+                    if (!activeShell || activeShell !== shell || horizontal) return;
                     longPressTriggered = true;
-                    pendingLongPressMeta = currentMeta;
-                    suppressClickUntil = Date.now() + 800;
-
-                    cancelPendingFrame();
-                    if (openShell) closeSwipe(openShell, false);
-                    if (activeShell) closeSwipe(activeShell, false);
-                    horizontal = false;
-                    clearLongPress();
+                    suppressClickUntil = Date.now() + 900;
                 }, 560);
+            }
+
+            function activateLongPressSelection(meta) {
+                if (!meta) return;
+                /* Zwei Frames warten: der iOS-Touch ist dann vollstaendig beendet und
+                   die Swipe-Shell kann gefahrlos durch den normalen Listen-Render ersetzt werden. */
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    if (openShell) closeSwipe(openShell, false);
+                    state.multiSelect[meta.type] = true;
+                    const selected = state.selected[meta.type] || (state.selected[meta.type] = []);
+                    if (!selected.includes(String(meta.id))) selected.push(String(meta.id));
+                    renderForSelection(meta.type);
+                }));
             }
 
             function setCardOffset(shell, offset) {
@@ -9292,6 +9293,13 @@
                 const computed = getComputedStyle(item);
                 const shell = document.createElement('div');
                 shell.className = 'swipe-entry-shell';
+                const moveBtn = actions.querySelector('button[onclick*="moveAusgabe("]');
+                const moveCode = moveBtn?.getAttribute('onclick') || '';
+                const moveMatch = moveCode.match(/moveAusgabe\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)/);
+                if (moveMatch) {
+                    shell.dataset.selectType = moveMatch[1];
+                    shell.dataset.selectId = moveMatch[2];
+                }
                 shell.style.marginTop = computed.marginTop;
                 shell.style.marginRight = computed.marginRight;
                 shell.style.marginBottom = computed.marginBottom;
@@ -9349,7 +9357,7 @@
                 deleteProgressState = shell.classList.contains('swipe-delete-progress');
                 deleteArmedState = shell.classList.contains('swipe-delete-armed');
                 horizontal = false;
-                startLongPress(shell, touch.clientX, touch.clientY);
+                beginLongPress(shell, touch.clientX, touch.clientY);
             }, { passive: true });
 
             document.addEventListener('touchmove', event => {
@@ -9358,20 +9366,22 @@
                 const dx = touch.clientX - startX;
                 const dy = touch.clientY - startY;
 
-                if (longPressShell) {
-                    const ldx = touch.clientX - longPressStartX;
-                    const ldy = touch.clientY - longPressStartY;
-                    if (Math.hypot(ldx, ldy) > 10) clearLongPress();
+                if (longPressTimer && Math.hypot(touch.clientX - longPressStartX, touch.clientY - longPressStartY) > 9) {
+                    clearLongPressTimer();
+                    longPressMeta = null;
                 }
 
                 if (!horizontal) {
                     if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
                     if (Math.abs(dy) > Math.abs(dx)) {
+                        clearLongPressTimer();
+                        longPressMeta = null;
                         activeShell = null;
                         return;
                     }
                     horizontal = true;
-                    clearLongPress();
+                    clearLongPressTimer();
+                    longPressMeta = null;
                     activeShell.classList.add('swipe-entry-dragging');
                 }
 
@@ -9384,11 +9394,17 @@
             }, { passive: false });
 
             document.addEventListener('touchend', event => {
-                clearLongPress();
+                clearLongPressTimer();
                 if (longPressTriggered) {
-                    const meta = pendingLongPressMeta;
+                    const meta = longPressMeta;
                     longPressTriggered = false;
-                    pendingLongPressMeta = null;
+                    longPressMeta = null;
+                    cancelPendingFrame();
+                    if (activeShell) {
+                        const card = cardOf(activeShell);
+                        activeShell.classList.remove('swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed', 'swipe-entry-open');
+                        if (card) card.style.transform = 'translate3d(0,0,0)';
+                    }
                     activeShell = null;
                     horizontal = false;
                     activeRailWidth = 0;
@@ -9396,19 +9412,10 @@
                     activeDeleteThreshold = 0;
                     deleteProgressState = false;
                     deleteArmedState = false;
-
-                    if (meta) {
-                        /* Erst NACH Ende des Touches in den Auswahlmodus wechseln.
-                           So rendert die Liste aus einer sauberen DOM-Struktur neu. */
-                        setTimeout(() => {
-                            state.multiSelect[meta.type] = true;
-                            const selected = state.selected[meta.type] || (state.selected[meta.type] = []);
-                            if (!selected.includes(String(meta.id))) selected.push(String(meta.id));
-                            renderForSelection(meta.type);
-                        }, 0);
-                    }
+                    activateLongPressSelection(meta);
                     return;
                 }
+                longPressMeta = null;
                 if (!activeShell) return;
                 const shell = activeShell;
                 const touch = event.changedTouches && event.changedTouches[0];
@@ -9454,9 +9461,9 @@
             }, { passive: true });
 
             document.addEventListener('touchcancel', () => {
-                clearLongPress();
+                clearLongPressTimer();
                 longPressTriggered = false;
-                pendingLongPressMeta = null;
+                longPressMeta = null;
                 if (activeShell) closeSwipe(activeShell);
                 activeShell = null;
                 horizontal = false;
@@ -9474,6 +9481,10 @@
                     return;
                 }
                 if (openShell && !openShell.contains(event.target)) closeSwipe(openShell);
+            }, true);
+
+            document.addEventListener('contextmenu', event => {
+                if (event.target.closest('.swipe-entry-shell')) event.preventDefault();
             }, true);
 
             const observer = new MutationObserver(mutations => {
