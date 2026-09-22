@@ -9101,7 +9101,10 @@
             z-index: 2;
             width: 100%;
             will-change: transform;
-            transition: transform .18s ease;
+            transform: translate3d(0,0,0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            transition: transform .22s cubic-bezier(.22,.61,.36,1);
         }
         .swipe-entry-shell.swipe-entry-dragging > .item.swipe-entry-ready {
             transition: none !important;
@@ -9169,6 +9172,35 @@
             let startOffset = 0;
             let horizontal = false;
             let openShell = null;
+            let activeRailWidth = 0;
+            let activeShellWidth = 0;
+            let activeDeleteThreshold = 0;
+            let latestOffset = 0;
+            let framePending = false;
+            let deleteProgressState = false;
+            let deleteArmedState = false;
+
+            function setCardOffset(shell, offset) {
+                latestOffset = offset;
+                if (framePending) return;
+                framePending = true;
+                requestAnimationFrame(() => {
+                    framePending = false;
+                    const card = cardOf(shell);
+                    if (card) card.style.transform = `translate3d(${-latestOffset}px,0,0)`;
+                });
+            }
+
+            function setDeleteStates(shell, progress, armed) {
+                if (progress !== deleteProgressState) {
+                    deleteProgressState = progress;
+                    shell.classList.toggle('swipe-delete-progress', progress);
+                }
+                if (armed !== deleteArmedState) {
+                    deleteArmedState = armed;
+                    shell.classList.toggle('swipe-delete-armed', armed);
+                }
+            }
 
             function cardOf(shell) {
                 return shell?.querySelector(':scope > .item.swipe-entry-ready') || null;
@@ -9180,7 +9212,7 @@
                 shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
                 if (card) {
                     if (!animate) card.style.transition = 'none';
-                    card.style.transform = 'translateX(0px)';
+                    card.style.transform = 'translate3d(0,0,0)';
                     if (!animate) requestAnimationFrame(() => { card.style.transition = ''; });
                 }
                 if (openShell === shell) openShell = null;
@@ -9250,7 +9282,13 @@
                 activeShell = shell;
                 startX = touch.clientX;
                 startY = touch.clientY;
-                startOffset = shell.classList.contains('swipe-entry-open') ? railWidth(shell) : 0;
+                activeRailWidth = railWidth(shell);
+                activeShellWidth = Math.max(activeRailWidth, shell.getBoundingClientRect().width);
+                activeDeleteThreshold = Math.max(activeRailWidth + 56, activeShellWidth * 0.72);
+                startOffset = shell.classList.contains('swipe-entry-open') ? activeRailWidth : 0;
+                latestOffset = startOffset;
+                deleteProgressState = shell.classList.contains('swipe-delete-progress');
+                deleteArmedState = shell.classList.contains('swipe-delete-armed');
                 horizontal = false;
             }, { passive: true });
 
@@ -9271,16 +9309,11 @@
                 }
 
                 event.preventDefault();
-                const max = railWidth(activeShell);
-                const shellWidth = Math.max(max, activeShell.getBoundingClientRect().width);
-                const offset = Math.max(0, Math.min(shellWidth, startOffset - dx));
-                const deleteThreshold = Math.max(max + 56, shellWidth * 0.72);
-                const deleteProgress = offset > max + 18;
-                const deleteArmed = !!activeShell.querySelector('.swipe-action-rail .delete') && offset >= deleteThreshold;
-                activeShell.classList.toggle('swipe-delete-progress', deleteProgress);
-                activeShell.classList.toggle('swipe-delete-armed', deleteArmed);
-                const card = cardOf(activeShell);
-                if (card) card.style.transform = `translateX(${-offset}px)`;
+                const offset = Math.max(0, Math.min(activeShellWidth, startOffset - dx));
+                const deleteProgress = offset > activeRailWidth + 18;
+                const deleteArmed = !!activeShell.querySelector('.swipe-action-rail .delete') && offset >= activeDeleteThreshold;
+                setDeleteStates(activeShell, deleteProgress, deleteArmed);
+                setCardOffset(activeShell, offset);
             }, { passive: false });
 
             document.addEventListener('touchend', event => {
@@ -9288,10 +9321,10 @@
                 const shell = activeShell;
                 const touch = event.changedTouches && event.changedTouches[0];
                 const dx = touch ? touch.clientX - startX : 0;
-                const max = railWidth(shell);
-                const shellWidth = Math.max(max, shell.getBoundingClientRect().width);
+                const max = activeRailWidth || railWidth(shell);
+                const shellWidth = activeShellWidth || Math.max(max, shell.getBoundingClientRect().width);
                 const offset = Math.max(0, Math.min(shellWidth, startOffset - dx));
-                const deleteThreshold = Math.max(max + 56, shellWidth * 0.72);
+                const deleteThreshold = activeDeleteThreshold || Math.max(max + 56, shellWidth * 0.72);
                 const deleteButton = shell.querySelector('.swipe-action-rail .delete');
                 const shouldDelete = horizontal && !!deleteButton && offset >= deleteThreshold;
                 const shouldOpen = !shouldDelete && horizontal && offset > Math.min(46, max * 0.32);
@@ -9312,19 +9345,29 @@
                     openShell = null;
                 } else {
                     const card = cardOf(shell);
-                    if (card) card.style.transform = `translateX(${shouldOpen ? -max : 0}px)`;
+                    if (card) card.style.transform = `translate3d(${shouldOpen ? -max : 0}px,0,0)`;
                     shell.classList.toggle('swipe-entry-open', shouldOpen);
                     openShell = shouldOpen ? shell : null;
                 }
 
                 activeShell = null;
                 horizontal = false;
+                activeRailWidth = 0;
+                activeShellWidth = 0;
+                activeDeleteThreshold = 0;
+                deleteProgressState = false;
+                deleteArmedState = false;
             }, { passive: true });
 
             document.addEventListener('touchcancel', () => {
                 if (activeShell) closeSwipe(activeShell);
                 activeShell = null;
                 horizontal = false;
+                activeRailWidth = 0;
+                activeShellWidth = 0;
+                activeDeleteThreshold = 0;
+                deleteProgressState = false;
+                deleteArmedState = false;
             }, { passive: true });
 
             document.addEventListener('click', event => {
