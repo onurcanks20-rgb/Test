@@ -2861,6 +2861,7 @@
             offeneFreizeitMonate: {},
             editFreizeitId: null,
             ausgabenArchivTyp: "haushalt",
+            editAusgabenArchivId: null,
             editEinnahmeId: null,
             editVersicherungId: null,
             editKategorieName: null,
@@ -4388,6 +4389,7 @@
 
         function openAusgabenArchiv(typ) {
             state.ausgabenArchivTyp = typ === "freizeit" ? "freizeit" : "haushalt";
+            state.editAusgabenArchivId = null;
             const suche = document.getElementById("ausgabenArchivSuche");
             if (suche) suche.value = "";
             show("ausgabenArchivView");
@@ -4395,6 +4397,7 @@
         }
 
         function closeAusgabenArchiv() {
+            state.editAusgabenArchivId = null;
             if (state.ausgabenArchivTyp === "freizeit") openFreizeit();
             else openHaushalt();
         }
@@ -6479,6 +6482,7 @@
             closeMoveSheet();
             renderHomeUebersicht(); renderHaushalt(); renderFreizeit(); renderLaufendeKosten(); renderVersicherungen(); renderEinnahmen(); renderLaender();
             if (aktuellesLand) renderListe();
+            if (!document.getElementById("ausgabenArchivView")?.classList.contains("hidden")) renderAusgabenArchiv();
         }
 
         function deleteAlleVersicherungen() {
@@ -7555,6 +7559,80 @@
             renderHaushalt();
         }
 
+        function toggleArchivDetails(typ, id) {
+            const map = typ === 'freizeit' ? state.offeneFreizeitEintraege : state.offeneHaushaltEintraege;
+            const key = String(id);
+            map[key] = !map[key];
+            renderAusgabenArchiv();
+        }
+
+        function startEditAusgabenArchiv(typ, id) {
+            if (state.ausgabenArchivTyp !== typ) return;
+            state.editAusgabenArchivId = String(id);
+            renderAusgabenArchiv();
+            setTimeout(() => document.getElementById(`editArchivBetrag-${id}`)?.focus(), 0);
+        }
+
+        function cancelEditAusgabenArchiv() {
+            state.editAusgabenArchivId = null;
+            renderAusgabenArchiv();
+        }
+
+        function saveEditAusgabenArchiv(typ, id) {
+            const textEl = document.getElementById(`editArchivText-${id}`);
+            const betragEl = document.getElementById(`editArchivBetrag-${id}`);
+            const datumEl = document.getElementById(`editArchivDatum-${id}`);
+            if (!textEl || !betragEl || !datumEl) return;
+
+            const betrag = parseBetrag(betragEl.value);
+            const datum = datumEl.value;
+            if (isNaN(betrag) || !datum) return;
+
+            const bereich = typ === 'freizeit' ? daten.Freizeit : daten.Haushalt;
+            if (!bereich) return;
+
+            let found = null;
+            let oldKey = null;
+            let oldIndex = -1;
+            for (const key of Object.keys(bereich)) {
+                const liste = bereich[key];
+                if (!Array.isArray(liste)) continue;
+                const index = liste.findIndex(e => String(e.id) === String(id));
+                if (index !== -1) {
+                    found = liste[index];
+                    oldKey = key;
+                    oldIndex = index;
+                    break;
+                }
+            }
+            if (!found) return;
+
+            const parsed = parseISODate(datum);
+            const neuerMonat = (parsed ? parsed.getMonth() : new Date().getMonth()) + 1;
+            const updated = {
+                ...found,
+                text: formatText(textEl.value.trim()),
+                betrag,
+                datum
+            };
+
+            bereich[oldKey].splice(oldIndex, 1);
+            bereich[neuerMonat] ??= [];
+            bereich[neuerMonat].push(updated);
+
+            state.editAusgabenArchivId = null;
+            speichern();
+            renderAusgabenArchiv();
+        }
+
+        function deleteArchivEintrag(typ, id) {
+            if (typ === 'freizeit') deleteFreizeit(id);
+            else deleteHaushalt(id);
+            if (!document.getElementById('ausgabenArchivView')?.classList.contains('hidden')) {
+                renderAusgabenArchiv();
+            }
+        }
+
         function renderAusgabenArchiv() {
             const typ = state.ausgabenArchivTyp === "freizeit" ? "freizeit" : "haushalt";
             const istFreizeit = typ === "freizeit";
@@ -7582,6 +7660,7 @@
 
             const jahresState = istFreizeit ? state.offeneFreizeitJahre : state.offeneHaushaltJahre;
             const monatsState = istFreizeit ? state.offeneFreizeitMonate : state.offeneHaushaltMonate;
+            const offenMap = istFreizeit ? state.offeneFreizeitEintraege : state.offeneHaushaltEintraege;
 
             jahre.forEach(jahr => {
                 const jahrOffen = !!jahresState[jahr];
@@ -7606,16 +7685,46 @@
                     if (!monatOffen) return;
 
                     liste.forEach(e => {
-                        const beschreibung = escapeHtml(e.text || e.name || '');
-                        const item = createItem(`<div style="display:flex; justify-content:space-between; width:100%; gap:12px; align-items:center;">
-                            <div style="display:flex; flex-direction:column; min-width:0;">
-                                <strong>${escapeHtml(e.kategorie || 'Sonstiges')}</strong>
-                                ${beschreibung ? `<span style="opacity:.72; font-size:13px; overflow-wrap:anywhere;">${beschreibung}</span>` : ''}
-                                <span style="opacity:.55; font-size:12px;">${e.datum ? formatDatum(e.datum) : ''}</span>
-                            </div>
-                            <strong style="flex-shrink:0;">${formatBetrag(e.betrag)}</strong>
-                        </div>`,40);
-                        item.style.background="#3a3a3c";
+                        const isEdit = String(state.editAusgabenArchivId) === String(e.id);
+                        let item;
+
+                        if (isEdit) {
+                            item = createItem(`<div style="display:flex; flex-direction:column; width:100%; gap:6px;">
+                                <input id="editArchivBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                                <input id="editArchivText-${e.id}" value="${escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                                <input id="editArchivDatum-${e.id}" type="date" value="${e.datum || ''}">
+                                <div style="display:flex; gap:10px;">
+                                    <button onclick="event.stopPropagation(); saveEditAusgabenArchiv('${typ}','${e.id}')">💾 Speichern</button>
+                                    <button onclick="event.stopPropagation(); cancelEditAusgabenArchiv()">❌ Abbrechen</button>
+                                </div>
+                            </div>`,40);
+                        } else {
+                            const beschreibung = escapeHtml(e.text || e.name || '');
+                            const istOffen = !!offenMap?.[String(e.id)];
+                            item = createItem(`<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
+                                <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
+                                    <div onclick="toggleArchivDetails('${typ}','${e.id}')"
+                                         style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
+                                        <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
+                                            <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
+                                            <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                        <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
+                                        <button class="edit" onclick="event.stopPropagation(); startEditAusgabenArchiv('${typ}','${e.id}')">✏️</button>
+                                        <button class="delete" onclick="event.stopPropagation(); deleteArchivEintrag('${typ}','${e.id}')">🗑️</button>
+                                    </div>
+                                </div>
+                                ${istOffen ? `
+                                    <div onclick="toggleArchivDetails('${typ}','${e.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
+                                        ${beschreibung ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Beschreibung</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${beschreibung}</span></div>` : ''}
+                                        <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Datum</span><span style="font-weight:600;text-align:right;">${e.datum ? formatDatum(e.datum) : '-'}</span></div>
+                                    </div>` : ''}
+                            </div>`,40);
+                        }
+
+                        item.style.background = "#3a3a3c";
                         container.appendChild(item);
                     });
                 });
@@ -9528,7 +9637,8 @@
                         '[onclick*="toggleFixkostenDetails("]',
                         '[onclick*="toggleVersicherungDetails("]',
                         '[onclick*="toggleEinnahmeDetails("]',
-                        '[onclick*="toggleReiseDetails("]'
+                        '[onclick*="toggleReiseDetails("]',
+                        '[onclick*="toggleArchivDetails("]'
                     ].join(',');
                     const directDetailTarget = event.target.closest(detailSelector);
                     if (!directDetailTarget) {
