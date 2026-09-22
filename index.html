@@ -9084,7 +9084,6 @@
         <button type="button" onclick="undoDelete()">↩️ Rückgängig</button>
     </div>
 
-
     <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
     <style>
         /* Die Karte selbst liegt als Vordergrund ueber der Aktionsleiste.
@@ -9177,18 +9176,73 @@
             let activeDeleteThreshold = 0;
             let latestOffset = 0;
             let framePending = false;
+            let frameId = 0;
             let deleteProgressState = false;
             let deleteArmedState = false;
+            let longPressTimer = 0;
+            let longPressStartX = 0;
+            let longPressStartY = 0;
+            let longPressShell = null;
+            let longPressTriggered = false;
+            let suppressClickUntil = 0;
+
+            function entryMeta(shell) {
+                if (!shell) return null;
+                const moveBtn = shell.querySelector('.swipe-original-actions button[onclick*="moveAusgabe("]');
+                const code = moveBtn?.getAttribute('onclick') || '';
+                const match = code.match(/moveAusgabe\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)/);
+                return match ? { type: match[1], id: match[2] } : null;
+            }
+
+            function clearLongPress() {
+                if (longPressTimer) clearTimeout(longPressTimer);
+                longPressTimer = 0;
+                longPressShell = null;
+            }
+
+            function startLongPress(shell, x, y) {
+                clearLongPress();
+                const meta = entryMeta(shell);
+                if (!meta || state.multiSelect?.[meta.type]) return;
+                longPressShell = shell;
+                longPressStartX = x;
+                longPressStartY = y;
+                longPressTriggered = false;
+                longPressTimer = window.setTimeout(() => {
+                    if (!longPressShell) return;
+                    const currentMeta = entryMeta(longPressShell);
+                    if (!currentMeta) return;
+                    longPressTriggered = true;
+                    suppressClickUntil = Date.now() + 700;
+                    if (openShell) closeSwipe(openShell, false);
+                    cancelPendingFrame();
+                    state.multiSelect[currentMeta.type] = true;
+                    const selected = state.selected[currentMeta.type] || (state.selected[currentMeta.type] = []);
+                    if (!selected.includes(String(currentMeta.id))) selected.push(String(currentMeta.id));
+                    clearLongPress();
+                    activeShell = null;
+                    horizontal = false;
+                    renderForSelection(currentMeta.type);
+                }, 560);
+            }
 
             function setCardOffset(shell, offset) {
                 latestOffset = offset;
                 if (framePending) return;
                 framePending = true;
-                requestAnimationFrame(() => {
+                frameId = requestAnimationFrame(() => {
                     framePending = false;
+                    frameId = 0;
                     const card = cardOf(shell);
                     if (card) card.style.transform = `translate3d(${-latestOffset}px,0,0)`;
                 });
+            }
+
+
+            function cancelPendingFrame() {
+                if (frameId) cancelAnimationFrame(frameId);
+                frameId = 0;
+                framePending = false;
             }
 
             function setDeleteStates(shell, progress, armed) {
@@ -9209,6 +9263,7 @@
             function closeSwipe(shell = openShell, animate = true) {
                 if (!shell) return;
                 const card = cardOf(shell);
+                cancelPendingFrame();
                 shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
                 if (card) {
                     if (!animate) card.style.transition = 'none';
@@ -9290,6 +9345,7 @@
                 deleteProgressState = shell.classList.contains('swipe-delete-progress');
                 deleteArmedState = shell.classList.contains('swipe-delete-armed');
                 horizontal = false;
+                startLongPress(shell, touch.clientX, touch.clientY);
             }, { passive: true });
 
             document.addEventListener('touchmove', event => {
@@ -9298,6 +9354,12 @@
                 const dx = touch.clientX - startX;
                 const dy = touch.clientY - startY;
 
+                if (longPressShell) {
+                    const ldx = touch.clientX - longPressStartX;
+                    const ldy = touch.clientY - longPressStartY;
+                    if (Math.hypot(ldx, ldy) > 10) clearLongPress();
+                }
+
                 if (!horizontal) {
                     if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
                     if (Math.abs(dy) > Math.abs(dx)) {
@@ -9305,6 +9367,7 @@
                         return;
                     }
                     horizontal = true;
+                    clearLongPress();
                     activeShell.classList.add('swipe-entry-dragging');
                 }
 
@@ -9317,6 +9380,13 @@
             }, { passive: false });
 
             document.addEventListener('touchend', event => {
+                clearLongPress();
+                if (longPressTriggered) {
+                    longPressTriggered = false;
+                    activeShell = null;
+                    horizontal = false;
+                    return;
+                }
                 if (!activeShell) return;
                 const shell = activeShell;
                 const touch = event.changedTouches && event.changedTouches[0];
@@ -9329,6 +9399,7 @@
                 const shouldDelete = horizontal && !!deleteButton && offset >= deleteThreshold;
                 const shouldOpen = !shouldDelete && horizontal && offset > Math.min(46, max * 0.32);
 
+                cancelPendingFrame();
                 shell.classList.remove('swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
 
                 if (shouldDelete) {
@@ -9345,6 +9416,7 @@
                     openShell = null;
                 } else {
                     const card = cardOf(shell);
+                    latestOffset = shouldOpen ? max : 0;
                     if (card) card.style.transform = `translate3d(${shouldOpen ? -max : 0}px,0,0)`;
                     shell.classList.toggle('swipe-entry-open', shouldOpen);
                     openShell = shouldOpen ? shell : null;
@@ -9360,6 +9432,8 @@
             }, { passive: true });
 
             document.addEventListener('touchcancel', () => {
+                clearLongPress();
+                longPressTriggered = false;
                 if (activeShell) closeSwipe(activeShell);
                 activeShell = null;
                 horizontal = false;
@@ -9371,6 +9445,11 @@
             }, { passive: true });
 
             document.addEventListener('click', event => {
+                if (Date.now() < suppressClickUntil) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
                 if (openShell && !openShell.contains(event.target)) closeSwipe(openShell);
             }, true);
 
