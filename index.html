@@ -9184,6 +9184,7 @@
             let longPressStartY = 0;
             let longPressShell = null;
             let longPressTriggered = false;
+            let pendingLongPressMeta = null;
             let suppressClickUntil = 0;
 
             function entryMeta(shell) {
@@ -9212,17 +9213,20 @@
                     if (!longPressShell) return;
                     const currentMeta = entryMeta(longPressShell);
                     if (!currentMeta) return;
+
+                    /* Den DOM waehrend eines noch aktiven Touches NICHT neu rendern.
+                       Auf iOS kann genau das dazu fuehren, dass die Liste verschwindet
+                       oder in einem kaputten Zwischenzustand bleibt. Stattdessen wird
+                       die Auswahl vorgemerkt und direkt beim Loslassen aktiviert. */
                     longPressTriggered = true;
-                    suppressClickUntil = Date.now() + 700;
-                    if (openShell) closeSwipe(openShell, false);
+                    pendingLongPressMeta = currentMeta;
+                    suppressClickUntil = Date.now() + 800;
+
                     cancelPendingFrame();
-                    state.multiSelect[currentMeta.type] = true;
-                    const selected = state.selected[currentMeta.type] || (state.selected[currentMeta.type] = []);
-                    if (!selected.includes(String(currentMeta.id))) selected.push(String(currentMeta.id));
-                    clearLongPress();
-                    activeShell = null;
+                    if (openShell) closeSwipe(openShell, false);
+                    if (activeShell) closeSwipe(activeShell, false);
                     horizontal = false;
-                    renderForSelection(currentMeta.type);
+                    clearLongPress();
                 }, 560);
             }
 
@@ -9382,9 +9386,27 @@
             document.addEventListener('touchend', event => {
                 clearLongPress();
                 if (longPressTriggered) {
+                    const meta = pendingLongPressMeta;
                     longPressTriggered = false;
+                    pendingLongPressMeta = null;
                     activeShell = null;
                     horizontal = false;
+                    activeRailWidth = 0;
+                    activeShellWidth = 0;
+                    activeDeleteThreshold = 0;
+                    deleteProgressState = false;
+                    deleteArmedState = false;
+
+                    if (meta) {
+                        /* Erst NACH Ende des Touches in den Auswahlmodus wechseln.
+                           So rendert die Liste aus einer sauberen DOM-Struktur neu. */
+                        setTimeout(() => {
+                            state.multiSelect[meta.type] = true;
+                            const selected = state.selected[meta.type] || (state.selected[meta.type] = []);
+                            if (!selected.includes(String(meta.id))) selected.push(String(meta.id));
+                            renderForSelection(meta.type);
+                        }, 0);
+                    }
                     return;
                 }
                 if (!activeShell) return;
@@ -9434,6 +9456,7 @@
             document.addEventListener('touchcancel', () => {
                 clearLongPress();
                 longPressTriggered = false;
+                pendingLongPressMeta = null;
                 if (activeShell) closeSwipe(activeShell);
                 activeShell = null;
                 horizontal = false;
