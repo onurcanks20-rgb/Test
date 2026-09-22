@@ -9077,6 +9077,7 @@
             let longPressShell = null;
             let longPressTriggered = false;
             let suppressClickUntil = 0;
+            let suppressClickShell = null;
 
             function setCardOffset(shell, offset, deleteVisualProgress = 0) {
                 latestOffset = offset;
@@ -9294,7 +9295,8 @@
                     const target = longPressShell;
                     if (!target || !target.isConnected) return;
                     longPressTriggered = true;
-                    suppressClickUntil = Date.now() + 850;
+                    suppressClickUntil = Date.now() + 350;
+                    suppressClickShell = target;
                     clearNativeTextSelection();
                     enterSelectionMode(target);
                     activeShell = null;
@@ -9491,13 +9493,17 @@
             }, { passive: true });
 
             document.addEventListener('click', event => {
-                /* Den synthetischen Klick direkt nach einem Long Press schlucken,
-                   damit der gerade markierte Eintrag nicht sofort wieder abgewählt wird. */
-                if (Date.now() < suppressClickUntil && event.target.closest('.swipe-entry-shell')) {
+                /* Nur den synthetischen Klick des Eintrags schlucken, der den Long Press
+                   ausgeloest hat. Andere Eintraege sind sofort anklickbar. */
+                const clickedShell = event.target.closest('.swipe-entry-shell');
+                if (Date.now() < suppressClickUntil && clickedShell && clickedShell === suppressClickShell) {
+                    suppressClickUntil = 0;
+                    suppressClickShell = null;
                     event.preventDefault();
                     event.stopPropagation();
                     return;
                 }
+                if (Date.now() >= suppressClickUntil) suppressClickShell = null;
 
                 if (event.target.closest('#longSelectToolbar')) return;
 
