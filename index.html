@@ -1049,34 +1049,7 @@
             box-sizing:border-box;
         }
         .list-search::placeholder { color:rgba(255,255,255,.45); }
-
-        .delete-tools {
-            display:flex;
-            gap:10px;
-            align-items:center;
-            flex-wrap:wrap;
-            margin-top:12px;
-        }
-        .delete-tools button {
-            flex:1;
-            min-width:140px;
-        }
-        .select-dot {
-            width:24px;
-            height:24px;
-            border-radius:50%;
-            border:2px solid #fff;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            flex-shrink:0;
-            cursor:pointer;
-            font-size:14px;
-            font-weight:700;
-        }
-        .select-dot.selected { background:var(--action-switch); }
-    
-        /* ===== COMPACT BOTTOM NAV ===== */
+/* ===== COMPACT BOTTOM NAV ===== */
         @media (max-width: 600px) {
             .container.app-shell {
                 padding-bottom: calc(86px + env(safe-area-inset-bottom));
@@ -1448,19 +1421,7 @@
             background: #2c2c2e;
             border: 1px solid rgba(255,255,255,.07);
         }
-        .delete-tools {
-            gap: 8px;
-            margin: 0 0 12px;
-        }
-        .delete-tools button {
-            min-height: 44px;
-            margin: 0;
-            padding: 10px 12px;
-            border-radius: 13px;
-            font-size: 14px;
-        }
-
-        .date-group-title {
+.date-group-title {
             margin: 20px 4px 8px;
             font-size: 15px;
             font-weight: 800;
@@ -2400,10 +2361,6 @@
 
         <div class="container">
             <input id="versicherungenSuche" class="list-search" type="search" placeholder="🔎 Versicherungen durchsuchen" oninput="renderVersicherungen()">
-            <div class="delete-tools">
-                <button onclick="toggleMultiSelect('versicherungen')" style="background:#3a3a3c;">☑️ Auswählen</button>
-                <button id="deleteSelectedVersicherungen" onclick="deleteSelected('versicherungen')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
-            </div>
             <div id="versicherungenListe"></div>
             <div class="total" id="versicherungenGesamt"></div>
             <div id="versicherungenFooter"></div>
@@ -2453,10 +2410,6 @@
                 <button onclick="openAusgabenArchiv('haushalt')" style="width:auto; margin:0; padding:9px 12px; background:#3a3a3c;">📁 Alle Einträge</button>
             </div>
             <input id="haushaltSuche" class="list-search" type="search" placeholder="🔎 Letzte 7 Tage durchsuchen" oninput="renderHaushalt()">
-            <div class="delete-tools">
-                <button onclick="toggleMultiSelect('haushalt')" style="background:#3a3a3c;">☑️ Auswählen</button>
-                <button id="deleteSelectedHaushalt" onclick="deleteSelected('haushalt')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
-            </div>
             <div id="haushaltListe"></div>
         </div>
 
@@ -2505,10 +2458,6 @@
                 <button onclick="openAusgabenArchiv('freizeit')" style="width:auto; margin:0; padding:9px 12px; background:#3a3a3c;">📁 Alle Einträge</button>
             </div>
             <input id="freizeitSuche" class="list-search" type="search" placeholder="🔎 Letzte 7 Tage durchsuchen" oninput="renderFreizeit()">
-            <div class="delete-tools">
-                <button onclick="toggleMultiSelect('freizeit')" style="background:#3a3a3c;">☑️ Auswählen</button>
-                <button id="deleteSelectedFreizeit" onclick="deleteSelected('freizeit')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
-            </div>
             <div id="freizeitListe"></div>
         </div>
 
@@ -2558,10 +2507,6 @@
 
         <div class="container">
             <input id="einnahmenSuche" class="list-search" type="search" placeholder="🔎 Einnahmen durchsuchen" oninput="renderEinnahmen()">
-            <div class="delete-tools">
-                <button onclick="toggleMultiSelect('einnahmen')" style="background:#3a3a3c;">☑️ Auswählen</button>
-                <button id="deleteSelectedEinnahmen" onclick="deleteSelected('einnahmen')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
-            </div>
             <div id="einnahmenListe"></div>
             <div class="total" id="einnahmenGesamt"></div>
         </div>
@@ -2597,11 +2542,6 @@
             </div>
 
             <input id="fixkostenSuche" class="list-search" type="search" placeholder="🔎 Fixkosten durchsuchen" oninput="renderLaufendeKosten()">
-            <div class="delete-tools">
-                <button onclick="toggleMultiSelect('fixkosten')" class="btn btn-primary" style="background:#3a3a3c;">☑️ Auswählen</button>
-                <button id="deleteSelectedFixkosten" onclick="deleteSelected('fixkosten')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
-            </div>
-            <div id="kostenAuswahlAktionen"></div>
         </div>
 
         <div class="container">
@@ -2926,10 +2866,6 @@
             homeWarnungenOffen: false,
             homeFaelligOffen: false,
             freiDetailsOffen: false,
-            kostenAuswahlModus: false,
-            ausgewaehlteKosten: [],
-            multiSelect: { haushalt:false, freizeit:false, einnahmen:false, versicherungen:false, fixkosten:false, reisen:false },
-            selected: { haushalt:[], freizeit:[], einnahmen:[], versicherungen:[], fixkosten:[], reisen:[] },
             offeneVersicherungen: {},
             offeneFixkosten: {},
             offeneEinnahmen: {},
@@ -5506,28 +5442,22 @@
 
                         else {
                             const reiseOffen = !!state.offeneReiseEintraege[String(e.id)];
-                            const reiseAusgewaehlt = (state.selected.reisen || []).includes(String(e.id));
                             const reiseBeschreibung = escapeHtml(e.text || '');
                             sub.innerHTML = `
                         <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                             <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                                <div onclick="${state.multiSelect.reisen ? `toggleSelected('reisen','${e.id}',this)` : `toggleReiseDetails('${e.id}')`}"
+                                <div onclick="toggleReiseDetails('${e.id}')"
                                      style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                    ${state.multiSelect.reisen ? `
-                                        <div data-selection-circle style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${reiseAusgewaehlt ? 'var(--action-switch)' : 'transparent'};flex-shrink:0;">
-                                            ${reiseAusgewaehlt ? '✓' : ''}
-                                        </div>` : ''}
                                     <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
                                         <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(k)}</span>
                                         <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
                                     </div>
                                 </div>
-                                ${!state.multiSelect.reisen ? `
-                                    <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                                        <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben">↪️</button>
-                                        <button class="edit" onclick="event.stopPropagation(); startEditReise(${e.id})">✏️</button>
-                                        <button class="delete" onclick="event.stopPropagation(); deleteEintrag('${k}', ${i})">🗑️</button>
-                                    </div>` : ''}
+                                <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                    <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben">↪️</button>
+                                    <button class="edit" onclick="event.stopPropagation(); startEditReise(${e.id})">✏️</button>
+                                    <button class="delete" onclick="event.stopPropagation(); deleteEintrag('${k}', ${i})">🗑️</button>
+                                </div>
                             </div>
                             ${reiseOffen ? `
                                 <div onclick="toggleReiseDetails('${e.id}')" style="background:#48484a;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
@@ -5560,7 +5490,6 @@
             const gesamtEl = document.getElementById("gesamt");
             if (gesamtEl) gesamtEl.innerText = "Gesamt: " + formatBetragText(gesamt);
             renderReiseBudget();
-            updateSelectionButton('reisen');
         }
 
         function toggleReiseDetails(id) {
@@ -5631,145 +5560,6 @@
         }
 
 
-        function selectionLabel(type) {
-            return ({haushalt:'Haushalt', freizeit:'Freizeit', einnahmen:'Einnahmen', versicherungen:'Versicherungen', fixkosten:'Fixkosten', reisen:'Reisen'})[type] || type;
-        }
-
-        function toggleMultiSelect(type) {
-            state.multiSelect[type] = !state.multiSelect[type];
-            if (!state.multiSelect[type]) state.selected[type] = [];
-            renderForSelection(type);
-        }
-
-        function toggleSelected(type, id, rowEl = null) {
-            const key = String(id);
-            const list = state.selected[type] || (state.selected[type] = []);
-            const i = list.indexOf(key);
-            const selected = i === -1;
-            if (selected) list.push(key); else list.splice(i, 1);
-
-            /* Nur den sichtbaren Auswahlkreis aktualisieren. Kein kompletter Listen-Render,
-               damit Auswahl und Swipe sich nicht gegenseitig zerlegen. */
-            let circle = null;
-            if (rowEl?.matches?.('[data-selection-circle], .select-dot')) {
-                circle = rowEl;
-            } else {
-                circle = rowEl?.querySelector?.('[data-selection-circle], .select-dot') || null;
-            }
-            if (circle) {
-                circle.classList.toggle('selected', selected);
-                circle.style.background = selected ? 'var(--action-switch)' : 'transparent';
-                circle.textContent = selected ? '✓' : '';
-                circle.setAttribute('aria-checked', selected ? 'true' : 'false');
-            }
-
-            updateSelectionButton(type);
-        }
-
-        function selectionDot(type, id) {
-            if (!state.multiSelect[type]) return '';
-            const selected = (state.selected[type] || []).includes(String(id));
-            return `<div class="select-dot ${selected ? 'selected' : ''}" data-selection-circle role="checkbox" aria-checked="${selected ? 'true' : 'false'}" onclick="event.stopPropagation(); toggleSelected('${type}','${String(id).replace(/'/g,"\'")}',this)">${selected ? '✓' : ''}</div>`;
-        }
-
-        function updateSelectionButton(type) {
-            const map = {haushalt:'Haushalt',freizeit:'Freizeit',einnahmen:'Einnahmen',versicherungen:'Versicherungen',fixkosten:'Fixkosten',reisen:'Reisen'};
-            const el = document.getElementById('deleteSelected' + map[type]);
-            if (!el) return;
-            const n = (state.selected[type] || []).length;
-            el.style.display = state.multiSelect[type] ? '' : 'none';
-            el.textContent = `🗑️ ${n} ausgewählte löschen`;
-            el.disabled = n === 0;
-            el.style.opacity = n === 0 ? '.55' : '1';
-        }
-
-        function renderForSelection(type) {
-            if (type === 'haushalt') renderHaushalt();
-            else if (type === 'freizeit') renderFreizeit();
-            else if (type === 'einnahmen') renderEinnahmen();
-            else if (type === 'versicherungen') renderVersicherungen();
-            else if (type === 'fixkosten') renderLaufendeKosten();
-            else if (type === 'reisen') renderListe();
-            updateSelectionButton(type);
-        }
-
-        function deleteSelected(type) {
-            const ids = state.selected[type] || [];
-            if (!ids.length) return;
-            if (!confirm(`${ids.length} ausgewählte ${selectionLabel(type)}-Einträge wirklich löschen?`)) return;
-            const set = new Set(ids.map(String));
-            beginUndoDelete(`${ids.length} Einträge gelöscht`);
-
-            if (type === 'haushalt') {
-                Object.keys(daten.Haushalt || {}).forEach(m => { if (Array.isArray(daten.Haushalt[m])) daten.Haushalt[m] = daten.Haushalt[m].filter(e => !set.has(String(e.id))); });
-            } else if (type === 'freizeit') {
-                Object.keys(daten.Freizeit || {}).forEach(m => { if (Array.isArray(daten.Freizeit[m])) daten.Freizeit[m] = daten.Freizeit[m].filter(e => !set.has(String(e.id))); });
-            } else if (type === 'einnahmen') {
-                daten.Einnahmen = (daten.Einnahmen || []).filter(e => !set.has(String(e.id)));
-            } else if (type === 'versicherungen') {
-                daten.Versicherungen = (daten.Versicherungen || []).filter(e => !set.has(String(e.id)));
-            } else if (type === 'fixkosten') {
-                daten['Laufende Kosten'] ??= {fix:[]};
-                daten['Laufende Kosten'].fix = (daten['Laufende Kosten'].fix || []).filter(e => !set.has(String(e.id)));
-            } else if (type === 'reisen' && aktuellesLand && daten.Reisen?.[aktuellesLand]) {
-                Object.keys(daten.Reisen[aktuellesLand]).forEach(k => {
-                    if (Array.isArray(daten.Reisen[aktuellesLand][k])) daten.Reisen[aktuellesLand][k] = daten.Reisen[aktuellesLand][k].filter(e => !set.has(String(e.id)));
-                });
-            }
-
-            state.selected[type] = [];
-            state.multiSelect[type] = false;
-            speichern();
-            renderForSelection(type);
-            renderHomeUebersicht();
-            finishUndoDelete(`${ids.length} Einträge gelöscht`);
-        }
-
-        function toggleKostenAuswahlModus() {
-            state.kostenAuswahlModus = !state.kostenAuswahlModus;
-
-            if (!state.kostenAuswahlModus) {
-                state.ausgewaehlteKosten = [];
-            }
-
-            renderLaufendeKosten();
-        }
-
-        function toggleKostenAuswahl(id) {
-
-            const index = state.ausgewaehlteKosten.indexOf(String(id));
-
-            if (index === -1) {
-                state.ausgewaehlteKosten.push(String(id));
-            } else {
-                state.ausgewaehlteKosten.splice(index, 1);
-            }
-
-            renderLaufendeKosten();
-        }
-
-        function deleteAusgewaehlteKosten() {
-
-            if (state.ausgewaehlteKosten.length === 0) return;
-
-            if (!confirm("Ausgewählte Fixkosten löschen?")) return;
-            beginUndoDelete(`${state.ausgewaehlteKosten.length} Fixkosten gelöscht`);
-
-            daten["Laufende Kosten"].fix =
-                daten["Laufende Kosten"].fix.filter(
-                    e => !state.ausgewaehlteKosten.includes(String(e.id))
-                );
-
-            state.ausgewaehlteKosten = [];
-            state.kostenAuswahlModus = false;
-
-            speichern();
-            renderLaufendeKosten();
-            renderHomeUebersicht();
-            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
-            finishUndoDelete("Ausgewählte Fixkosten gelöscht");
-        }
-
         function renderLaufendeKosten() {
 
             const div = document.getElementById("kostenListe");
@@ -5777,20 +5567,6 @@
             if (!div) return;
 
             div.innerHTML = "";
-
-            const auswahlBox = document.getElementById("kostenAuswahlAktionen");
-
-            if (auswahlBox) {
-                if (false && state.kostenAuswahlModus) {
-                    auswahlBox.innerHTML = `
-                        <button onclick="deleteAusgewaehlteKosten()" style="background:#ff453a;">
-                            🗑️ ${state.ausgewaehlteKosten.length} ausgewählte löschen
-                        </button>
-                    `;
-                } else {
-                    auswahlBox.innerHTML = "";
-                }
-            }
 
             daten["Laufende Kosten"] ??= { fix: [] };
             daten["Laufende Kosten"].fix ??= [];
@@ -5883,19 +5659,12 @@
                     setTimeout(() => setupKostenEditEnterFlow(k.id), 0);
                 } else {
 
-                    const ausgewaehlt = (state.selected.fixkosten || []).includes(String(k.id));
-
                     const istOffen = !!state.offeneFixkosten[String(k.id)];
                     item = createItem(`
                     <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="${state.multiSelect.fixkosten ? `toggleSelected('fixkosten','${k.id}',this)` : `toggleFixkostenDetails('${k.id}')`}"
+                            <div onclick="toggleFixkostenDetails('${k.id}')"
                                  style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                ${state.multiSelect.fixkosten ? `
-                                    <div data-selection-circle style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? 'var(--action-switch)' : 'transparent'};flex-shrink:0;">
-                                        ${ausgewaehlt ? '✓' : ''}
-                                    </div>
-                                ` : ''}
                                 <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
                                     <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(k.text || k.name || "-")}</span>
                                     <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;">
@@ -5904,13 +5673,11 @@
                                     </div>
                                 </div>
                             </div>
-                            ${!state.multiSelect.fixkosten ? `
-                                <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                                    <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben">↪️</button>
-                                    <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')">✏️</button>
-                                    <button class="delete" onclick="event.stopPropagation(); deleteLaufendeKosten('${k.id}')">🗑️</button>
-                                </div>
-                            ` : ''}
+                            <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben">↪️</button>
+                                <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')">✏️</button>
+                                <button class="delete" onclick="event.stopPropagation(); deleteLaufendeKosten('${k.id}')">🗑️</button>
+                            </div>
                         </div>
                         ${istOffen ? `
                             <div onclick="toggleFixkostenDetails('${k.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
@@ -5929,7 +5696,6 @@
             if (total) {
                 total.innerHTML = "Gesamt: " + formatBetrag(summe);
             }
-            updateSelectionButton('fixkosten');
         }
 
         function toggleFixkostenDetails(id) {
@@ -6256,21 +6022,18 @@
                 <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
 
                     <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; width:100%; gap:10px;">
-                        <div onclick="${state.multiSelect.versicherungen ? `toggleSelected('versicherungen','${v.id}',this)` : `toggleVersicherungDetails('${v.id}')`}"
+                        <div onclick="toggleVersicherungDetails('${v.id}')"
                              style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                            ${selectionDot('versicherungen', v.id)}
                             <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
                                 <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(v.name || "Versicherung")}</span>
                                 <strong style="font-size:18px;">${formatBetrag(v.betrag)}</strong>
                             </div>
                         </div>
-                        ${!state.multiSelect.versicherungen ? `
-                            <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                                <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben">↪️</button>
-                                <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')">✏️</button>
-                                <button class="delete" onclick="event.stopPropagation(); deleteVersicherung('${v.id}')">🗑️</button>
-                            </div>
-                        ` : ''}
+                        <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                            <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben">↪️</button>
+                            <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')">✏️</button>
+                            <button class="delete" onclick="event.stopPropagation(); deleteVersicherung('${v.id}')">🗑️</button>
+                        </div>
                     </div>
 
                     ${istOffen ? `
@@ -6370,7 +6133,6 @@
             if (total) {
                 total.innerHTML = "Fixkosten pro aktuellem Gehaltsmonat: " + formatBetrag(berechneGesamtFixkosten());
             }
-            updateSelectionButton('versicherungen');
         }
 
         function toggleVersicherungDetails(id) {
@@ -6814,7 +6576,6 @@
             if (!liste.length) {
                 container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-title">Noch keine Einnahmen</div><div class="empty-state-text">Zusätzliche oder wiederkehrende Einnahmen erscheinen hier.</div></div>`;
                 if (total) total.innerHTML = "";
-                updateSelectionButton('einnahmen');
                 return;
             }
 
@@ -6841,14 +6602,13 @@
                     const istOffen = !!state.offeneEinnahmen[String(e.id)];
                     html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="${state.multiSelect.einnahmen ? `toggleSelected('einnahmen','${e.id}',this)` : `toggleEinnahmeDetails('${e.id}')`}" style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                ${selectionDot('einnahmen', e.id)}
+                            <div onclick="toggleEinnahmeDetails('${e.id}')" style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                 <span style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0;">
                                     <strong style="overflow-wrap:anywhere;">${escapeHtml(e.text || 'Einnahme')}</strong>
                                     <strong style="font-size:18px;">+${formatBetrag(e.betrag)}</strong>
                                 </span>
                             </div>
-                            ${!state.multiSelect.einnahmen ? `<div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><button onclick="event.stopPropagation(); moveAusgabe('einnahmen','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="event.stopPropagation(); startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="event.stopPropagation(); deleteEinnahme('${e.id}')">🗑️</button></div>` : ''}
+                            <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><button onclick="event.stopPropagation(); moveAusgabe('einnahmen','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="event.stopPropagation(); startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="event.stopPropagation(); deleteEinnahme('${e.id}')">🗑️</button></div>
                         </div>
                         ${istOffen ? `<div onclick="toggleEinnahmeDetails('${e.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
                             <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Art</span><span style="font-weight:600;text-align:right;">${escapeHtml(info)}</span></div>
@@ -6864,7 +6624,6 @@
             const z = getGehaltszeitraum();
             const sum = einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((a,e)=>a+e.betrag,0);
             if (total) total.innerHTML = "Einnahmen im aktuellen Gehaltszeitraum: +" + formatBetrag(sum);
-            updateSelectionButton('einnahmen');
         }
 
         function toggleEinnahmeDetails(id) {
@@ -7481,7 +7240,6 @@
 
             if (!liste.length) {
                 container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${istFreizeit ? '🎉' : '🛒'}</div><div class="empty-state-title">Keine Ausgaben in den letzten 7 Tagen</div><div class="empty-state-text">${istFreizeit ? 'Deine neuen Freizeit-Ausgaben erscheinen hier.' : 'Deine neuen Haushalts-Ausgaben erscheinen hier.'}</div></div>`;
-                updateSelectionButton(typ);
                 return;
             }
 
@@ -7517,27 +7275,21 @@
                         </div>`;
                 } else {
                     const beschreibung = escapeHtml(e.text || e.name || '');
-                    const ausgewaehlt = (state.selected?.[typ] || []).includes(String(e.id));
                     const istOffen = !!offenMap?.[String(e.id)];
                     html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="${state.multiSelect?.[typ] ? `toggleSelected('${typ}','${e.id}',this)` : `toggleAlltagsDetails('${typ}','${e.id}')`}"
+                            <div onclick="toggleAlltagsDetails('${typ}','${e.id}')"
                                  style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                ${state.multiSelect?.[typ] ? `
-                                    <div data-selection-circle style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? 'var(--action-switch)' : 'transparent'};flex-shrink:0;">
-                                        ${ausgewaehlt ? '✓' : ''}
-                                    </div>` : ''}
                                 <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
                                     <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
                                     <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
                                 </div>
                             </div>
-                            ${!state.multiSelect?.[typ] ? `
-                                <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                                    <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
-                                    <button class="edit" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button>
-                                    <button class="delete" onclick="event.stopPropagation(); ${istFreizeit ? `deleteFreizeit('${e.id}')` : `deleteHaushalt('${e.id}')`}">🗑️</button>
-                                </div>` : ''}
+                            <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
+                                <button class="edit" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button>
+                                <button class="delete" onclick="event.stopPropagation(); ${istFreizeit ? `deleteFreizeit('${e.id}')` : `deleteHaushalt('${e.id}')`}">🗑️</button>
+                            </div>
                         </div>
                         ${istOffen ? `
                             <div onclick="toggleAlltagsDetails('${typ}','${e.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
@@ -7551,7 +7303,6 @@
                 container.appendChild(item);
                 if (isEdit) setTimeout(() => istFreizeit ? setupFreizeitEditEnterFlow(e.id) : setupHaushaltEditEnterFlow(e.id), 0);
             });
-            updateSelectionButton(typ);
         }
 
         function toggleAlltagsDetails(typ, id) {
