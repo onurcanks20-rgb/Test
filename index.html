@@ -9408,7 +9408,8 @@
     </script>
 
 
-    <!-- ===== TEST: LONG PRESS STARTET DIREKT DEN AUSWAHLMODUS ===== -->
+
+    <!-- ===== TEST: LONG PRESS LOEST NUR DEN VORHANDENEN AUSWAEHLEN-BUTTON AUS ===== -->
     <style>
         .swipe-entry-shell > .item.swipe-entry-ready.longpress-hold-active {
             box-shadow: inset 0 0 0 2px var(--action-switch) !important;
@@ -9429,14 +9430,21 @@
 
             const HOLD_MS = 560;
             const MOVE_TOLERANCE = 10;
-            const SUPPORTED_TYPES = new Set(['haushalt', 'freizeit', 'einnahmen', 'versicherungen', 'fixkosten', 'reisen']);
+            const VIEW_TYPE_MAP = [
+                ['#haushaltView', 'haushalt'],
+                ['#freizeitView', 'freizeit'],
+                ['#einnahmenView', 'einnahmen'],
+                ['#versicherungenView', 'versicherungen'],
+                ['#kostenView', 'fixkosten'],
+                ['#land', 'reisen']
+            ];
 
             let timer = 0;
             let activeCard = null;
+            let pendingType = '';
             let startX = 0;
             let startY = 0;
             let triggered = false;
-            let pendingSelection = null;
             let suppressClickUntil = 0;
 
             function clearTimer() {
@@ -9448,41 +9456,35 @@
                 clearTimer();
                 if (activeCard) activeCard.classList.remove('longpress-hold-active');
                 activeCard = null;
+                pendingType = '';
                 triggered = false;
-                pendingSelection = null;
             }
 
-            function selectionInfoFromCard(card) {
-                if (!card) return null;
-                const moveButton = card.querySelector('.actions button[onclick*="moveAusgabe("], .swipe-original-actions button[onclick*="moveAusgabe("]');
-                const code = moveButton?.getAttribute('onclick') || '';
-                const match = code.match(/moveAusgabe\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)/);
-                if (!match) return null;
+            function typeFromCard(card) {
+                if (!card) return '';
+                for (const [selector, type] of VIEW_TYPE_MAP) {
+                    if (card.closest(selector)) return type;
+                }
+                return '';
+            }
 
-                const type = match[1];
-                const id = match[2];
-                if (!SUPPORTED_TYPES.has(type)) return null;
-                return { type, id: String(id) };
+            function selectButtonForType(type) {
+                if (!type) return null;
+                const expected = `toggleMultiSelect('${type}')`;
+                return Array.from(document.querySelectorAll('button[onclick]')).find(button =>
+                    (button.getAttribute('onclick') || '').trim() === expected
+                ) || null;
             }
 
             function cardFromTarget(target) {
                 if (!(target instanceof Element)) return null;
                 if (target.closest('.swipe-action-rail')) return null;
-                if (target.closest('button,input,select,textarea,a,label')) return null;
+                if (target.closest('button,input,select,textarea,a,label,.select-dot')) return null;
 
                 const shell = target.closest('.swipe-entry-shell');
                 if (!shell || shell.classList.contains('swipe-entry-open')) return null;
                 const card = shell.querySelector(':scope > .item.swipe-entry-ready');
-                return selectionInfoFromCard(card) ? card : null;
-            }
-
-            function startSelectionMode(info) {
-                if (!info || typeof state !== 'object' || typeof renderForSelection !== 'function') return;
-                if (!state.multiSelect || !state.selected) return;
-
-                state.multiSelect[info.type] = true;
-                state.selected[info.type] = [String(info.id)];
-                renderForSelection(info.type);
+                return typeFromCard(card) ? card : null;
             }
 
             document.addEventListener('touchstart', event => {
@@ -9494,16 +9496,22 @@
                     return;
                 }
 
+                const type = typeFromCard(card);
+                if (!selectButtonForType(type)) {
+                    resetPress();
+                    return;
+                }
+
                 const touch = event.touches[0];
                 clearTimer();
                 activeCard = card;
+                pendingType = type;
                 startX = touch.clientX;
                 startY = touch.clientY;
                 triggered = false;
-                pendingSelection = selectionInfoFromCard(card);
 
                 timer = setTimeout(() => {
-                    if (!activeCard || !pendingSelection) return;
+                    if (!activeCard || !pendingType) return;
                     triggered = true;
                     activeCard.classList.add('longpress-hold-active');
                 }, HOLD_MS);
@@ -9514,39 +9522,34 @@
                 const touch = event.touches[0];
                 const dx = touch.clientX - startX;
                 const dy = touch.clientY - startY;
-
-                if (!triggered && Math.hypot(dx, dy) > MOVE_TOLERANCE) {
-                    resetPress();
-                }
+                if (Math.hypot(dx, dy) > MOVE_TOLERANCE) resetPress();
             }, { passive: true });
 
             document.addEventListener('touchend', () => {
                 clearTimer();
 
-                if (!triggered || !pendingSelection) {
+                if (!triggered || !pendingType) {
                     resetPress();
                     return;
                 }
 
-                const info = pendingSelection;
+                const type = pendingType;
                 if (activeCard) activeCard.classList.remove('longpress-hold-active');
 
-                /* Das synthetische iOS-Klickereignis nach dem Long Press darf nicht
-                   direkt den frisch gerenderten Auswahl-Eintrag wieder antippen. */
+                activeCard = null;
+                pendingType = '';
+                triggered = false;
                 suppressClickUntil = Date.now() + 800;
 
-                activeCard = null;
-                triggered = false;
-                pendingSelection = null;
-
-                /* Erst nach dem kompletten touchend-Zyklus neu rendern. So kann die
-                   bestehende Swipe-Logik ihren Zustand vorher sauber beenden. */
-                setTimeout(() => startSelectionMode(info), 0);
+                /* Absichtlich keine direkte Aenderung an state und kein eigener Render-Aufruf.
+                   Es wird exakt derselbe sichtbare Auswaehlen-Button ausgeloest, den man sonst antippt. */
+                setTimeout(() => {
+                    const button = selectButtonForType(type);
+                    if (button) button.click();
+                }, 0);
             }, { passive: true });
 
-            document.addEventListener('touchcancel', () => {
-                resetPress();
-            }, { passive: true });
+            document.addEventListener('touchcancel', resetPress, { passive: true });
 
             document.addEventListener('contextmenu', event => {
                 if (cardFromTarget(event.target)) event.preventDefault();
