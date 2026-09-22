@@ -258,9 +258,9 @@
         /* Long-Press auf Listen-Eintraegen: iOS-Textauswahl und Touch-Menue unterdruecken. */
         .item,
         .item * {
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
         }
 
         /* Reisen: kompakte, ruhige Karten mit kleinen Aktionen rechts oben */
@@ -8870,6 +8870,17 @@
             overflow: hidden;
             isolation: isolate;
             width: 100%;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .swipe-entry-shell *,
+        .swipe-entry-ready,
+        .swipe-entry-ready * {
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
         }
         .swipe-entry-shell > .item.swipe-entry-ready {
             position: relative;
@@ -9250,6 +9261,31 @@
                 if (typeof oldFinishUndo === 'function') oldFinishUndo(`${count} Einträge gelöscht`);
             }
 
+            function clearNativeTextSelection() {
+                const selection = window.getSelection?.();
+                if (selection && selection.rangeCount) selection.removeAllRanges();
+            }
+
+            /* iOS/Safari kann trotz CSS bei langem Halten kurz eine Textauswahl starten.
+               Fuer unsere wischbaren Eintraege wird sie deshalb auch auf Event-Ebene blockiert. */
+            document.addEventListener('selectstart', event => {
+                if (event.target.closest?.('.swipe-entry-shell')) {
+                    event.preventDefault();
+                    clearNativeTextSelection();
+                }
+            }, true);
+
+            document.addEventListener('contextmenu', event => {
+                if (event.target.closest?.('.swipe-entry-shell')) {
+                    event.preventDefault();
+                    clearNativeTextSelection();
+                }
+            }, true);
+
+            document.addEventListener('selectionchange', () => {
+                if (activeShell || longPressShell || selectionMode) clearNativeTextSelection();
+            });
+
             function startLongPress(shell, x, y) {
                 clearLongPressTimer();
                 longPressTriggered = false;
@@ -9262,6 +9298,7 @@
                     if (!target || !target.isConnected) return;
                     longPressTriggered = true;
                     suppressClickUntil = Date.now() + 850;
+                    clearNativeTextSelection();
                     enterSelectionMode(target);
                     activeShell = null;
                     horizontal = false;
@@ -9333,6 +9370,7 @@
                 if (openShell && openShell !== shell) closeSwipe(openShell);
 
                 const touch = event.touches[0];
+                clearNativeTextSelection();
                 activeShell = shell;
                 startLongPress(shell, touch.clientX, touch.clientY);
                 startX = touch.clientX;
