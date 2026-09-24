@@ -1943,7 +1943,7 @@
             <div class="settings-menu">
                 <button class="settings-menu-item" type="button" onclick="openSettingsBudget()">
                     <span class="settings-menu-icon">💶</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Budget & Gehalt</span><span class="settings-menu-sub">Startgehalt, Gehaltstag und Gehaltszeitraum</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Budget & Gehalt</span><span class="settings-menu-sub">Aktuelles und nächstes Gehalt, Gehaltstag</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsQuickAdd()">
@@ -1998,10 +1998,27 @@
                 <div class="settings-note">Das Startgehalt wird getrennt für jeden Gehaltszeitraum gespeichert.</div>
             </div>
             <div class="settings-page-card">
+                <h3>Nächstes Gehalt</h3>
+                <div class="settings-note" style="margin-bottom:12px;">Sobald deine Lohnabrechnung da ist, kannst du das tatsächliche Datum und den Betrag für das nächste Gehalt vormerken. Der neue Gehaltszeitraum beginnt erst, wenn du den Eingang bestätigst.</div>
+                <div class="date-range">
+                    <div class="date-field">
+                        <label for="nextSalaryDateInput">Erwartetes Datum</label>
+                        <input id="nextSalaryDateInput" type="date">
+                    </div>
+                    <div class="date-field">
+                        <label for="nextSalaryAmountInput">Betrag</label>
+                        <input id="nextSalaryAmountInput" type="text" inputmode="decimal" placeholder="z. B. 2750">
+                    </div>
+                </div>
+                <button onclick="saveNextSalaryPlan()">Nächstes Gehalt speichern</button>
+                <button onclick="clearNextSalaryPlan()" style="background:#3a3a3c;">Angaben löschen</button>
+                <div id="nextSalarySettingsStatus" class="settings-note" style="margin-top:8px;"></div>
+            </div>
+            <div class="settings-page-card">
                 <label for="gehaltstagInput">Regulärer Gehaltstag</label>
                 <input id="gehaltstagInput" type="number" min="1" max="31" value="26">
                 <button onclick="saveGehaltstag()">Gehaltstag speichern</button>
-                <div class="settings-note">Fällt der Gehaltstag auf Samstag oder Sonntag, verwendet die App automatisch den folgenden Montag.</div>
+                <div class="settings-note">Dieser Tag bleibt der Standard, falls du kein konkretes nächstes Gehalt eingetragen hast. Fällt er auf Samstag oder Sonntag, verwendet die App weiterhin automatisch den folgenden Montag.</div>
             </div>
         </div>
     </div>
@@ -2195,6 +2212,17 @@
                 <div id="globalArchivTransferStatus" class="settings-note" style="margin-top:10px;">Exportiert die aktuell gefilterten Einträge als CSV für Excel/Numbers und als JSON für einen späteren Re-Import.</div>
             </div>
             <div id="globalArchivListe"></div>
+        </div>
+    </div>
+
+    <!-- ===================== NÄCHSTES GEHALT BESTÄTIGEN ===================== -->
+    <div id="nextSalaryPromptSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) snoozeNextSalaryPrompt()">
+        <div class="add-sheet">
+            <h3>Ist dein Gehalt angekommen?</h3>
+            <div id="nextSalaryPromptText" class="settings-note" style="font-size:14px;margin:-4px 0 14px;line-height:1.5;"></div>
+            <button type="button" onclick="confirmNextSalaryArrival()">✓ Ja, Gehalt ist da</button>
+            <button type="button" onclick="editNextSalaryFromPrompt()" style="background:#3a3a3c;">📅 Datum ändern</button>
+            <button type="button" onclick="snoozeNextSalaryPrompt()" style="background:#3a3a3c;">Später beantworten</button>
         </div>
     </div>
 
@@ -2678,6 +2706,8 @@
             Einstellungen: {
                 gehaltstag: 26,
                 startgehaelter: {},
+                naechstesGehaltPlan: { datum: "", betrag: "", periodenStart: "" },
+                aktuellerGehaltsstart: "",
                 quickAddFavoriten: ["haushalt", "freizeit", "einnahmen", "fixkosten", "versicherungen", "geplant", "sparen", "reisen"],
                 schnellbetraege: [5, 10, 20, 50],
                 letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} },
@@ -2804,6 +2834,16 @@
         if (!daten.Einstellungen.startgehaelter || typeof daten.Einstellungen.startgehaelter !== "object" || Array.isArray(daten.Einstellungen.startgehaelter)) {
             daten.Einstellungen.startgehaelter = {};
         }
+        if (!daten.Einstellungen.naechstesGehaltPlan || typeof daten.Einstellungen.naechstesGehaltPlan !== "object" || Array.isArray(daten.Einstellungen.naechstesGehaltPlan)) {
+            daten.Einstellungen.naechstesGehaltPlan = { datum: "", betrag: "", periodenStart: "" };
+        } else {
+            daten.Einstellungen.naechstesGehaltPlan = {
+                datum: typeof daten.Einstellungen.naechstesGehaltPlan.datum === "string" ? daten.Einstellungen.naechstesGehaltPlan.datum : "",
+                betrag: daten.Einstellungen.naechstesGehaltPlan.betrag ?? "",
+                periodenStart: typeof daten.Einstellungen.naechstesGehaltPlan.periodenStart === "string" ? daten.Einstellungen.naechstesGehaltPlan.periodenStart : ""
+            };
+        }
+        if (typeof daten.Einstellungen.aktuellerGehaltsstart !== "string") daten.Einstellungen.aktuellerGehaltsstart = "";
         const QUICK_ADD_DEFAULT = ["haushalt", "freizeit", "einnahmen", "fixkosten", "versicherungen", "geplant", "sparen", "reisen"];
         if (!Array.isArray(daten.Einstellungen.quickAddFavoriten)) {
             daten.Einstellungen.quickAddFavoriten = [...QUICK_ADD_DEFAULT];
@@ -2974,6 +3014,7 @@
             offeneFreizeitEintraege: {},
             offeneReiseEintraege: {},
             offeneArchivMonate: {},
+            nextSalaryPromptSnoozed: false,
         };
 
         if (!daten.geloeschteKategorien) {
@@ -3298,24 +3339,73 @@
             return d;
         }
 
-        function getGehaltszeitraum() {
-            const heute = startOfToday();
+        function standardGehaltszeitraumFuerDatum(referenz = startOfToday()) {
+            const ref = new Date(referenz.getFullYear(), referenz.getMonth(), referenz.getDate());
             const gehaltstag = getGehaltstag();
-            const gehaltDieserMonat = berechneterGehaltstag(heute.getFullYear(), heute.getMonth(), gehaltstag);
+            const gehaltDieserMonat = berechneterGehaltstag(ref.getFullYear(), ref.getMonth(), gehaltstag);
 
             let start;
             let naechstesGehalt;
-
-            if (heute >= gehaltDieserMonat) {
+            if (ref >= gehaltDieserMonat) {
                 start = gehaltDieserMonat;
-                naechstesGehalt = berechneterGehaltstag(heute.getFullYear(), heute.getMonth() + 1, gehaltstag);
+                naechstesGehalt = berechneterGehaltstag(ref.getFullYear(), ref.getMonth() + 1, gehaltstag);
             } else {
-                start = berechneterGehaltstag(heute.getFullYear(), heute.getMonth() - 1, gehaltstag);
+                start = berechneterGehaltstag(ref.getFullYear(), ref.getMonth() - 1, gehaltstag);
                 naechstesGehalt = gehaltDieserMonat;
             }
+            return { start, naechstesGehalt, gehaltstag };
+        }
 
-            const ende = addDays(naechstesGehalt, -1);
-            return { heute, start, ende, naechstesGehalt, gehaltstag };
+        function getNextSalaryPlan() {
+            daten.Einstellungen ??= {};
+            const plan = daten.Einstellungen.naechstesGehaltPlan;
+            if (!plan || typeof plan !== "object") return { datum: "", betrag: "", periodenStart: "" };
+            return {
+                datum: typeof plan.datum === "string" ? plan.datum : "",
+                betrag: plan.betrag ?? "",
+                periodenStart: typeof plan.periodenStart === "string" ? plan.periodenStart : ""
+            };
+        }
+
+        function getGehaltszeitraum() {
+            const heute = startOfToday();
+            const gehaltstag = getGehaltstag();
+            const plan = getNextSalaryPlan();
+            const planDatum = parseISODate(plan.datum);
+            const planPeriodenStart = parseISODate(plan.periodenStart);
+            const gespeicherterStart = parseISODate(daten.Einstellungen?.aktuellerGehaltsstart);
+
+            // Ein konkret vorgemerktes Gehalt hat Vorrang vor dem Standardtag.
+            // Solange der Eingang nicht bestätigt wurde, bleibt die alte Periode aktiv.
+            if (planDatum) {
+                const standardVorPlan = standardGehaltszeitraumFuerDatum(addDays(planDatum, -1));
+                let start = standardVorPlan.start;
+                if (planPeriodenStart && planPeriodenStart < planDatum) {
+                    start = planPeriodenStart;
+                } else if (gespeicherterStart && gespeicherterStart < planDatum) {
+                    const abstand = Math.round((planDatum - gespeicherterStart) / 86400000);
+                    if (abstand > 0 && abstand <= 45) start = gespeicherterStart;
+                }
+
+                // Ist das erwartete Datum schon erreicht/überschritten, verlängern wir die
+                // laufende Periode bis heute. So landen neue Ausgaben nicht versehentlich
+                // in einer noch gar nicht bestätigten neuen Gehaltsperiode.
+                const naechstesGehalt = planDatum > heute ? planDatum : addDays(heute, 1);
+                const ende = addDays(naechstesGehalt, -1);
+                return { heute, start, ende, naechstesGehalt, geplantesGehalt: planDatum, gehaltstag, wartetAufBestaetigung: heute >= planDatum };
+            }
+
+            // Nach einer manuellen Bestätigung darf der neue Zeitraum auch dann schon
+            // beginnen, wenn der reguläre Standardtag erst ein oder zwei Tage später wäre.
+            if (gespeicherterStart && gespeicherterStart <= heute) {
+                const nextStandard = berechneterGehaltstag(gespeicherterStart.getFullYear(), gespeicherterStart.getMonth() + 1, gehaltstag);
+                if (heute < nextStandard) {
+                    return { heute, start: gespeicherterStart, ende: addDays(nextStandard, -1), naechstesGehalt: nextStandard, gehaltstag };
+                }
+            }
+
+            const standard = standardGehaltszeitraumFuerDatum(heute);
+            return { heute, start: standard.start, ende: addDays(standard.naechstesGehalt, -1), naechstesGehalt: standard.naechstesGehalt, gehaltstag };
         }
 
         function generateId() {
@@ -3482,6 +3572,7 @@
             const tagInput = document.getElementById("gehaltstagInput");
             if (startInput) startInput.value = getStartgehalt(z) || "";
             if (tagInput) tagInput.value = getGehaltstag();
+            renderNextSalarySettings();
         }
 
         function openSettingsQuickAdd() {
@@ -8443,6 +8534,103 @@
             speichern();
         }
 
+        function renderNextSalarySettings(message = "") {
+            const plan = getNextSalaryPlan();
+            const dateInput = document.getElementById("nextSalaryDateInput");
+            const amountInput = document.getElementById("nextSalaryAmountInput");
+            const status = document.getElementById("nextSalarySettingsStatus");
+            if (dateInput && document.activeElement !== dateInput) dateInput.value = plan.datum || "";
+            if (amountInput && document.activeElement !== amountInput) amountInput.value = plan.betrag === "" ? "" : formatInputBetrag(plan.betrag);
+            if (status) {
+                if (message) status.textContent = message;
+                else if (plan.datum) {
+                    const d = parseISODate(plan.datum);
+                    const b = parseBetrag(plan.betrag);
+                    status.textContent = `Vorgemerkt: ${d ? formatDatum(plan.datum) : plan.datum}${Number.isFinite(b) ? ` · ${formatBetragText(b)}` : ""}. Am Datum fragt die App, ob das Gehalt wirklich angekommen ist.`;
+                } else {
+                    status.textContent = "Noch kein konkretes nächstes Gehalt vorgemerkt. Bis dahin gilt der reguläre Gehaltstag als Standard.";
+                }
+            }
+        }
+
+        function saveNextSalaryPlan() {
+            const dateInput = document.getElementById("nextSalaryDateInput");
+            const amountInput = document.getElementById("nextSalaryAmountInput");
+            const datum = dateInput?.value || "";
+            const betrag = parseBetrag(amountInput?.value);
+            const datumObj = parseISODate(datum);
+            const aktuellerStart = getGehaltszeitraum().start;
+            if (!datumObj) {
+                renderNextSalarySettings("Bitte ein gültiges Datum für das nächste Gehalt auswählen.");
+                return;
+            }
+            if (datumObj <= aktuellerStart) {
+                renderNextSalarySettings("Das nächste Gehalt muss nach dem Beginn der aktuellen Gehaltsperiode liegen.");
+                return;
+            }
+            if (!Number.isFinite(betrag) || betrag < 0) {
+                renderNextSalarySettings("Bitte einen gültigen Gehaltsbetrag eingeben.");
+                return;
+            }
+            daten.Einstellungen ??= {};
+            daten.Einstellungen.naechstesGehaltPlan = { datum, betrag, periodenStart: isoAusDate(aktuellerStart) };
+            state.nextSalaryPromptSnoozed = false;
+            speichern();
+            renderNextSalarySettings("Nächstes Gehalt gespeichert. Der neue Zeitraum startet erst nach deiner Bestätigung.");
+        }
+
+        function clearNextSalaryPlan() {
+            const plan = getNextSalaryPlan();
+            if (!plan.datum && plan.betrag === "") return renderNextSalarySettings();
+            if (!confirm("Vorgemerktes nächstes Gehalt wirklich löschen?")) return;
+            daten.Einstellungen.naechstesGehaltPlan = { datum: "", betrag: "", periodenStart: "" };
+            state.nextSalaryPromptSnoozed = false;
+            document.getElementById("nextSalaryPromptSheet")?.classList.add("hidden");
+            speichern();
+            renderNextSalarySettings("Vormerkung gelöscht. Es gilt wieder der reguläre Gehaltstag.");
+        }
+
+        function maybeOpenNextSalaryPrompt() {
+            if (state.nextSalaryPromptSnoozed) return;
+            const plan = getNextSalaryPlan();
+            const datum = parseISODate(plan.datum);
+            if (!datum || startOfToday() < datum) return;
+            if (document.getElementById("home")?.classList.contains("hidden")) return;
+            const sheet = document.getElementById("nextSalaryPromptSheet");
+            const text = document.getElementById("nextSalaryPromptText");
+            if (!sheet || !sheet.classList.contains("hidden")) return;
+            const betrag = parseBetrag(plan.betrag);
+            if (text) text.textContent = `Vorgemerkt für ${formatDatum(plan.datum)}${Number.isFinite(betrag) ? ` mit ${formatBetragText(betrag)}` : ""}. Erst mit „Ja“ beginnt der neue Gehaltszeitraum.`;
+            sheet.classList.remove("hidden");
+        }
+
+        function confirmNextSalaryArrival() {
+            const plan = getNextSalaryPlan();
+            const datum = parseISODate(plan.datum);
+            const betrag = parseBetrag(plan.betrag);
+            if (!datum || !Number.isFinite(betrag) || betrag < 0) return;
+            daten.Einstellungen ??= {};
+            daten.Einstellungen.startgehaelter ??= {};
+            daten.Einstellungen.aktuellerGehaltsstart = plan.datum;
+            daten.Einstellungen.startgehaelter[plan.datum] = betrag;
+            daten.Einstellungen.naechstesGehaltPlan = { datum: "", betrag: "", periodenStart: "" };
+            state.nextSalaryPromptSnoozed = false;
+            document.getElementById("nextSalaryPromptSheet")?.classList.add("hidden");
+            speichern();
+        }
+
+        function editNextSalaryFromPrompt() {
+            state.nextSalaryPromptSnoozed = true;
+            document.getElementById("nextSalaryPromptSheet")?.classList.add("hidden");
+            openSettingsBudget();
+            setTimeout(() => document.getElementById("nextSalaryDateInput")?.focus(), 80);
+        }
+
+        function snoozeNextSalaryPrompt() {
+            state.nextSalaryPromptSnoozed = true;
+            document.getElementById("nextSalaryPromptSheet")?.classList.add("hidden");
+        }
+
         function haushaltImZeitraum(von, bis) {
             const liste = [];
             if (!daten.Haushalt) return liste;
@@ -8609,7 +8797,13 @@
             if (weekDates) weekDates.innerText = `${formatKurzDatum(wochenStart)} – ${formatKurzDatum(wochenEnde)}`;
 
             const nextSalary = document.getElementById("homeNextSalary");
-            if (nextSalary) nextSalary.innerText = formatDatum(isoAusDate(zeitraum.naechstesGehalt));
+            if (nextSalary) {
+                const plan = getNextSalaryPlan();
+                const planDatum = parseISODate(plan.datum);
+                const planBetrag = parseBetrag(plan.betrag);
+                const anzeigeDatum = planDatum || zeitraum.geplantesGehalt || zeitraum.naechstesGehalt;
+                nextSalary.innerText = `${formatDatum(isoAusDate(anzeigeDatum))}${planDatum && Number.isFinite(planBetrag) ? ` · ${formatBetragText(planBetrag)}` : ""}`;
+            }
 
             const periodDates = document.getElementById("homePeriodDates");
             if (periodDates) periodDates.innerText = `${formatKurzDatum(zeitraum.start)} – ${formatKurzDatum(zeitraum.ende)}`;
@@ -8759,6 +8953,8 @@
             if (faelligDetailsEl) {
                 faelligDetailsEl.classList.toggle("hidden", !state.homeFaelligOffen);
             }
+
+            setTimeout(maybeOpenNextSalaryPrompt, 0);
 
             if (faelligListeEl) {
                 if (faellig.alle.length === 0) {
