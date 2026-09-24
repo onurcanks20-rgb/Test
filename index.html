@@ -7961,7 +7961,8 @@
             const data = istFreizeit ? gruppiereFreizeit() : gruppiereHaushalt();
             Object.keys(data).forEach(j => Object.keys(data[j]).forEach(m => {
                 data[j][m] = data[j][m]
-                    .filter(e => !istEintragAusgeblendet(typ, e.id))
+                    // In „Alle Einträge“ bleiben auch ausgeblendete Buchungen sichtbar,
+                    // damit sie hier direkt erkannt und wieder eingeblendet werden können.
                     .filter(e => matchesSearch(suche, e.text, e.name, e.kategorie, e.datum, e.betrag))
                     .sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
                 if (!data[j][m].length) delete data[j][m];
@@ -8016,14 +8017,17 @@
                             </div>`,40);
                         } else {
                             const zusatz = alltagZusatztext(e);
+                            const istAusgeblendet = istEintragAusgeblendet(typ, e.id);
                             item = createItem(`<div class="compact-alltag-content">
                                 <div class="compact-alltag-main">
                                     <span class="compact-alltag-title">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
+                                    ${istAusgeblendet ? `<span class="compact-alltag-sub" style="opacity:.9;">👁️‍🗨️ Ausgeblendet</span>` : ''}
                                     ${zusatz ? `<span class="compact-alltag-sub">${escapeHtml(zusatz)}</span>` : ''}
                                     ${e.datum ? `<span class="compact-alltag-sub">${formatDatum(e.datum)}</span>` : ''}
                                 </div>
                                 <strong class="compact-alltag-amount">${formatBetrag(e.betrag)}</strong>
                                 <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                    ${istAusgeblendet ? `<button onclick="event.stopPropagation(); eintragEinblenden('${typ}','${e.id}')" title="Wieder einblenden">👁️</button>` : ''}
                                     <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
                                     <button class="edit" onclick="event.stopPropagation(); startEditAusgabenArchiv('${typ}','${e.id}')">✏️</button>
                                     <button class="delete" onclick="event.stopPropagation(); deleteArchivEintrag('${typ}','${e.id}')">🗑️</button>
@@ -9877,10 +9881,15 @@
             }
 
             function rightSwipeConfigFor(shell) {
-                const action = typeof getRightSwipeAction === 'function' ? getRightSwipeAction() : 'aus';
+                let action = typeof getRightSwipeAction === 'function' ? getRightSwipeAction() : 'aus';
                 if (action === 'aus') return null;
                 const meta = shellEntryMeta(shell);
                 if (!meta) return null;
+                // Ist ein Eintrag bereits ausgeblendet, wird die eingestellte Aktion
+                // „Ausblenden“ automatisch zur passenden Rückgängig-Aktion.
+                if (action === 'ausblenden' && typeof istEintragAusgeblendet === 'function' && istEintragAusgeblendet(meta.type, meta.id)) {
+                    action = 'einblenden';
+                }
                 if (action === 'erneut' && !['haushalt','freizeit','reisen'].includes(meta.type)) return null;
                 if (action === 'bearbeiten' && !shell.querySelector(':scope > .item .actions .edit')) return null;
                 return { action, meta };
@@ -9890,7 +9899,7 @@
                 shell?.querySelector(':scope > .swipe-right-action-rail')?.remove();
                 const cfg = rightSwipeConfigFor(shell);
                 if (!cfg) return;
-                const labels = { erneut:'↻ Erneut', ausblenden:'👁️‍🗨️ Ausblenden', bearbeiten:'✏️ Bearbeiten', verschieben:'↪️ Verschieben' };
+                const labels = { erneut:'↻ Erneut', ausblenden:'👁️‍🗨️ Ausblenden', einblenden:'👁️ Einblenden', bearbeiten:'✏️ Bearbeiten', verschieben:'↪️ Verschieben' };
                 const rail = document.createElement('div');
                 rail.className = 'swipe-right-action-rail';
                 rail.dataset.action = cfg.action;
@@ -9908,6 +9917,7 @@
                 const { action, meta } = cfg;
                 if (action === 'erneut') erneutBuchenEintrag(meta.type, meta.id);
                 else if (action === 'ausblenden') ausblendenEintrag(meta.type, meta.id);
+                else if (action === 'einblenden') eintragEinblenden(meta.type, meta.id);
                 else if (action === 'bearbeiten') shell.querySelector(':scope > .item .actions .edit')?.click();
                 else if (action === 'verschieben') shell.querySelector(':scope > .item .actions button[onclick*="moveAusgabe("]')?.click();
             }
