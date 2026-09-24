@@ -2023,7 +2023,7 @@
                 <select id="rightSwipeAction" onchange="setRightSwipeAction(this.value)">
                     <option value="aus">Aus</option>
                     <option value="erneut">↻ Erneut buchen</option>
-                    <option value="ausblenden">🙈 Ausblenden</option>
+                    <option value="ausblenden">👁️‍🗨️ Ausblenden</option>
                     <option value="bearbeiten">✏️ Bearbeiten</option>
                     <option value="verschieben">↪️ Verschieben</option>
                 </select>
@@ -2034,7 +2034,7 @@
             <div class="settings-page-card">
                 <div style="font-weight:750;font-size:16px;">Ausgeblendete Einträge</div>
                 <div class="settings-note" style="margin:6px 0 12px;">Ausgeblendete Einträge bleiben in Summen und Budgets enthalten. Du kannst sie jederzeit im Archiv wieder einblenden.</div>
-                <button type="button" onclick="openHiddenArchive()" style="background:#3a3a3c;">🙈 Ausgeblendete verwalten</button>
+                <button type="button" onclick="openHiddenArchive()" style="background:#3a3a3c;">👁️‍🗨️ Ausgeblendete verwalten</button>
             </div>
         </div>
     </div>
@@ -4053,7 +4053,7 @@
                     html += `<div class="archive-month"><div class="archive-month-head" onclick="toggleGlobalArchivMonat('${key}')"><div class="archive-month-title">${offen?'▾':'▸'} ${getMonatName(parseInt(m))}</div><div class="archive-month-sum">${sumText}</div></div>`;
                     if (offen) {
                         entries.forEach(e => {
-                            html += `<div class="archive-entry"><div class="archive-entry-main"><div class="archive-entry-type">${globalArchivBereichLabel(e.bereich)}${e.ausgeblendet ? ' · 🙈 Ausgeblendet' : ''}</div><div class="archive-entry-title">${escapeHtml(e.titel)}</div><div class="archive-entry-meta">${formatDatum(e.datum)}${e.meta ? ' · '+escapeHtml(e.meta) : ''}</div>${e.ausgeblendet && e.id != null ? `<button type="button" onclick="event.stopPropagation(); eintragEinblenden('${e.bereich}','${e.id}')" style="width:auto;margin:8px 0 0;padding:7px 10px;background:#3a3a3c;font-size:12px;">👁️ Einblenden</button>` : ''}</div><div class="archive-entry-amount">${e.positiv?'+':''}${formatBetrag(e.betrag)}</div></div>`;
+                            html += `<div class="archive-entry"><div class="archive-entry-main"><div class="archive-entry-type">${globalArchivBereichLabel(e.bereich)}${e.ausgeblendet ? ' · 👁️‍🗨️ Ausgeblendet' : ''}</div><div class="archive-entry-title">${escapeHtml(e.titel)}</div><div class="archive-entry-meta">${formatDatum(e.datum)}${e.meta ? ' · '+escapeHtml(e.meta) : ''}</div>${e.ausgeblendet && e.id != null ? `<button type="button" onclick="event.stopPropagation(); eintragEinblenden('${e.bereich}','${e.id}')" style="width:auto;margin:8px 0 0;padding:7px 10px;background:#3a3a3c;font-size:12px;">👁️ Einblenden</button>` : ''}</div><div class="archive-entry-amount">${e.positiv?'+':''}${formatBetrag(e.betrag)}</div></div>`;
                         });
                     }
                     html += `</div>`;
@@ -5799,7 +5799,7 @@
                 });
 
             if (!sortierteFixkosten.length && daten["Laufende Kosten"].fix.length > 0 && !suche) {
-                div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🙈</div><div class="empty-state-title">Alle Fixkosten sind ausgeblendet</div><div class="empty-state-text">Unter Einstellungen → Gesten → Ausgeblendete verwalten kannst du sie wieder einblenden.</div></div>`;
+                div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👁️‍🗨️</div><div class="empty-state-title">Alle Fixkosten sind ausgeblendet</div><div class="empty-state-text">Unter Einstellungen → Gesten → Ausgeblendete verwalten kannst du sie wieder einblenden.</div></div>`;
             }
 
             let letzteFixkostenGruppe = null;
@@ -6184,7 +6184,7 @@
                 });
 
             if (!versicherungenSortiert.length && daten.Versicherungen.length > 0 && !suche) {
-                div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🙈</div><div class="empty-state-title">Alle Versicherungen sind ausgeblendet</div><div class="empty-state-text">Unter Einstellungen → Gesten → Ausgeblendete verwalten kannst du sie wieder einblenden.</div></div>`;
+                div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👁️‍🗨️</div><div class="empty-state-title">Alle Versicherungen sind ausgeblendet</div><div class="empty-state-text">Unter Einstellungen → Gesten → Ausgeblendete verwalten kannst du sie wieder einblenden.</div></div>`;
             }
 
             let letzteVersicherungsGruppe = null;
@@ -9656,7 +9656,7 @@
                 shell?.querySelector(':scope > .swipe-right-action-rail')?.remove();
                 const cfg = rightSwipeConfigFor(shell);
                 if (!cfg) return;
-                const labels = { erneut:'↻ Erneut', ausblenden:'🙈 Ausblenden', bearbeiten:'✏️ Bearbeiten', verschieben:'↪️ Verschieben' };
+                const labels = { erneut:'↻ Erneut', ausblenden:'👁️‍🗨️ Ausblenden', bearbeiten:'✏️ Bearbeiten', verschieben:'↪️ Verschieben' };
                 const rail = document.createElement('div');
                 rail.className = 'swipe-right-action-rail';
                 rail.dataset.action = cfg.action;
