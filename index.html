@@ -1913,6 +1913,11 @@
                     <span class="settings-menu-main"><span class="settings-menu-title">Design</span><span id="settingsDesignMenuSub" class="settings-menu-sub">Systemeinstellung verwenden</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
+                <button class="settings-menu-item" type="button" onclick="openSettingsGestures()">
+                    <span class="settings-menu-icon">👆</span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Gesten</span><span id="settingsGesturesMenuSub" class="settings-menu-sub">Rechts-Swipe: Aus</span></span>
+                    <span class="settings-menu-chevron">›</span>
+                </button>
             </div>
 
             <div class="settings-section-head" style="margin-top:22px;">Daten</div>
@@ -2006,6 +2011,34 @@
         </div>
     </div>
 
+    <!-- ===================== EINSTELLUNGEN: GESTEN ===================== -->
+    <div id="settingsGesturesView" class="hidden">
+        <div class="container">
+            <div class="topbar">
+                <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 style="flex:1;">Gesten</h2>
+            </div>
+            <div class="settings-page-card">
+                <label for="rightSwipeAction">Nach rechts wischen</label>
+                <select id="rightSwipeAction" onchange="setRightSwipeAction(this.value)">
+                    <option value="aus">Aus</option>
+                    <option value="erneut">↻ Erneut buchen</option>
+                    <option value="ausblenden">🙈 Ausblenden</option>
+                    <option value="bearbeiten">✏️ Bearbeiten</option>
+                    <option value="verschieben">↪️ Verschieben</option>
+                </select>
+                <div class="settings-note" style="margin-top:10px;">
+                    Ein Rechts-Swipe führt die gewählte Aktion aus. „Erneut buchen“ ist für Haushalt, Freizeit und Reisen verfügbar und übernimmt Betrag, Kategorie und Beschreibung mit heutigem Datum.
+                </div>
+            </div>
+            <div class="settings-page-card">
+                <div style="font-weight:750;font-size:16px;">Ausgeblendete Einträge</div>
+                <div class="settings-note" style="margin:6px 0 12px;">Ausgeblendete Einträge bleiben in Summen und Budgets enthalten. Du kannst sie jederzeit im Archiv wieder einblenden.</div>
+                <button type="button" onclick="openHiddenArchive()" style="background:#3a3a3c;">🙈 Ausgeblendete verwalten</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================== EINSTELLUNGEN: DESIGN ===================== -->
     <div id="settingsDesignView" class="hidden">
         <div class="container">
@@ -2091,6 +2124,11 @@
                         <option value="reisen">Reisen</option>
                     </select>
                     <select id="globalArchivJahr" onchange="renderGlobalArchiv()"><option value="alle">Alle Jahre</option></select>
+                    <select id="globalArchivSichtbarkeit" onchange="renderGlobalArchiv()">
+                        <option value="alle">Alle Einträge</option>
+                        <option value="sichtbar">Nur sichtbar</option>
+                        <option value="ausgeblendet">Nur ausgeblendet</option>
+                    </select>
                     <div class="archive-date-field">
                         <label for="globalArchivVon">Von</label>
                         <input id="globalArchivVon" type="date" aria-label="Von" onchange="renderGlobalArchiv()">
@@ -2596,6 +2634,8 @@
                 schnellbetraege: [5, 10, 20, 50],
                 letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} },
                 designModus: "system",
+                rechtsSwipeAktion: "aus",
+                ausgeblendeteEintraege: {},
                 warnungen: { aktiv:true, schwelle:100, tage:14, kategorien:{ haushalt:false, freizeit:false, fixkosten:true, versicherungen:true, einnahmen:false, reisen:true, geplant:true, sparen:true } }
             },
             geloeschteKategorien: {}
@@ -2704,6 +2744,10 @@
             daten.Einstellungen = {};
         }
         if (!["dunkel", "hell", "system"].includes(daten.Einstellungen.designModus)) daten.Einstellungen.designModus = "system";
+        if (!["aus", "erneut", "ausblenden", "bearbeiten", "verschieben"].includes(daten.Einstellungen.rechtsSwipeAktion)) daten.Einstellungen.rechtsSwipeAktion = "aus";
+        if (!daten.Einstellungen.ausgeblendeteEintraege || typeof daten.Einstellungen.ausgeblendeteEintraege !== "object" || Array.isArray(daten.Einstellungen.ausgeblendeteEintraege)) {
+            daten.Einstellungen.ausgeblendeteEintraege = {};
+        }
         const standardWarnungen = structuredClone(STANDARD_DATEN.Einstellungen.warnungen);
         if (!daten.Einstellungen.warnungen || typeof daten.Einstellungen.warnungen !== "object") daten.Einstellungen.warnungen = standardWarnungen;
         daten.Einstellungen.warnungen = { ...standardWarnungen, ...daten.Einstellungen.warnungen, kategorien:{...standardWarnungen.kategorien,...(daten.Einstellungen.warnungen.kategorien||{})} };
@@ -3306,6 +3350,7 @@
                 "settingsQuickAddView",
                 "settingsWarningsView",
                 "settingsDesignView",
+                "settingsGesturesView",
                 "settingsBackupView"
             ];
 
@@ -3379,6 +3424,7 @@
         function openSettings() {
             show("settingsView");
             renderDesignMenuStatus();
+            renderGestureSettings();
         }
 
         function openSettingsBudget() {
@@ -3404,6 +3450,113 @@
         function openSettingsDesign() {
             show("settingsDesignView");
             renderDesignSettings();
+        }
+
+        function getRightSwipeAction() {
+            daten.Einstellungen ??= {};
+            const value = daten.Einstellungen.rechtsSwipeAktion;
+            return ["aus", "erneut", "ausblenden", "bearbeiten", "verschieben"].includes(value) ? value : "aus";
+        }
+
+        function rightSwipeActionLabel(value = getRightSwipeAction()) {
+            return ({ aus:"Aus", erneut:"Erneut buchen", ausblenden:"Ausblenden", bearbeiten:"Bearbeiten", verschieben:"Verschieben" })[value] || "Aus";
+        }
+
+        function renderGestureSettings() {
+            const select = document.getElementById("rightSwipeAction");
+            if (select) select.value = getRightSwipeAction();
+            const sub = document.getElementById("settingsGesturesMenuSub");
+            if (sub) sub.textContent = `Rechts-Swipe: ${rightSwipeActionLabel()}`;
+        }
+
+        function openSettingsGestures() {
+            show("settingsGesturesView");
+            renderGestureSettings();
+        }
+
+        function setRightSwipeAction(value) {
+            if (!["aus", "erneut", "ausblenden", "bearbeiten", "verschieben"].includes(value)) return;
+            daten.Einstellungen ??= {};
+            daten.Einstellungen.rechtsSwipeAktion = value;
+            speichern();
+            renderGestureSettings();
+            document.dispatchEvent(new CustomEvent("kostentracker:rightSwipeSettingChanged"));
+        }
+
+        function hiddenEntryKey(type, id) {
+            return `${String(type || "")}:${String(id ?? "")}`;
+        }
+
+        function istEintragAusgeblendet(type, id) {
+            daten.Einstellungen ??= {};
+            daten.Einstellungen.ausgeblendeteEintraege ??= {};
+            return !!daten.Einstellungen.ausgeblendeteEintraege[hiddenEntryKey(type, id)];
+        }
+
+        function setEintragAusgeblendet(type, id, hidden) {
+            daten.Einstellungen ??= {};
+            daten.Einstellungen.ausgeblendeteEintraege ??= {};
+            const key = hiddenEntryKey(type, id);
+            if (hidden) daten.Einstellungen.ausgeblendeteEintraege[key] = true;
+            else delete daten.Einstellungen.ausgeblendeteEintraege[key];
+        }
+
+        function renderNachEintragsAktion(type) {
+            if (!document.getElementById("globalArchivView")?.classList.contains("hidden")) { populateGlobalArchivJahre(); renderGlobalArchiv(); return; }
+            if (!document.getElementById("ausgabenArchivView")?.classList.contains("hidden") && ["haushalt","freizeit"].includes(type)) { renderAusgabenArchiv(); return; }
+            if (type === "haushalt") renderHaushalt();
+            else if (type === "freizeit") renderFreizeit();
+            else if (type === "fixkosten") renderLaufendeKosten();
+            else if (type === "versicherungen") renderVersicherungen();
+            else if (type === "einnahmen") renderEinnahmen();
+            else if (type === "reisen") renderListe();
+        }
+
+        function ausblendenEintrag(type, id) {
+            if (!findeAusgabeZumVerschieben(type, id)) return;
+            beginUndoDelete("Eintrag ausgeblendet");
+            setEintragAusgeblendet(type, id, true);
+            speichern();
+            renderNachEintragsAktion(type);
+            finishUndoDelete("Eintrag ausgeblendet");
+        }
+
+        function eintragEinblenden(type, id) {
+            beginUndoDelete("Eintrag eingeblendet");
+            setEintragAusgeblendet(type, id, false);
+            speichern();
+            renderNachEintragsAktion(type);
+            finishUndoDelete("Eintrag eingeblendet");
+        }
+
+        function erneutBuchenEintrag(type, id) {
+            if (!["haushalt", "freizeit", "reisen"].includes(type)) return;
+            const gefunden = findeAusgabeZumVerschieben(type, id);
+            if (!gefunden?.eintrag) return;
+            beginUndoDelete("Eintrag erneut gebucht");
+            const copy = structuredClone(gefunden.eintrag);
+            copy.id = generateId();
+            copy.datum = heuteISO();
+            if (type === "haushalt" || type === "freizeit") {
+                const store = type === "haushalt" ? daten.Haushalt : daten.Freizeit;
+                const monat = parseISODate(copy.datum).getMonth() + 1;
+                store[monat] ??= [];
+                store[monat].push(copy);
+            } else if (type === "reisen" && gefunden.land && gefunden.kategorie) {
+                daten.Reisen[gefunden.land][gefunden.kategorie] ??= [];
+                daten.Reisen[gefunden.land][gefunden.kategorie].push(copy);
+            }
+            speichern();
+            renderNachEintragsAktion(type);
+            finishUndoDelete("Eintrag erneut gebucht");
+        }
+
+        function openHiddenArchive() {
+            show("globalArchivView");
+            populateGlobalArchivJahre();
+            const sichtbarkeit = document.getElementById("globalArchivSichtbarkeit");
+            if (sichtbarkeit) sichtbarkeit.value = "ausgeblendet";
+            renderGlobalArchiv();
         }
 
         function getDesignMode() {
@@ -3577,8 +3730,10 @@
             ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
             const bereich = document.getElementById("globalArchivBereich");
             const jahr = document.getElementById("globalArchivJahr");
+            const sichtbarkeit = document.getElementById("globalArchivSichtbarkeit");
             if (bereich) bereich.value = "alle";
             if (jahr) jahr.value = "alle";
+            if (sichtbarkeit) sichtbarkeit.value = "alle";
             renderGlobalArchiv();
         }
 
@@ -3588,6 +3743,7 @@
                 suche: getSearchTerm("globalArchivSuche"),
                 bereich: document.getElementById("globalArchivBereich")?.value || "alle",
                 jahr: document.getElementById("globalArchivJahr")?.value || "alle",
+                sichtbarkeit: document.getElementById("globalArchivSichtbarkeit")?.value || "alle",
                 von: document.getElementById("globalArchivVon")?.value || "",
                 bis: document.getElementById("globalArchivBis")?.value || ""
             };
@@ -3605,6 +3761,8 @@
                     titel: display.titel || eintrag.text || eintrag.name || "Eintrag",
                     meta: display.meta || "",
                     betrag: parseBetrag(eintrag.betrag) || 0,
+                    id: eintrag.id,
+                    ausgeblendet: istEintragAusgeblendet(bereich, eintrag.id),
                     positiv: bereich === "einnahmen"
                 });
             };
@@ -3639,6 +3797,8 @@
             return (records || []).filter(e => {
                 if (f.bereich !== "alle" && e.bereich !== f.bereich) return false;
                 if (f.jahr !== "alle" && !String(e.datum || "").startsWith(f.jahr + "-")) return false;
+                if (f.sichtbarkeit === "sichtbar" && e.ausgeblendet) return false;
+                if (f.sichtbarkeit === "ausgeblendet" && !e.ausgeblendet) return false;
                 if (f.von && e.datum < f.von) return false;
                 if (f.bis && e.datum > f.bis) return false;
                 if (f.suche && !matchesSearch(f.suche, e.titel, e.meta, e.datum, e.betrag, globalArchivBereichLabel(e.bereich))) return false;
@@ -3821,25 +3981,26 @@
                 if (!datum) return;
                 const d = parseISODate(datum);
                 if (!d) return;
-                out.push({ bereich, titel: titel || "Eintrag", betrag: parseBetrag(betrag) || 0, datum: isoAusDate(d), meta, ...extra });
+                const id = extra?.id;
+                out.push({ bereich, titel: titel || "Eintrag", betrag: parseBetrag(betrag) || 0, datum: isoAusDate(d), meta, ausgeblendet: istEintragAusgeblendet(bereich, id), ...extra });
             };
 
             Object.values(daten.Haushalt || {}).forEach(liste => {
                 if (!Array.isArray(liste)) return;
-                liste.forEach(e => push("haushalt", e.text || e.kategorie || "Haushalt", e.betrag, e.datum, e.kategorie || ""));
+                liste.forEach(e => push("haushalt", e.text || e.kategorie || "Haushalt", e.betrag, e.datum, e.kategorie || "", { id:e.id }));
             });
             Object.values(daten.Freizeit || {}).forEach(liste => {
                 if (!Array.isArray(liste)) return;
-                liste.forEach(e => push("freizeit", e.text || e.kategorie || "Freizeit", e.betrag, e.datum, e.kategorie || ""));
+                liste.forEach(e => push("freizeit", e.text || e.kategorie || "Freizeit", e.betrag, e.datum, e.kategorie || "", { id:e.id }));
             });
-            (daten["Laufende Kosten"]?.fix || []).forEach(e => push("fixkosten", e.text || e.name || "Fixkosten", e.betrag, e.datum, "Monatlich"));
-            (daten.Versicherungen || []).forEach(e => push("versicherungen", e.name || "Versicherung", e.betrag, e.datum, e.intervall || ""));
-            (daten.Einnahmen || []).forEach(e => push("einnahmen", e.text || "Einnahme", e.betrag, e.datum, [e.von, e.wiederholung].filter(Boolean).join(" · "), { positiv:true }));
+            (daten["Laufende Kosten"]?.fix || []).forEach(e => push("fixkosten", e.text || e.name || "Fixkosten", e.betrag, e.datum, "Monatlich", { id:e.id }));
+            (daten.Versicherungen || []).forEach(e => push("versicherungen", e.name || "Versicherung", e.betrag, e.datum, e.intervall || "", { id:e.id }));
+            (daten.Einnahmen || []).forEach(e => push("einnahmen", e.text || "Einnahme", e.betrag, e.datum, [e.von, e.wiederholung].filter(Boolean).join(" · "), { positiv:true, id:e.id }));
             Object.entries(daten.Reisen || {}).forEach(([land, reise]) => {
                 if (!reise || typeof reise !== "object") return;
                 Object.entries(reise).forEach(([kategorie, liste]) => {
                     if (!Array.isArray(liste)) return;
-                    liste.forEach(e => push("reisen", e.text || kategorie || "Reiseausgabe", e.betrag, e.datum, `${land} · ${kategorie}`));
+                    liste.forEach(e => push("reisen", e.text || kategorie || "Reiseausgabe", e.betrag, e.datum, `${land} · ${kategorie}`, { id:e.id, land, kategorie }));
                 });
             });
             return out.sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
@@ -3892,7 +4053,7 @@
                     html += `<div class="archive-month"><div class="archive-month-head" onclick="toggleGlobalArchivMonat('${key}')"><div class="archive-month-title">${offen?'▾':'▸'} ${getMonatName(parseInt(m))}</div><div class="archive-month-sum">${sumText}</div></div>`;
                     if (offen) {
                         entries.forEach(e => {
-                            html += `<div class="archive-entry"><div class="archive-entry-main"><div class="archive-entry-type">${globalArchivBereichLabel(e.bereich)}</div><div class="archive-entry-title">${escapeHtml(e.titel)}</div><div class="archive-entry-meta">${formatDatum(e.datum)}${e.meta ? ' · '+escapeHtml(e.meta) : ''}</div></div><div class="archive-entry-amount">${e.positiv?'+':''}${formatBetrag(e.betrag)}</div></div>`;
+                            html += `<div class="archive-entry"><div class="archive-entry-main"><div class="archive-entry-type">${globalArchivBereichLabel(e.bereich)}${e.ausgeblendet ? ' · 🙈 Ausgeblendet' : ''}</div><div class="archive-entry-title">${escapeHtml(e.titel)}</div><div class="archive-entry-meta">${formatDatum(e.datum)}${e.meta ? ' · '+escapeHtml(e.meta) : ''}</div>${e.ausgeblendet && e.id != null ? `<button type="button" onclick="event.stopPropagation(); eintragEinblenden('${e.bereich}','${e.id}')" style="width:auto;margin:8px 0 0;padding:7px 10px;background:#3a3a3c;font-size:12px;">👁️ Einblenden</button>` : ''}</div><div class="archive-entry-amount">${e.positiv?'+':''}${formatBetrag(e.betrag)}</div></div>`;
                         });
                     }
                     html += `</div>`;
@@ -5380,11 +5541,14 @@
 
                 const alleEintraege = Array.isArray(daten.Reisen[aktuellesLand][k]) ? daten.Reisen[aktuellesLand][k] : [];
                 const gefilterteEintraege = alleEintraege
+                    .filter(e => !istEintragAusgeblendet("reisen", e.id))
                     .filter(e => matchesSearch(suche, k, e.text, e.datum, e.betrag))
                     .sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
                 if (suche && !matchesSearch(suche, k) && gefilterteEintraege.length === 0) continue;
 
-                let sum = gefilterteEintraege.reduce((a, b) => a + (b.betrag || 0), 0);
+                let sum = alleEintraege
+                    .filter(e => matchesSearch(suche, k, e.text, e.datum, e.betrag))
+                    .reduce((a, b) => a + (b.betrag || 0), 0);
 
                 gesamt += sum;
 
@@ -5619,7 +5783,12 @@
                 return termin;
             };
 
+            summe = [...daten["Laufende Kosten"].fix]
+                .filter(k => matchesSearch(suche, k.text, k.name, k.info, k.datum, k.tag, k.betrag))
+                .reduce((acc, k) => acc + (parseBetrag(k.betrag) || 0), 0);
+
             const sortierteFixkosten = [...daten["Laufende Kosten"].fix]
+                .filter(k => !istEintragAusgeblendet("fixkosten", k.id))
                 .filter(k => matchesSearch(suche, k.text, k.name, k.info, k.datum, k.tag, k.betrag))
                 .sort((a, b) => {
                     const terminA = terminImGehaltszeitraum(a);
@@ -5628,6 +5797,10 @@
                     if (diff !== 0) return diff;
                     return String(a.datum || '').localeCompare(String(b.datum || ''));
                 });
+
+            if (!sortierteFixkosten.length && daten["Laufende Kosten"].fix.length > 0 && !suche) {
+                div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🙈</div><div class="empty-state-title">Alle Fixkosten sind ausgeblendet</div><div class="empty-state-text">Unter Einstellungen → Gesten → Ausgeblendete verwalten kannst du sie wieder einblenden.</div></div>`;
+            }
 
             let letzteFixkostenGruppe = null;
             sortierteFixkosten.forEach(k => {
@@ -5645,8 +5818,6 @@
                 k.datum = datum;
                 k.tag = tag;
                 k.info = k.info || "";
-
-                summe += parseBetrag(k.betrag) || 0;
 
                 const isEdit = String(state.editKostenId) === String(k.id);
                 let item;
@@ -6004,12 +6175,17 @@
 
             const suche = getSearchTerm("versicherungenSuche");
             const versicherungenSortiert = [...daten.Versicherungen]
+                .filter(v => !istEintragAusgeblendet("versicherungen", v.id))
                 .filter(v => matchesSearch(suche, v.name, v.anbieter, v.versicherungsnummer, v.intervall, v.datum, v.betrag))
                 .sort((a,b) => {
                     const da = naechsteZahlungDatum(a);
                     const db = naechsteZahlungDatum(b);
                     return (da?.getTime() || Number.MAX_SAFE_INTEGER) - (db?.getTime() || Number.MAX_SAFE_INTEGER);
                 });
+
+            if (!versicherungenSortiert.length && daten.Versicherungen.length > 0 && !suche) {
+                div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🙈</div><div class="empty-state-title">Alle Versicherungen sind ausgeblendet</div><div class="empty-state-text">Unter Einstellungen → Gesten → Ausgeblendete verwalten kannst du sie wieder einblenden.</div></div>`;
+            }
 
             let letzteVersicherungsGruppe = null;
             versicherungenSortiert.forEach((v) => {
@@ -6582,6 +6758,7 @@
             const alleEinnahmen = Array.isArray(daten.Einnahmen) ? daten.Einnahmen : [];
             document.getElementById("einnahmenDeleteAllBtn")?.classList.toggle("hidden", alleEinnahmen.length === 0);
             const liste = [...alleEinnahmen]
+                .filter(e => !istEintragAusgeblendet("einnahmen", e.id))
                 .filter(e => matchesSearch(suche, e.text, e.von, e.wiederholung, e.datum, e.betrag))
                 .sort((a,b) => String(b.datum).localeCompare(String(a.datum)));
 
@@ -7247,6 +7424,7 @@
             const suche = getSearchTerm(istFreizeit ? "freizeitSuche" : "haushaltSuche");
             const liste = alleAusgabenAusBereich(typ)
                 .filter(e => istInLetztenTagen(e.datum, 7))
+                .filter(e => !istEintragAusgeblendet(typ, e.id))
                 .filter(e => matchesSearch(suche, e.text, e.name, e.kategorie, e.datum, e.betrag))
                 .sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
 
@@ -7646,6 +7824,7 @@
             const data = istFreizeit ? gruppiereFreizeit() : gruppiereHaushalt();
             Object.keys(data).forEach(j => Object.keys(data[j]).forEach(m => {
                 data[j][m] = data[j][m]
+                    .filter(e => !istEintragAusgeblendet(typ, e.id))
                     .filter(e => matchesSearch(suche, e.text, e.name, e.kategorie, e.datum, e.betrag))
                     .sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
                 if (!data[j][m].length) delete data[j][m];
@@ -9004,6 +9183,43 @@
         .swipe-entry-shell.swipe-entry-dragging > .item.swipe-entry-ready {
             transition: none !important;
         }
+        .swipe-entry-shell > .swipe-right-action-rail {
+            position: absolute;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 118px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 5px 6px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .12s ease;
+        }
+        .swipe-entry-shell.swipe-entry-right-dragging > .swipe-right-action-rail { opacity: 1; }
+        .swipe-right-action-rail button {
+            width: auto !important;
+            min-width: 92px !important;
+            height: 46px !important;
+            min-height: 46px !important;
+            margin: 0 !important;
+            padding: 0 12px !important;
+            border-radius: 13px !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 14px !important;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+        .swipe-right-action-rail[data-action="erneut"] button { background:#34c759; }
+        .swipe-right-action-rail[data-action="ausblenden"] button { background:#8e8e93; }
+        .swipe-right-action-rail[data-action="bearbeiten"] button { background:var(--action-edit); }
+        .swipe-right-action-rail[data-action="verschieben"] button { background:var(--action-move); }
+
         .swipe-entry-shell > .swipe-action-rail {
             position: absolute;
             z-index: 1;
@@ -9102,7 +9318,8 @@
             opacity: 1;
             transform: scale(1);
         }
-        .swipe-entry-shell.swipe-selection-mode > .swipe-action-rail {
+        .swipe-entry-shell.swipe-selection-mode > .swipe-action-rail,
+        .swipe-entry-shell.swipe-selection-mode > .swipe-right-action-rail {
             opacity: 0 !important;
             pointer-events: none !important;
         }
@@ -9204,6 +9421,10 @@
                 });
             }
 
+            function setCardTranslate(shell, translateX) {
+                setCardOffset(shell, -translateX, 0);
+            }
+
 
             function cancelPendingFrame() {
                 if (frameId) cancelAnimationFrame(frameId);
@@ -9219,7 +9440,7 @@
                 if (!shell) return;
                 const card = cardOf(shell);
                 cancelPendingFrame();
-                shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
+                shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging', 'swipe-entry-right-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
                 shell.style.setProperty('--swipe-delete-progress', '0');
                 latestDeleteVisualProgress = 0;
                 if (card) {
@@ -9414,6 +9635,49 @@
                 }, 400);
             }
 
+            function shellEntryMeta(shell) {
+                const btn = shell?.querySelector(':scope > .swipe-action-rail button[onclick*="moveAusgabe("]');
+                const code = btn?.getAttribute('onclick') || '';
+                const match = code.match(/moveAusgabe\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)/);
+                return match ? { type: match[1], id: match[2] } : null;
+            }
+
+            function rightSwipeConfigFor(shell) {
+                const action = typeof getRightSwipeAction === 'function' ? getRightSwipeAction() : 'aus';
+                if (action === 'aus') return null;
+                const meta = shellEntryMeta(shell);
+                if (!meta) return null;
+                if (action === 'erneut' && !['haushalt','freizeit','reisen'].includes(meta.type)) return null;
+                if (action === 'bearbeiten' && !shell.querySelector(':scope > .item .actions .edit')) return null;
+                return { action, meta };
+            }
+
+            function refreshRightRail(shell) {
+                shell?.querySelector(':scope > .swipe-right-action-rail')?.remove();
+                const cfg = rightSwipeConfigFor(shell);
+                if (!cfg) return;
+                const labels = { erneut:'↻ Erneut', ausblenden:'🙈 Ausblenden', bearbeiten:'✏️ Bearbeiten', verschieben:'↪️ Verschieben' };
+                const rail = document.createElement('div');
+                rail.className = 'swipe-right-action-rail';
+                rail.dataset.action = cfg.action;
+                rail.setAttribute('aria-hidden', 'true');
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = labels[cfg.action] || 'Aktion';
+                rail.appendChild(btn);
+                shell.appendChild(rail);
+            }
+
+            function executeRightSwipe(shell) {
+                const cfg = rightSwipeConfigFor(shell);
+                if (!cfg) return;
+                const { action, meta } = cfg;
+                if (action === 'erneut') erneutBuchenEintrag(meta.type, meta.id);
+                else if (action === 'ausblenden') ausblendenEintrag(meta.type, meta.id);
+                else if (action === 'bearbeiten') shell.querySelector(':scope > .item .actions .edit')?.click();
+                else if (action === 'verschieben') shell.querySelector(':scope > .item .actions button[onclick*="moveAusgabe("]')?.click();
+            }
+
             function enhanceItem(item) {
                 if (!item || item.classList.contains('swipe-entry-ready')) return;
                 if (item.querySelector('input, select, textarea')) return;
@@ -9460,6 +9724,7 @@
                 actions.classList.add('swipe-original-actions');
                 item.classList.add('swipe-entry-ready');
                 shell.appendChild(rail);
+                refreshRightRail(shell);
             }
 
             function enhanceAll(root = document) {
@@ -9528,6 +9793,18 @@
                 }
 
                 event.preventDefault();
+
+                const rightRail = activeShell.querySelector(':scope > .swipe-right-action-rail');
+                if (startOffset === 0 && dx > 0 && rightRail) {
+                    activeShell.classList.remove('swipe-entry-dragging');
+                    activeShell.classList.add('swipe-entry-right-dragging');
+                    const rightOffset = Math.min(activeShellWidth * 0.42, dx);
+                    setCardTranslate(activeShell, rightOffset);
+                    return;
+                }
+
+                activeShell.classList.remove('swipe-entry-right-dragging');
+                activeShell.classList.add('swipe-entry-dragging');
                 const offset = Math.max(0, Math.min(activeShellWidth, startOffset - dx));
 
                 /* Hinter den normalen Aktionen beginnt die rote Voll-Swipe-Zone.
@@ -9560,6 +9837,25 @@
                 const dx = touch ? touch.clientX - startX : 0;
                 const max = activeRailWidth || railWidth(shell);
                 const shellWidth = activeShellWidth || Math.max(max, shell.getBoundingClientRect().width);
+
+                const rightRail = shell.querySelector(':scope > .swipe-right-action-rail');
+                if (horizontal && startOffset === 0 && dx > 0 && rightRail) {
+                    const trigger = Math.min(120, Math.max(86, shellWidth * 0.28));
+                    const shouldRun = dx >= trigger;
+                    const card = cardOf(shell);
+                    cancelPendingFrame();
+                    shell.classList.remove('swipe-entry-right-dragging', 'swipe-entry-dragging');
+                    if (card) card.style.transform = 'translate3d(0,0,0)';
+                    activeShell = null;
+                    horizontal = false;
+                    activeRailWidth = 0;
+                    activeShellWidth = 0;
+                    activeDeleteThreshold = 0;
+                    latestDeleteVisualProgress = 0;
+                    if (shouldRun) window.setTimeout(() => executeRightSwipe(shell), 30);
+                    return;
+                }
+
                 const offset = Math.max(0, Math.min(shellWidth, startOffset - dx));
                 const deleteThreshold = activeDeleteThreshold || Math.max(max + 56, shellWidth * 0.72);
                 const deleteButton = shell.querySelector('.swipe-action-rail .delete');
@@ -9664,6 +9960,10 @@
 
                 if (openShell && !openShell.contains(event.target)) closeSwipe(openShell);
             }, true);
+
+            document.addEventListener('kostentracker:rightSwipeSettingChanged', () => {
+                document.querySelectorAll('.swipe-entry-shell').forEach(refreshRightRail);
+            });
 
             const observer = new MutationObserver(mutations => {
                 let listWasRendered = false;
