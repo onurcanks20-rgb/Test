@@ -255,6 +255,52 @@
             transform: scale(0.98);
         }
 
+        /* Haushalt/Freizeit: kompakte Karten ohne aufklappbare Doppelinfos.
+           Die Hoehe bleibt bewusst etwa so gross wie bisher, nur die Anordnung
+           wird ruhiger: Kategorie links, Betrag rechts, Zusatztext darunter. */
+        .item.compact-alltag-card {
+            min-height: 80px;
+            box-sizing: border-box;
+        }
+        .compact-alltag-content {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            min-height: 52px;
+        }
+        .compact-alltag-main {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+        }
+        .compact-alltag-title {
+            font-weight: 750;
+            overflow-wrap: anywhere;
+        }
+        .compact-alltag-sub {
+            font-size: 13px;
+            line-height: 1.3;
+            opacity: .62;
+            overflow-wrap: anywhere;
+        }
+        .compact-alltag-amount {
+            font-size: 18px;
+            font-weight: 800;
+            white-space: nowrap;
+            text-align: right;
+            align-self: center;
+        }
+        /* Bei diesen Karten brauchen die versteckten Original-Aktionsbuttons
+           keinen Platz mehr in der Karte; die Swipe-Leiste liegt separat dahinter. */
+        .item.compact-alltag-card .actions,
+        .item.compact-alltag-card .swipe-original-actions {
+            display: none !important;
+        }
+
         /* Long-Press auf Listen-Eintraegen: iOS-Textauswahl und Touch-Menue unterdruecken. */
         .item,
         .item * {
@@ -7416,6 +7462,13 @@
             breakdownEl.innerHTML = teile.join(" · ");
         }
 
+        function alltagZusatztext(e) {
+            const text = String(e?.text || e?.name || '').trim();
+            const kategorie = String(e?.kategorie || 'Sonstiges').trim();
+            if (!text) return '';
+            return text.toLocaleLowerCase('de-DE') === kategorie.toLocaleLowerCase('de-DE') ? '' : text;
+        }
+
         function renderRecentAusgaben(typ) {
             const istFreizeit = typ === "freizeit";
             const container = document.getElementById(istFreizeit ? "freizeitListe" : "haushaltListe");
@@ -7464,31 +7517,22 @@
                             <div style="display:flex; gap:10px;"><button onclick="saveEditHaushalt('${e.id}')">💾 Speichern</button><button onclick="cancelEditHaushalt()">❌ Abbrechen</button></div>
                         </div>`;
                 } else {
-                    const beschreibung = escapeHtml(e.text || e.name || '');
-                    const istOffen = !!offenMap?.[String(e.id)];
-                    html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
-                        <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="toggleAlltagsDetails('${typ}','${e.id}')"
-                                 style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
-                                    <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
-                                    <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
-                                </div>
-                            </div>
-                            <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                                <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
-                                <button class="edit" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button>
-                                <button class="delete" onclick="event.stopPropagation(); ${istFreizeit ? `deleteFreizeit('${e.id}')` : `deleteHaushalt('${e.id}')`}">🗑️</button>
-                            </div>
+                    const zusatz = alltagZusatztext(e);
+                    html = `<div class="compact-alltag-content">
+                        <div class="compact-alltag-main">
+                            <span class="compact-alltag-title">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
+                            ${zusatz ? `<span class="compact-alltag-sub">${escapeHtml(zusatz)}</span>` : ''}
                         </div>
-                        ${istOffen ? `
-                            <div onclick="toggleAlltagsDetails('${typ}','${e.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
-                                ${beschreibung ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Beschreibung</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${beschreibung}</span></div>` : ''}
-                                <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Datum</span><span style="font-weight:600;text-align:right;">${e.datum ? formatDatum(e.datum) : '-'}</span></div>
-                            </div>` : ''}
+                        <strong class="compact-alltag-amount">${formatBetrag(e.betrag)}</strong>
+                        <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                            <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
+                            <button class="edit" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button>
+                            <button class="delete" onclick="event.stopPropagation(); ${istFreizeit ? `deleteFreizeit('${e.id}')` : `deleteHaushalt('${e.id}')`}">🗑️</button>
+                        </div>
                     </div>`;
                 }
                 const item = createItem(html);
+                if (!isEdit) item.classList.add("compact-alltag-card");
                 item.style.background = "#3a3a3c";
                 container.appendChild(item);
                 if (isEdit) setTimeout(() => istFreizeit ? setupFreizeitEditEnterFlow(e.id) : setupHaushaltEditEnterFlow(e.id), 0);
@@ -7878,29 +7922,21 @@
                                 </div>
                             </div>`,40);
                         } else {
-                            const beschreibung = escapeHtml(e.text || e.name || '');
-                            const istOffen = !!offenMap?.[String(e.id)];
-                            item = createItem(`<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
-                                <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                                    <div onclick="toggleArchivDetails('${typ}','${e.id}')"
-                                         style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                        <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
-                                            <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
-                                            <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
-                                        </div>
-                                    </div>
-                                    <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                                        <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
-                                        <button class="edit" onclick="event.stopPropagation(); startEditAusgabenArchiv('${typ}','${e.id}')">✏️</button>
-                                        <button class="delete" onclick="event.stopPropagation(); deleteArchivEintrag('${typ}','${e.id}')">🗑️</button>
-                                    </div>
+                            const zusatz = alltagZusatztext(e);
+                            item = createItem(`<div class="compact-alltag-content">
+                                <div class="compact-alltag-main">
+                                    <span class="compact-alltag-title">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
+                                    ${zusatz ? `<span class="compact-alltag-sub">${escapeHtml(zusatz)}</span>` : ''}
+                                    ${e.datum ? `<span class="compact-alltag-sub">${formatDatum(e.datum)}</span>` : ''}
                                 </div>
-                                ${istOffen ? `
-                                    <div onclick="toggleArchivDetails('${typ}','${e.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
-                                        ${beschreibung ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Beschreibung</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${beschreibung}</span></div>` : ''}
-                                        <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Datum</span><span style="font-weight:600;text-align:right;">${e.datum ? formatDatum(e.datum) : '-'}</span></div>
-                                    </div>` : ''}
+                                <strong class="compact-alltag-amount">${formatBetrag(e.betrag)}</strong>
+                                <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                    <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
+                                    <button class="edit" onclick="event.stopPropagation(); startEditAusgabenArchiv('${typ}','${e.id}')">✏️</button>
+                                    <button class="delete" onclick="event.stopPropagation(); deleteArchivEintrag('${typ}','${e.id}')">🗑️</button>
+                                </div>
                             </div>`,40);
+                            item.classList.add("compact-alltag-card");
                         }
 
                         item.style.background = "#3a3a3c";
