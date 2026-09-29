@@ -1267,11 +1267,93 @@
         .warning-cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
         .warning-cat { display:flex; align-items:center; gap:8px; background:#2c2c2e; border-radius:12px; padding:10px; font-size:14px; }
         .warning-cat input { width:auto; margin:0; }
-        .home-warning-card { background:#2c2c2e; border-radius:18px; padding:14px; margin-top:10px; }
-        .home-warning-head { display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer; }
-        .home-warning-list { margin-top:10px; display:flex; flex-direction:column; gap:8px; }
-        .home-warning-item { display:flex; justify-content:space-between; gap:12px; padding:10px; border-radius:12px; background:#3a3a3c; }
-        .home-warning-item small { display:block; opacity:.65; margin-top:3px; }
+        .home-warning-card {
+            background:#2c2c2e;
+            border-radius:22px;
+            padding:16px;
+            margin:0 0 12px;
+            border:1px solid rgba(255,255,255,.035);
+        }
+        .home-warning-head {
+            display:flex;
+            align-items:center;
+            gap:9px;
+            margin-bottom:13px;
+        }
+        .home-warning-icon {
+            width:30px;
+            height:30px;
+            flex:0 0 30px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border-radius:10px;
+            background:rgba(255,204,0,.10);
+            font-size:17px;
+        }
+        .home-warning-head strong {
+            font-size:17px;
+            line-height:1.2;
+            font-weight:800;
+        }
+        .home-warning-list { display:flex; flex-direction:column; gap:0; }
+        .home-warning-item {
+            display:grid;
+            grid-template-columns:minmax(0,1fr) auto;
+            align-items:start;
+            gap:14px;
+            padding:0;
+            background:transparent;
+        }
+        .home-warning-item + .home-warning-item {
+            margin-top:12px;
+            padding-top:12px;
+            border-top:1px solid rgba(255,255,255,.10);
+        }
+        .home-warning-main { min-width:0; }
+        .home-warning-title {
+            display:block;
+            font-size:17px;
+            line-height:1.22;
+            font-weight:780;
+            overflow-wrap:anywhere;
+        }
+        .home-warning-meta {
+            display:block;
+            margin-top:5px;
+            font-size:13.5px;
+            line-height:1.3;
+            opacity:.62;
+        }
+        .home-warning-side {
+            min-width:max-content;
+            text-align:right;
+        }
+        .home-warning-amount {
+            display:block;
+            font-size:17px;
+            line-height:1.22;
+            font-weight:800;
+            white-space:nowrap;
+        }
+        .home-warning-date {
+            display:block;
+            margin-top:5px;
+            font-size:13.5px;
+            line-height:1.3;
+            opacity:.58;
+            white-space:nowrap;
+        }
+        .home-warning-card.high-amount-warning {
+            border-color:rgba(255,159,10,.24);
+            background:linear-gradient(180deg, rgba(255,159,10,.075), rgba(44,44,46,1) 44%);
+        }
+        .home-warning-card.high-amount-warning .home-warning-icon {
+            background:rgba(255,159,10,.16);
+        }
+        .home-warning-card.high-amount-warning .home-warning-amount {
+            color:#ffb340;
+        }
 
         /* ===== DATUMSGRUPPEN WIE IN BANKING-APPS ===== */
         .date-group-title {
@@ -1618,7 +1700,13 @@
         :root[data-theme="light"] .empty-state,
         :root[data-theme="light"] .week-preview-row,
         :root[data-theme="light"] .reminder-control,
-        :root[data-theme="light"] .home-warning-item { background:#f2f2f7; color:#111; }
+        :root[data-theme="light"] .home-warning-item { background:transparent; color:#111; }
+        :root[data-theme="light"] .home-warning-item + .home-warning-item { border-top-color:rgba(0,0,0,.10); }
+        :root[data-theme="light"] .home-warning-card.high-amount-warning {
+            background:linear-gradient(180deg, rgba(255,159,10,.10), #fff 48%);
+            border-color:rgba(180,83,9,.18);
+        }
+        :root[data-theme="light"] .home-warning-card.high-amount-warning .home-warning-amount { color:#b45309; }
         :root[data-theme="light"] .bottom-nav { background:rgba(250,250,252,.96); box-shadow:0 -8px 24px rgba(0,0,0,.10); }
         :root[data-theme="light"] .back-btn,
         :root[data-theme="light"] .icon-btn,
@@ -1770,7 +1858,7 @@
                 <strong id="homeNextSalary">–</strong>
             </div>
 
-            <div class="salary-row" style="margin-top:-6px;">
+            <div class="salary-row">
                 <span>Gespart</span>
                 <strong id="homeGespart">0,00 €</strong>
             </div>
@@ -3004,7 +3092,6 @@
             editGeplanteAusgabeId: null,
             editSparenInvestierenId: null,
             homeKostenOffen: false,
-            homeWarnungenOffen: false,
             homeFaelligOffen: false,
             freiDetailsOffen: false,
             offeneVersicherungen: {},
@@ -3119,9 +3206,48 @@
         function toggleWarnungenAktiv(){ const a=document.getElementById('warnungenAktiv');if(!a)return;const on=a.getAttribute('aria-checked')!=='true';a.setAttribute('aria-checked',on?'true':'false');a.querySelector('.ios-switch')?.classList.toggle('on',on);saveWarnSettings();renderWarnSettings();renderHomeWarnings(); }
         function saveWarnSettings(doSave=true){ const w=getWarnSettings();const a=document.getElementById('warnungenAktiv');if(a)w.aktiv=a.getAttribute('aria-checked')!=='false';const s=parseBetrag(document.getElementById('warnSchwelle')?.value);if(!isNaN(s)&&s>=0)w.schwelle=s;const t=parseInt(document.getElementById('warnTage')?.value,10);if(!isNaN(t)&&t>=0)w.tage=Math.min(365,t);w.kategorien??={};document.querySelectorAll('[data-warn-cat]').forEach(el=>w.kategorien[el.dataset.warnCat]=el.checked);document.getElementById('warnGlobalFields')?.classList.toggle('hidden',!w.aktiv);if(doSave)speichern(); }
         function daysBetween(a,b){return Math.round((b-a)/86400000);}
-        function collectUpcomingWarnings(){ const w=getWarnSettings(),today=startOfToday(),horizon=addDays(today,365),rows=[]; const push=(type,label,entry,date,amount,name)=>{if(!date||date<today||date>horizon)return;const days=daysBetween(today,date),manual=!!entry?.warnung,own=Math.max(0,parseInt(entry?.warnTage,10)||14),auto=w.aktiv!==false&&!!w.kategorien?.[type]&&(parseBetrag(amount)||0)>=(parseBetrag(w.schwelle)||0)&&days<=Math.max(0,parseInt(w.tage,10)||14);if(!(manual&&days<=own)&&!auto)return;rows.push({type,label,name:name||label,betrag:parseBetrag(amount)||0,datum:new Date(date),manual});}; Object.values(daten.Haushalt||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('haushalt','Haushalt',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.values(daten.Freizeit||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('freizeit','Freizeit',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.entries(daten.Reisen||{}).forEach(([land,r])=>Object.values(r||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('reisen',`Reise · ${land}`,e,parseISODate(e.datum),e.betrag,e.text||land))));(daten['Geplante Ausgaben']||[]).forEach(e=>push('geplant','Geplante Ausgabe',e,parseISODate(e.datum),e.betrag,e.text)); const fix=(daten['Laufende Kosten']?.fix||[]);laufendeKostenImZeitraum(today,horizon).forEach(x=>{const e=fix.find(k=>String(k.id)===String(x.sourceId))||fix.find(k=>(k.text||k.name||'Fixkosten')===x.name&&(parseBetrag(k.betrag)||0)===x.betrag);push('fixkosten','Fixkosten',e||{},x.datum,x.betrag,x.name);});versicherungsZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Versicherungen||[]).find(v=>String(v.id)===String(x.sourceId))||(daten.Versicherungen||[]).find(v=>(v.name||'Versicherung')===x.name&&(parseBetrag(v.betrag)||0)===x.betrag);push('versicherungen','Versicherung',e||{},x.datum,x.betrag,x.name);});einnahmenZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Einnahmen||[]).find(v=>String(v.id)===String(x.id));push('einnahmen','Einnahme',e||x,x.datumObj,x.betrag,x.text);});const z=getGehaltszeitraum(),next=z.naechstesGehalt||addDays(today,30);(daten['Sparen & Investieren']||[]).forEach(e=>{const a=parseISODate(e.datum),d=a&&a>=today?a:next;push('sparen',e.typ==='sparen'?'Sparen':'Investieren',e,d,e.betrag,e.text||(e.typ==='sparen'?'Sparen':'Investieren'));});return rows.sort((a,b)=>a.datum-b.datum||b.betrag-a.betrag);}
-        function toggleHomeWarnings(){state.homeWarnungenOffen=!state.homeWarnungenOffen;renderHomeWarnings();}
-        function renderHomeWarnings(){const h=document.getElementById('homeWarnings');if(!h)return;const rows=collectUpcomingWarnings();h.classList.toggle('hidden',!rows.length);if(!rows.length){h.innerHTML='';return;}const f=rows[0],rest=rows.length-1;h.innerHTML=`<div class="home-warning-card"><div class="home-warning-head" onclick="toggleHomeWarnings()"><div><strong>🔔 Bevorstehende ${rows.length===1?'Erinnerung':'Erinnerungen'}</strong><div style="margin-top:4px;">${escapeHtml(f.name)} · ${formatBetrag(f.betrag)} · ${formatKurzDatum(f.datum)}</div>${rest?`<small style="opacity:.65;">+ ${rest} weitere</small>`:''}</div><span>${state.homeWarnungenOffen?'▲':'▼'}</span></div>${state.homeWarnungenOffen?`<div class="home-warning-list">${rows.map(r=>`<div class="home-warning-item"><div><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.label)} · in ${daysBetween(startOfToday(),r.datum)} Tag(en)${r.manual?' · manuell':''}</small></div><div style="text-align:right"><strong>${formatBetrag(r.betrag)}</strong><small>${formatKurzDatum(r.datum)}</small></div></div>`).join('')}</div>`:''}</div>`;}
+        function collectUpcomingWarnings(){ const w=getWarnSettings(),today=startOfToday(),horizon=addDays(today,365),rows=[]; const push=(type,label,entry,date,amount,name)=>{if(!date||date<today||date>horizon)return;const days=daysBetween(today,date),manual=!!entry?.warnung,own=Math.max(0,parseInt(entry?.warnTage,10)||14),auto=w.aktiv!==false&&!!w.kategorien?.[type]&&(parseBetrag(amount)||0)>=(parseBetrag(w.schwelle)||0)&&days<=Math.max(0,parseInt(w.tage,10)||14),manualAktiv=manual&&days<=own;if(!manualAktiv&&!auto)return;rows.push({type,label,name:name||label,betrag:parseBetrag(amount)||0,datum:new Date(date),manual:manualAktiv,auto});}; Object.values(daten.Haushalt||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('haushalt','Haushalt',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.values(daten.Freizeit||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('freizeit','Freizeit',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.entries(daten.Reisen||{}).forEach(([land,r])=>Object.values(r||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('reisen',`Reise · ${land}`,e,parseISODate(e.datum),e.betrag,e.text||land))));(daten['Geplante Ausgaben']||[]).forEach(e=>push('geplant','Geplante Ausgabe',e,parseISODate(e.datum),e.betrag,e.text)); const fix=(daten['Laufende Kosten']?.fix||[]);laufendeKostenImZeitraum(today,horizon).forEach(x=>{const e=fix.find(k=>String(k.id)===String(x.sourceId))||fix.find(k=>(k.text||k.name||'Fixkosten')===x.name&&(parseBetrag(k.betrag)||0)===x.betrag);push('fixkosten','Fixkosten',e||{},x.datum,x.betrag,x.name);});versicherungsZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Versicherungen||[]).find(v=>String(v.id)===String(x.sourceId))||(daten.Versicherungen||[]).find(v=>(v.name||'Versicherung')===x.name&&(parseBetrag(v.betrag)||0)===x.betrag);push('versicherungen','Versicherung',e||{},x.datum,x.betrag,x.name);});einnahmenZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Einnahmen||[]).find(v=>String(v.id)===String(x.id));push('einnahmen','Einnahme',e||x,x.datumObj,x.betrag,x.text);});const z=getGehaltszeitraum(),next=z.naechstesGehalt||addDays(today,30);(daten['Sparen & Investieren']||[]).forEach(e=>{const a=parseISODate(e.datum),d=a&&a>=today?a:next;push('sparen',e.typ==='sparen'?'Sparen':'Investieren',e,d,e.betrag,e.text||(e.typ==='sparen'?'Sparen':'Investieren'));});return rows.sort((a,b)=>a.datum-b.datum||b.betrag-a.betrag);}
+        function formatReminderCountdown(tage) {
+            if (tage <= 0) return "heute";
+            if (tage === 1) return "in 1 Tag";
+            return `in ${tage} Tagen`;
+        }
+        function renderHomeWarningGroup(rows, highAmount=false) {
+            if (!rows.length) return "";
+            const icon = highAmount ? "⚠️" : "🔔";
+            const title = highAmount
+                ? (rows.length === 1 ? "Hoher Betrag" : "Hohe Beträge")
+                : `Bevorstehende ${rows.length === 1 ? "Erinnerung" : "Erinnerungen"}`;
+            return `<div class="home-warning-card${highAmount ? ' high-amount-warning' : ''}">
+                <div class="home-warning-head">
+                    <span class="home-warning-icon">${icon}</span>
+                    <strong>${title}</strong>
+                </div>
+                <div class="home-warning-list">${rows.map(r=>{
+                    const tage=daysBetween(startOfToday(),r.datum);
+                    return `<div class="home-warning-item">
+                        <div class="home-warning-main">
+                            <strong class="home-warning-title">${escapeHtml(r.name)}</strong>
+                            <span class="home-warning-meta">${escapeHtml(r.label)} · ${formatReminderCountdown(tage)}</span>
+                        </div>
+                        <div class="home-warning-side">
+                            <strong class="home-warning-amount">${formatBetrag(r.betrag)}</strong>
+                            <span class="home-warning-date">${formatKurzDatum(r.datum)}</span>
+                        </div>
+                    </div>`;
+                }).join('')}</div>
+            </div>`;
+        }
+        function renderHomeWarnings(){
+            const h=document.getElementById('homeWarnings');
+            if(!h)return;
+            const rows=collectUpcomingWarnings();
+            h.classList.toggle('hidden',!rows.length);
+            if(!rows.length){h.innerHTML='';return;}
+            const hoheBetraege=rows.filter(r=>r.auto);
+            const erinnerungen=rows.filter(r=>!r.auto);
+            h.innerHTML=renderHomeWarningGroup(hoheBetraege,true)+renderHomeWarningGroup(erinnerungen,false);
+        }
         document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{decorateReminderControls();renderWarnSettings();renderHomeWarnings();},0);new MutationObserver(()=>decorateReminderControls()).observe(document.body,{childList:true,subtree:true});});
 
         function speichern() {
