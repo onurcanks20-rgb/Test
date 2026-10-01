@@ -1,0 +1,26 @@
+{
+  "id": "./kostentracker-test",
+  "name": "Kostentracker Test",
+  "short_name": "KT Test",
+  "description": "Testversion des Kostentrackers",
+  "lang": "de-DE",
+  "start_url": "./indexupdate.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111114",
+  "theme_color": "#5b21b6",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

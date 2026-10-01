@@ -4,18 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#5b21b6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Kostentracker">
+    <meta name="apple-mobile-web-app-title" content="Kostentracker Test">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Kostentracker">
+    <meta name="application-name" content="Kostentracker Test">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
-    <title>Kostentracker</title>
+    <title>Kostentracker Test</title>
 
     <script>
         // Design so frueh wie moeglich anwenden, damit beim Start nichts kurz aufblitzt.
@@ -23,7 +23,7 @@
             let mode = "system";
             let saved = null;
             try {
-                saved = JSON.parse(localStorage.getItem("kostenApp") || "null");
+                saved = JSON.parse(localStorage.getItem("kostenApp_test") || "null");
                 const candidate = saved?.Einstellungen?.designModus;
                 if (["dunkel", "hell", "system"].includes(candidate)) mode = candidate;
             } catch (_) {}
@@ -2044,6 +2044,11 @@
                     <span class="settings-menu-main"><span class="settings-menu-title">Erinnerungen & Warnungen</span><span class="settings-menu-sub">Große Ausgaben und Hinweise auf der Startseite</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
+                <button class="settings-menu-item" type="button" onclick="openSettingsPushTest()">
+                    <span class="settings-menu-icon">📳</span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Push-Test</span><span id="settingsPushMenuSub" class="settings-menu-sub">Mitteilungen auf dem iPhone testen</span></span>
+                    <span class="settings-menu-chevron">›</span>
+                </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsDesign()">
                     <span class="settings-menu-icon">🎨</span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Design</span><span id="settingsDesignMenuSub" class="settings-menu-sub">Systemeinstellung verwenden</span></span>
@@ -2160,6 +2165,27 @@
                     <div id="warnKategorieGrid" class="warning-cat-grid"></div>
                     <button onclick="saveWarnSettings()" style="margin-top:14px;">Warnungen speichern</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== EINSTELLUNGEN: PUSH-TEST ===================== -->
+    <div id="settingsPushTestView" class="hidden">
+        <div class="container">
+            <div class="topbar">
+                <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 style="flex:1;">Push-Test</h2>
+            </div>
+            <div class="settings-page-card">
+                <div style="font-weight:750;font-size:16px;">Test-App auf dem iPhone</div>
+                <div class="settings-note" style="margin:7px 0 14px;">Für den iPhone-Test die Testseite zuerst zum Home-Bildschirm hinzufügen und anschließend über das neue Test-Icon öffnen.</div>
+                <div id="pushTestStatus" class="settings-note" style="margin:0 0 12px;">Status wird geprüft …</div>
+                <button type="button" onclick="requestTestNotificationPermission()">📳 Mitteilungen aktivieren</button>
+                <button type="button" onclick="sendTestNotification()" style="background:#3a3a3c;">🔔 Testbenachrichtigung anzeigen</button>
+            </div>
+            <div class="settings-page-card">
+                <div style="font-weight:750;font-size:16px;">Was dieser Test prüft</div>
+                <div class="settings-note" style="margin-top:7px;">Die Testbenachrichtigung prüft Installation, Service Worker und Mitteilungsberechtigung. Der Service Worker kann bereits echte Push-Ereignisse empfangen. Für Nachrichten bei komplett geschlossener App brauchen wir im nächsten Schritt zusätzlich den Push-Dienst und VAPID-Schlüssel.</div>
             </div>
         </div>
     </div>
@@ -2770,10 +2796,13 @@
 
     <script>
 
-        // PWA / Offline-Unterstützung
+        // PWA / Offline-Unterstützung der TEST-App.
+        // Der Service Worker liegt im Test-Repository und bleibt dadurch auf diesen Pfad begrenzt.
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {
-                navigator.serviceWorker.register("./service-worker.js")
+                navigator.serviceWorker.register("./service-worker.js", { scope: "./", updateViaCache: "none" })
+                    .then(() => navigator.serviceWorker.ready)
+                    .then(() => renderPushTestStatus?.())
                     .catch(error => console.warn("Service Worker konnte nicht registriert werden:", error));
             });
         }
@@ -2802,14 +2831,14 @@
                 designModus: "system",
                 rechtsSwipeAktion: "aus",
                 ausgeblendeteEintraege: {},
-                warnungen: { aktiv:true, schwelle:100, tage:14, kategorien:{ haushalt:false, freizeit:false, fixkosten:true, versicherungen:true, einnahmen:false, reisen:true, geplant:true, sparen:true } }
+                warnungen: { aktiv:true, schwelle:100, tage:14, kategorien:{ haushalt:false, freizeit:false, fixkosten:true, versicherungen:true, reisen:true, geplant:true, sparen:true } }
             },
             geloeschteKategorien: {}
         };
 
         function ladeDaten() {
             try {
-                return JSON.parse(localStorage.getItem("kostenApp")) || structuredClone(STANDARD_DATEN);
+                return JSON.parse(localStorage.getItem("kostenApp_test")) || structuredClone(STANDARD_DATEN);
             } catch (error) {
                 console.error("Gespeicherte Daten konnten nicht gelesen werden:", error);
                 return structuredClone(STANDARD_DATEN);
@@ -2984,7 +3013,7 @@
 
         // Migration direkt speichern, damit alte kaputte Strukturen nicht wiederkommen.
         try {
-            localStorage.setItem("kostenApp", JSON.stringify(daten));
+            localStorage.setItem("kostenApp_test", JSON.stringify(daten));
         } catch (error) {
             console.error("Migration konnte nicht gespeichert werden:", error);
         }
@@ -3193,7 +3222,7 @@
             showUndoDelete(label);
         }
 
-        const WARN_KATEGORIEN = [["haushalt","Haushalt"],["freizeit","Freizeit"],["fixkosten","Fixkosten"],["versicherungen","Versicherungen"],["einnahmen","Einnahmen"],["reisen","Reisen"],["geplant","Geplante Ausgaben"],["sparen","Sparen & Investieren"]];
+        const WARN_KATEGORIEN = [["haushalt","Haushalt"],["freizeit","Freizeit"],["fixkosten","Fixkosten"],["versicherungen","Versicherungen"],["reisen","Reisen"],["geplant","Geplante Ausgaben"],["sparen","Sparen & Investieren"]];
         function getWarnSettings(){ daten.Einstellungen??={}; daten.Einstellungen.warnungen??=structuredClone(STANDARD_DATEN.Einstellungen.warnungen); return daten.Einstellungen.warnungen; }
         function reminderControlHtml(key,value={}){ const on=!!value.warnung,tage=Math.max(0,parseInt(value.warnTage,10)||14); return `<div class="reminder-control" data-reminder-key="${escapeHtml(key)}"><button type="button" class="reminder-toggle ${on?'on':''}" role="switch" aria-checked="${on?'true':'false'}" onclick="toggleReminderControl('${escapeHtml(key)}')"><span>🔔 Auf Startseite erinnern</span><span class="ios-switch ${on?'on':''}" aria-hidden="true"></span></button><div class="reminder-days ${on?'':'hidden'}"><label>Warnzeit vorher (Tage)</label><input type="number" min="0" max="365" value="${tage}"></div></div>`; }
         function toggleReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return; const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),on=!btn.classList.contains('on'); btn.classList.toggle('on',on); btn.setAttribute('aria-checked',on?'true':'false'); btn.querySelector('.ios-switch')?.classList.toggle('on',on); days?.classList.toggle('hidden',!on); }
@@ -3206,7 +3235,7 @@
         function toggleWarnungenAktiv(){ const a=document.getElementById('warnungenAktiv');if(!a)return;const on=a.getAttribute('aria-checked')!=='true';a.setAttribute('aria-checked',on?'true':'false');a.querySelector('.ios-switch')?.classList.toggle('on',on);saveWarnSettings();renderWarnSettings();renderHomeWarnings(); }
         function saveWarnSettings(doSave=true){ const w=getWarnSettings();const a=document.getElementById('warnungenAktiv');if(a)w.aktiv=a.getAttribute('aria-checked')!=='false';const s=parseBetrag(document.getElementById('warnSchwelle')?.value);if(!isNaN(s)&&s>=0)w.schwelle=s;const t=parseInt(document.getElementById('warnTage')?.value,10);if(!isNaN(t)&&t>=0)w.tage=Math.min(365,t);w.kategorien??={};document.querySelectorAll('[data-warn-cat]').forEach(el=>w.kategorien[el.dataset.warnCat]=el.checked);document.getElementById('warnGlobalFields')?.classList.toggle('hidden',!w.aktiv);if(doSave)speichern(); }
         function daysBetween(a,b){return Math.round((b-a)/86400000);}
-        function collectUpcomingWarnings(){ const w=getWarnSettings(),today=startOfToday(),horizon=addDays(today,365),rows=[]; const push=(type,label,entry,date,amount,name)=>{if(!date||date<today||date>horizon)return;const days=daysBetween(today,date),manual=!!entry?.warnung,own=Math.max(0,parseInt(entry?.warnTage,10)||14),auto=w.aktiv!==false&&!!w.kategorien?.[type]&&(parseBetrag(amount)||0)>=(parseBetrag(w.schwelle)||0)&&days<=Math.max(0,parseInt(w.tage,10)||14),manualAktiv=manual&&days<=own;if(!manualAktiv&&!auto)return;rows.push({type,label,name:name||label,betrag:parseBetrag(amount)||0,datum:new Date(date),manual:manualAktiv,auto});}; Object.values(daten.Haushalt||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('haushalt','Haushalt',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.values(daten.Freizeit||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('freizeit','Freizeit',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.entries(daten.Reisen||{}).forEach(([land,r])=>Object.values(r||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('reisen',`Reise · ${land}`,e,parseISODate(e.datum),e.betrag,e.text||land))));(daten['Geplante Ausgaben']||[]).forEach(e=>push('geplant','Geplante Ausgabe',e,parseISODate(e.datum),e.betrag,e.text)); const fix=(daten['Laufende Kosten']?.fix||[]);laufendeKostenImZeitraum(today,horizon).forEach(x=>{const e=fix.find(k=>String(k.id)===String(x.sourceId))||fix.find(k=>(k.text||k.name||'Fixkosten')===x.name&&(parseBetrag(k.betrag)||0)===x.betrag);push('fixkosten','Fixkosten',e||{},x.datum,x.betrag,x.name);});versicherungsZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Versicherungen||[]).find(v=>String(v.id)===String(x.sourceId))||(daten.Versicherungen||[]).find(v=>(v.name||'Versicherung')===x.name&&(parseBetrag(v.betrag)||0)===x.betrag);push('versicherungen','Versicherung',e||{},x.datum,x.betrag,x.name);});einnahmenZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Einnahmen||[]).find(v=>String(v.id)===String(x.id));push('einnahmen','Einnahme',e||x,x.datumObj,x.betrag,x.text);});const z=getGehaltszeitraum(),next=z.naechstesGehalt||addDays(today,30);(daten['Sparen & Investieren']||[]).forEach(e=>{const a=parseISODate(e.datum),d=a&&a>=today?a:next;push('sparen',e.typ==='sparen'?'Sparen':'Investieren',e,d,e.betrag,e.text||(e.typ==='sparen'?'Sparen':'Investieren'));});return rows.sort((a,b)=>a.datum-b.datum||b.betrag-a.betrag);}
+        function collectUpcomingWarnings(){ const w=getWarnSettings(),today=startOfToday(),horizon=addDays(today,365),rows=[]; const push=(type,label,entry,date,amount,name)=>{if(!date||date<today||date>horizon)return;const days=daysBetween(today,date),manual=!!entry?.warnung,own=Math.max(0,parseInt(entry?.warnTage,10)||14),auto=type!=='einnahmen'&&w.aktiv!==false&&!!w.kategorien?.[type]&&(parseBetrag(amount)||0)>=(parseBetrag(w.schwelle)||0)&&days<=Math.max(0,parseInt(w.tage,10)||14),manualAktiv=manual&&days<=own;if(!manualAktiv&&!auto)return;rows.push({type,label,name:name||label,betrag:parseBetrag(amount)||0,datum:new Date(date),manual:manualAktiv,auto});}; Object.values(daten.Haushalt||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('haushalt','Haushalt',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.values(daten.Freizeit||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('freizeit','Freizeit',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.entries(daten.Reisen||{}).forEach(([land,r])=>Object.values(r||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('reisen',`Reise · ${land}`,e,parseISODate(e.datum),e.betrag,e.text||land))));(daten['Geplante Ausgaben']||[]).forEach(e=>push('geplant','Geplante Ausgabe',e,parseISODate(e.datum),e.betrag,e.text)); const fix=(daten['Laufende Kosten']?.fix||[]);laufendeKostenImZeitraum(today,horizon).forEach(x=>{const e=fix.find(k=>String(k.id)===String(x.sourceId))||fix.find(k=>(k.text||k.name||'Fixkosten')===x.name&&(parseBetrag(k.betrag)||0)===x.betrag);push('fixkosten','Fixkosten',e||{},x.datum,x.betrag,x.name);});versicherungsZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Versicherungen||[]).find(v=>String(v.id)===String(x.sourceId))||(daten.Versicherungen||[]).find(v=>(v.name||'Versicherung')===x.name&&(parseBetrag(v.betrag)||0)===x.betrag);push('versicherungen','Versicherung',e||{},x.datum,x.betrag,x.name);});einnahmenZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Einnahmen||[]).find(v=>String(v.id)===String(x.id));push('einnahmen','Einnahme',e||x,x.datumObj,x.betrag,x.text);});const z=getGehaltszeitraum(),next=z.naechstesGehalt||addDays(today,30);(daten['Sparen & Investieren']||[]).forEach(e=>{const a=parseISODate(e.datum),d=a&&a>=today?a:next;push('sparen',e.typ==='sparen'?'Sparen':'Investieren',e,d,e.betrag,e.text||(e.typ==='sparen'?'Sparen':'Investieren'));});return rows.sort((a,b)=>a.datum-b.datum||b.betrag-a.betrag);}
         function formatReminderCountdown(tage) {
             if (tage <= 0) return "heute";
             if (tage === 1) return "in 1 Tag";
@@ -3250,14 +3279,19 @@
         }
         document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{decorateReminderControls();renderWarnSettings();renderHomeWarnings();},0);new MutationObserver(()=>decorateReminderControls()).observe(document.body,{childList:true,subtree:true});});
 
-        function speichern() {
+        function speichernOhneHomeRender() {
             try {
-                localStorage.setItem("kostenApp", JSON.stringify(daten));
+                localStorage.setItem("kostenApp_test", JSON.stringify(daten));
+                return true;
             } catch (error) {
                 console.error("Speichern fehlgeschlagen:", error);
                 alert("Speichern im Browser ist fehlgeschlagen. Öffne die heruntergeladene HTML-Datei direkt im Browser und nicht nur in einer Vorschau.");
+                return false;
             }
+        }
 
+        function speichern() {
+            speichernOhneHomeRender();
             renderHomeUebersicht();
         }
 
@@ -3339,7 +3373,7 @@
                 }
 
                 const neueDaten = parsed.daten ?? parsed;
-                localStorage.setItem("kostenApp", JSON.stringify(neueDaten));
+                localStorage.setItem("kostenApp_test", JSON.stringify(neueDaten));
                 setBackupStatus("Backup wurde wiederhergestellt. Die App wird neu geladen …");
                 setTimeout(() => location.reload(), 400);
             } catch (error) {
@@ -3689,6 +3723,7 @@
             show("settingsView");
             renderDesignMenuStatus();
             renderGestureSettings();
+            renderPushTestStatus();
         }
 
         function openSettingsBudget() {
@@ -3710,6 +3745,89 @@
         function openSettingsWarnings() {
             show("settingsWarningsView");
             renderWarnSettings();
+        }
+
+        function istAlsWebAppGeoeffnet() {
+            return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
+        }
+
+        async function ensureTestServiceWorker() {
+            if (!("serviceWorker" in navigator)) throw new Error("Service Worker wird von diesem Browser nicht unterstützt.");
+            const reg = await navigator.serviceWorker.register("./service-worker.js", { scope: "./", updateViaCache: "none" });
+            await navigator.serviceWorker.ready;
+            return reg;
+        }
+
+        async function renderPushTestStatus(message = "") {
+            const el = document.getElementById("pushTestStatus");
+            const menu = document.getElementById("settingsPushMenuSub");
+            if (!el && !menu) return;
+
+            const standalone = istAlsWebAppGeoeffnet();
+            const notifications = "Notification" in window;
+            const sw = "serviceWorker" in navigator;
+            const push = "PushManager" in window;
+            const permission = notifications ? Notification.permission : "unsupported";
+
+            let swReady = false;
+            if (sw) {
+                try {
+                    await ensureTestServiceWorker();
+                    swReady = true;
+                } catch (_) {}
+            }
+
+            let status = message ? `${message} ` : "";
+            if (!standalone) status += "Für den iPhone-Test bitte über das Home-Screen-Icon öffnen. ";
+            status += `Service Worker: ${swReady ? "bereit" : "nicht bereit"} · Mitteilungen: ${permission === "granted" ? "erlaubt" : permission === "denied" ? "blockiert" : permission === "default" ? "noch nicht erlaubt" : "nicht unterstützt"} · Push API: ${push ? "verfügbar" : "nicht verfügbar"}`;
+            if (el) el.textContent = status;
+            if (menu) menu.textContent = permission === "granted" ? "Mitteilungen erlaubt · Test bereit" : "Mitteilungen auf dem iPhone testen";
+        }
+
+        function openSettingsPushTest() {
+            show("settingsPushTestView");
+            renderPushTestStatus();
+        }
+
+        async function requestTestNotificationPermission() {
+            const el = document.getElementById("pushTestStatus");
+            try {
+                if (!("Notification" in window)) throw new Error("Mitteilungen werden hier nicht unterstützt.");
+                await ensureTestServiceWorker();
+                const permission = await Notification.requestPermission();
+                if (permission === "granted") {
+                    await renderPushTestStatus("Mitteilungen wurden erlaubt.");
+                } else if (permission === "denied") {
+                    await renderPushTestStatus("Mitteilungen wurden blockiert.");
+                } else {
+                    await renderPushTestStatus("Mitteilungen wurden noch nicht erlaubt.");
+                }
+            } catch (error) {
+                if (el) el.textContent = `Push-Test nicht möglich: ${error?.message || error}`;
+            }
+        }
+
+        async function sendTestNotification() {
+            const el = document.getElementById("pushTestStatus");
+            try {
+                if (!("Notification" in window)) throw new Error("Mitteilungen werden hier nicht unterstützt.");
+                if (Notification.permission !== "granted") {
+                    await requestTestNotificationPermission();
+                }
+                if (Notification.permission !== "granted") return;
+                const reg = await ensureTestServiceWorker();
+                await reg.showNotification("Kostentracker Test", {
+                    body: "Die Testbenachrichtigung funktioniert. ✅",
+                    icon: "./icon-192.png",
+                    badge: "./icon-192.png",
+                    tag: "kostentracker-test-local",
+                    renotify: false,
+                    data: { url: "./indexupdate.html" }
+                });
+                await renderPushTestStatus("Testbenachrichtigung wurde ausgelöst.");
+            } catch (error) {
+                if (el) el.textContent = `Testbenachrichtigung fehlgeschlagen: ${error?.message || error}`;
+            }
         }
 
         function openSettingsDesign() {
@@ -3777,20 +3895,50 @@
             else if (type === "reisen") renderListe();
         }
 
+        function cloneEintragFuerSichtbarkeit(eintrag) {
+            if (!eintrag || typeof eintrag !== "object") return null;
+            try { return structuredClone(eintrag); }
+            catch (_) { return JSON.parse(JSON.stringify(eintrag)); }
+        }
+
+        function restoreEintragNachSichtbarkeit(type, id, snapshot) {
+            if (!snapshot) return;
+            const gefunden = findeAusgabeZumVerschieben(type, id);
+            const ziel = gefunden?.eintrag;
+            if (!ziel || typeof ziel !== "object") return;
+
+            // Aus-/Einblenden darf niemals Buchungsdaten veraendern.
+            // Deshalb wird der komplette Eintrag exakt auf den Stand vor der
+            // Sichtbarkeitsaenderung zurueckgesetzt.
+            Object.keys(ziel).forEach(key => delete ziel[key]);
+            Object.assign(ziel, cloneEintragFuerSichtbarkeit(snapshot));
+        }
+
         function ausblendenEintrag(type, id) {
-            if (!findeAusgabeZumVerschieben(type, id)) return;
+            const gefunden = findeAusgabeZumVerschieben(type, id);
+            if (!gefunden?.eintrag) return;
+            const snapshot = cloneEintragFuerSichtbarkeit(gefunden.eintrag);
             beginUndoDelete("Eintrag ausgeblendet");
             setEintragAusgeblendet(type, id, true);
-            speichern();
+            restoreEintragNachSichtbarkeit(type, id, snapshot);
+            speichernOhneHomeRender();
             renderNachEintragsAktion(type);
+            restoreEintragNachSichtbarkeit(type, id, snapshot);
+            speichernOhneHomeRender();
             finishUndoDelete("Eintrag ausgeblendet");
         }
 
         function eintragEinblenden(type, id) {
+            const gefunden = findeAusgabeZumVerschieben(type, id);
+            if (!gefunden?.eintrag) return;
+            const snapshot = cloneEintragFuerSichtbarkeit(gefunden.eintrag);
             beginUndoDelete("Eintrag eingeblendet");
             setEintragAusgeblendet(type, id, false);
-            speichern();
+            restoreEintragNachSichtbarkeit(type, id, snapshot);
+            speichernOhneHomeRender();
             renderNachEintragsAktion(type);
+            restoreEintragNachSichtbarkeit(type, id, snapshot);
+            speichernOhneHomeRender();
             finishUndoDelete("Eintrag eingeblendet");
         }
 
@@ -5310,7 +5458,7 @@
 
             if (geaendert) {
                 daten["Geplante Ausgaben"] = offen;
-                try { localStorage.setItem("kostenApp", JSON.stringify(daten)); } catch (_) {}
+                try { localStorage.setItem("kostenApp_test", JSON.stringify(daten)); } catch (_) {}
             }
             return geaendert;
         }
