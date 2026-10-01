@@ -4,7 +4,7 @@
   "short_name": "KT Test",
   "description": "Testversion des Kostentrackers",
   "lang": "de-DE",
-  "start_url": "./indexupdate.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#111114",

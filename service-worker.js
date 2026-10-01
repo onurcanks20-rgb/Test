@@ -1,5 +1,5 @@
-const CACHE_NAME = "kostentracker-test-v1";
-const APP_URL = "./indexupdate.html";
+const CACHE_NAME = "kostentracker-test-v2";
+const APP_URL = "./index.html";
 const STATIC_ASSETS = [
   "./",
   APP_URL,
