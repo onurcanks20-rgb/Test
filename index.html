@@ -1276,6 +1276,15 @@
             background:rgba(52,199,89,.16); color:#78e08f; white-space:nowrap;
         }
         .warning-push-note { margin-top:10px; }
+
+        /* iOS: Zeitfeld darf die Einstellungs-Karte nicht ueberragen. */
+        #warnPushUhrzeit {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
         .warning-cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
         .warning-cat { display:flex; align-items:center; gap:8px; background:#2c2c2e; border-radius:12px; padding:10px; font-size:14px; }
         .warning-cat input { width:auto; margin:0; }
