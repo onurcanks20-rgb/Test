@@ -2220,8 +2220,16 @@
                 <button type="button" onclick="sendTestNotification()" style="background:#3a3a3c;">🔔 Testbenachrichtigung anzeigen</button>
             </div>
             <div class="settings-page-card">
+                <div style="font-weight:750;font-size:16px;">Diagnose</div>
+                <div class="settings-note" style="margin:7px 0 12px;">Damit sehen wir, ob iOS die Test-App wirklich über den richtigen Service Worker steuert und ob eine Benachrichtigung intern angelegt wird.</div>
+                <button type="button" onclick="runPushDiagnostics(false)" style="background:#3a3a3c;">🩺 Diagnose ausführen</button>
+                <button type="button" onclick="sendDelayedTestNotification()" style="background:#3a3a3c;">⏱️ Test in 5 Sekunden</button>
+                <div class="settings-note" style="margin-top:8px;">Beim 5-Sekunden-Test nach dem Antippen direkt zum Home-Bildschirm wechseln. So testen wir, ob iOS die Meldung zeigt, wenn die Test-App nicht im Vordergrund ist.</div>
+                <div id="pushDiagnostics" class="settings-note" style="margin-top:12px;white-space:pre-line;line-height:1.55;">Noch keine Diagnose ausgeführt.</div>
+            </div>
+            <div class="settings-page-card">
                 <div style="font-weight:750;font-size:16px;">Was dieser Test prüft</div>
-                <div class="settings-note" style="margin-top:7px;">Die Testbenachrichtigung prüft Installation, Service Worker und Mitteilungsberechtigung. Der Service Worker kann bereits echte Push-Ereignisse empfangen. Für Nachrichten bei komplett geschlossener App brauchen wir im nächsten Schritt zusätzlich den Push-Dienst und VAPID-Schlüssel.</div>
+                <div class="settings-note" style="margin-top:7px;">Die Testbenachrichtigung prüft Installation, Service Worker und Mitteilungsberechtigung. Eine echte Push-Subscription ist erst vorhanden, wenn wir später einen Push-Dienst mit VAPID anbinden. Deshalb ist „keine Push-Subscription“ in dieser Teststufe normal.</div>
             </div>
         </div>
     </div>
@@ -3723,6 +3731,7 @@
                 "settingsBudgetView",
                 "settingsQuickAddView",
                 "settingsWarningsView",
+                "settingsPushTestView",
                 "settingsDesignView",
                 "settingsGesturesView",
                 "settingsBackupView"
@@ -3860,6 +3869,71 @@
             if (menu) menu.textContent = permission === "granted" ? "Mitteilungen erlaubt · Test bereit" : "Mitteilungen auf dem iPhone testen";
         }
 
+        function pushDiagLine(label, value, state = null) {
+            const icon = state === true ? "✅" : state === false ? "❌" : "ℹ️";
+            return `${icon} ${label}: ${value}`;
+        }
+
+        async function runPushDiagnostics(testNotification = true) {
+            const out = document.getElementById("pushDiagnostics");
+            const lines = [];
+            const write = () => { if (out) out.textContent = lines.join("\n"); };
+            try {
+                const standalone = istAlsWebAppGeoeffnet();
+                lines.push(pushDiagLine("Home-Screen-App", standalone ? "ja" : "nein", standalone));
+
+                const notificationSupported = "Notification" in window;
+                lines.push(pushDiagLine("Notification API", notificationSupported ? "verfügbar" : "nicht verfügbar", notificationSupported));
+                const permission = notificationSupported ? Notification.permission : "unsupported";
+                lines.push(pushDiagLine("Mitteilungsrecht", permission, permission === "granted" ? true : permission === "denied" ? false : null));
+
+                const swSupported = "serviceWorker" in navigator;
+                lines.push(pushDiagLine("Service Worker API", swSupported ? "verfügbar" : "nicht verfügbar", swSupported));
+                if (!swSupported) { write(); return; }
+
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                lines.push(pushDiagLine("Registrierte Service Worker", String(registrations.length), registrations.length > 0));
+
+                const reg = await ensureTestServiceWorker();
+                lines.push(pushDiagLine("Service-Worker-Scope", reg.scope, true));
+                lines.push(pushDiagLine("Aktiver Worker", reg.active?.state || "keiner", !!reg.active));
+                lines.push(pushDiagLine("Controller dieser Seite", navigator.serviceWorker.controller ? "ja" : "nein", !!navigator.serviceWorker.controller));
+
+                const pushSupported = "PushManager" in window && !!reg.pushManager;
+                lines.push(pushDiagLine("Push API", pushSupported ? "verfügbar" : "nicht verfügbar", pushSupported));
+                if (pushSupported) {
+                    const subscription = await reg.pushManager.getSubscription();
+                    lines.push(pushDiagLine("Push-Subscription", subscription ? "vorhanden" : "noch keine – aktuell normal", subscription ? true : null));
+                }
+
+                if (testNotification) {
+                    if (permission !== "granted") {
+                        lines.push(pushDiagLine("Testmeldung", "nicht ausgeführt – Mitteilungen nicht erlaubt", false));
+                    } else {
+                        const tag = `kostentracker-diag-${Date.now()}`;
+                        await reg.showNotification("Kostentracker Test · Diagnose", {
+                            body: "Wenn du diese Meldung siehst, funktioniert die lokale Systembenachrichtigung. ✅",
+                            icon: "./icon-192.png",
+                            badge: "./icon-192.png",
+                            tag,
+                            data: { url: "./index.html" }
+                        });
+                        lines.push(pushDiagLine("showNotification()", "ohne Fehler ausgeführt", true));
+                        await new Promise(resolve => setTimeout(resolve, 700));
+                        const found = await reg.getNotifications({ tag });
+                        lines.push(pushDiagLine("Vom Service Worker erkannte Testmeldungen", String(found.length), found.length > 0));
+                        if (found.length > 0) {
+                            lines.push(pushDiagLine("Hinweis", "Wenn trotzdem kein Banner erscheint, teste zusätzlich den 5-Sekunden-Test und wechsle direkt zum Home-Bildschirm.", null));
+                        }
+                    }
+                }
+            } catch (error) {
+                lines.push(pushDiagLine("Fehler", error?.message || String(error), false));
+            }
+            write();
+            await renderPushTestStatus();
+        }
+
         function openSettingsPushTest() {
             show("settingsPushTestView");
             renderPushTestStatus();
@@ -3878,6 +3952,7 @@
                 } else {
                     await renderPushTestStatus("Mitteilungen wurden noch nicht erlaubt.");
                 }
+                await runPushDiagnostics(false);
             } catch (error) {
                 if (el) el.textContent = `Push-Test nicht möglich: ${error?.message || error}`;
             }
@@ -3891,18 +3966,39 @@
                     await requestTestNotificationPermission();
                 }
                 if (Notification.permission !== "granted") return;
-                const reg = await ensureTestServiceWorker();
-                await reg.showNotification("Kostentracker Test", {
-                    body: "Die Testbenachrichtigung funktioniert. ✅",
-                    icon: "./icon-192.png",
-                    badge: "./icon-192.png",
-                    tag: "kostentracker-test-local",
-                    renotify: false,
-                    data: { url: "./index.html" }
-                });
-                await renderPushTestStatus("Testbenachrichtigung wurde ausgelöst.");
+                await runPushDiagnostics(true);
+                await renderPushTestStatus("Direkter Benachrichtigungstest ausgeführt.");
             } catch (error) {
                 if (el) el.textContent = `Testbenachrichtigung fehlgeschlagen: ${error?.message || error}`;
+            }
+        }
+
+        async function sendDelayedTestNotification() {
+            const el = document.getElementById("pushTestStatus");
+            try {
+                if (!("Notification" in window)) throw new Error("Mitteilungen werden hier nicht unterstützt.");
+                if (Notification.permission !== "granted") {
+                    await requestTestNotificationPermission();
+                }
+                if (Notification.permission !== "granted") return;
+
+                const reg = await ensureTestServiceWorker();
+                const worker = reg.active || navigator.serviceWorker.controller;
+                if (!worker) throw new Error("Kein aktiver Service Worker gefunden.");
+
+                worker.postMessage({
+                    type: "SCHEDULE_TEST_NOTIFICATION",
+                    delayMs: 5000,
+                    title: "Kostentracker Test",
+                    body: "5-Sekunden-Test: Die Hintergrund-Benachrichtigung funktioniert. ✅",
+                    tag: `kostentracker-delayed-${Date.now()}`
+                });
+
+                if (el) el.textContent = "Test läuft: In 5 Sekunden kommt die Benachrichtigung. Jetzt direkt zum Home-Bildschirm wechseln.";
+                const out = document.getElementById("pushDiagnostics");
+                if (out) out.textContent = "⏱️ 5-Sekunden-Test gestartet.\nJetzt die Test-App verlassen und zum Home-Bildschirm wechseln.";
+            } catch (error) {
+                if (el) el.textContent = `5-Sekunden-Test fehlgeschlagen: ${error?.message || error}`;
             }
         }
 
