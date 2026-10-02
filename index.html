@@ -2388,7 +2388,7 @@
     <div id="weekPreviewSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) closeWeekPreview()">
         <div class="add-sheet">
             <h3>Wochenbudget</h3>
-            <div class="week-preview-note">Diese Woche ist fest. Die kommenden Wochen bleiben unverändert, solange diese Woche nicht ins Minus rutscht. Ein Minus wird sofort auf die restlichen Wochen verteilt. Am nächsten Wochenstart wird wieder mit dem tatsächlichen Rest neu berechnet.</div>
+            <div class="week-preview-note">Diese Woche ist fest. Die kommenden Wochen bleiben während der laufenden Woche unverändert. Ausgaben verändern nur den Rest dieser Woche. Am nächsten Wochenstart wird der tatsächliche Rest neu auf die verbleibenden Wochen verteilt.</div>
             <div id="weekPreviewList" class="week-preview-list"></div>
             <div class="week-preview-total"><span>Noch frei bis Gehalt</span><span id="weekPreviewTotal">0,00 €</span></div>
             <button onclick="closeWeekPreview()" style="background:#3a3a3c; margin-top:14px;">Schließen</button>
@@ -4692,19 +4692,20 @@
                 current: true
             }];
 
-            // Vorschau fuer kommende Wochen bleibt waehrend der laufenden Woche fest,
-            // solange das aktuelle Wochenbudget nicht ins Minus rutscht.
-            // Sobald dieseWocheUebrig negativ ist, wird genau dieser Fehlbetrag sofort
-            // auf die verbleibenden Wochen verteilt. Positive Restbetraege werden dagegen
-            // weiterhin erst am naechsten Montag neu verteilt.
+            // Vorschau fuer kommende Wochen bleibt waehrend der laufenden Woche fest.
+            // Der aktuelle Wochenrest (auch wenn er negativ ist) wird bereits separat
+            // in dieserWocheUebrig angezeigt und darf deshalb nicht nochmals von den
+            // Folgewochen abgezogen werden. Erst am naechsten Wochenstart wird der
+            // tatsaechliche Gesamt-Rest neu verteilt.
             let futureStart = addDays(kalenderSonntag, 1);
             if (futureStart < zeitraum.start) futureStart = new Date(zeitraum.start);
             if (futureStart <= zeitraum.ende) {
                 const futureSegments = wochenSegmente(futureStart, zeitraum.ende);
                 const futureDays = Math.max(1, Math.round((zeitraum.ende - futureStart) / 86400000) + 1);
-                const fuerFolgewochenZuWochenbeginn = verfuegbarZuWochenbeginn - wochenBudgetStart;
-                const wochenMinus = Math.min(0, dieseWocheUebrig);
-                const fuerFolgewochenAktuell = fuerFolgewochenZuWochenbeginn + wochenMinus;
+                // Gesamt der Folgewochen so berechnen, dass aktuelle Woche + Folgewochen
+                // exakt dem aktuell frei verfuegbaren Betrag entsprechen. Dadurch wird
+                // ein negatives Wochenbudget nicht doppelt beruecksichtigt.
+                const fuerFolgewochenAktuell = freiJetzt - dieseWocheUebrig;
 
                 futureSegments.forEach((seg, idx) => {
                     const days = Math.max(1, Math.round((seg.ende - seg.start) / 86400000) + 1);
@@ -9214,8 +9215,8 @@
             // Wochenbudget-Logik:
             // - Montag bis Sonntag bleibt das Startbudget der aktuellen Woche unveraendert.
             // - Ausgaben der aktuellen Woche werden vom Wochenbudget abgezogen.
-            // - Sobald die aktuelle Woche ins Minus rutscht, wird dieses Minus in der Vorschau
-            //   sofort auf die kommenden Wochen verteilt. Positive Reste werden erst Montag neu verteilt.
+            // - Die Vorschau der kommenden Wochen bleibt waehrend der laufenden Woche stabil.
+            //   Erst am naechsten Wochenstart wird der tatsaechliche Rest neu verteilt.
             // - Angebrochene Wochen bis zum Gehalt werden nach ihren tatsaechlichen Tagen gewichtet.
             const kalenderMontag = montagDerWoche(heute);
             const kalenderSonntag = addDays(kalenderMontag, 6);
