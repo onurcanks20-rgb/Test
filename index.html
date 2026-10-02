@@ -2238,7 +2238,7 @@
             </div>
             <div class="settings-page-card">
                 <div style="font-weight:750;font-size:16px;">Was dieser Test prüft</div>
-                <div class="settings-note" style="margin-top:7px;">Die Testbenachrichtigung prüft Installation, Service Worker und Mitteilungsberechtigung. Eine echte Push-Subscription ist erst vorhanden, wenn wir später einen Push-Dienst mit VAPID anbinden. Deshalb ist „keine Push-Subscription“ in dieser Teststufe normal.</div>
+                <div class="settings-note" style="margin-top:7px;">Die Testbenachrichtigung prüft Installation, Service Worker und Mitteilungsberechtigung. Der 5-Sekunden-Test ist ein kurzer lokaler Test und keine dauerhafte Zeitplanung im Hintergrund. Eine echte Push-Subscription ist erst vorhanden, wenn wir später einen Push-Dienst mit VAPID anbinden. Deshalb ist „keine Push-Subscription“ in dieser Teststufe normal.</div>
             </div>
         </div>
     </div>
@@ -2851,10 +2851,9 @@
 
         // PWA / Offline-Unterstützung der TEST-App.
         // Der Service Worker liegt im Test-Repository und bleibt dadurch auf diesen Pfad begrenzt.
-        if ("serviceWorker" in navigator) {
+        if ("serviceWorker" in navigator && window.isSecureContext && /^https?:$/.test(location.protocol)) {
             window.addEventListener("load", () => {
-                navigator.serviceWorker.register("./service-worker.js", { scope: "./", updateViaCache: "none" })
-                    .then(() => navigator.serviceWorker.ready)
+                ensureTestServiceWorker()
                     .then(() => renderPushTestStatus?.())
                     .catch(error => console.warn("Service Worker konnte nicht registriert werden:", error));
             });
@@ -3277,13 +3276,13 @@
 
         const WARN_KATEGORIEN = [["haushalt","Haushalt"],["freizeit","Freizeit"],["fixkosten","Fixkosten"],["versicherungen","Versicherungen"],["reisen","Reisen"],["geplant","Geplante Ausgaben"],["sparen","Sparen & Investieren"]];
         function getWarnSettings(){ daten.Einstellungen??={}; daten.Einstellungen.warnungen??=structuredClone(STANDARD_DATEN.Einstellungen.warnungen); return daten.Einstellungen.warnungen; }
-        function reminderControlHtml(key,value={}){ const on=!!value.warnung,tage=Math.max(0,parseInt(value.warnTage,10)||14); return `<div class="reminder-control" data-reminder-key="${escapeHtml(key)}"><button type="button" class="reminder-toggle ${on?'on':''}" role="switch" aria-checked="${on?'true':'false'}" onclick="toggleReminderControl('${escapeHtml(key)}')"><span>🔔 Auf Startseite erinnern</span><span class="ios-switch ${on?'on':''}" aria-hidden="true"></span></button><div class="reminder-days ${on?'':'hidden'}"><label>Warnzeit vorher (Tage)</label><input type="number" min="0" max="365" value="${tage}"></div></div>`; }
+        function reminderControlHtml(key,value={}){ const on=!!value.warnung,tage=Math.max(0,parseInt(value.warnTage,10)||14); return `<div class="reminder-control" data-reminder-key="${escapeHtml(key)}"><button type="button" class="reminder-toggle ${on?'on':''}" role="switch" aria-checked="${on?'true':'false'}" onclick="toggleReminderControl(this.closest('[data-reminder-key]').dataset.reminderKey)"><span>🔔 Auf Startseite erinnern</span><span class="ios-switch ${on?'on':''}" aria-hidden="true"></span></button><div class="reminder-days ${on?'':'hidden'}"><label>Warnzeit vorher (Tage)</label><input type="number" min="0" max="365" value="${tage}"></div></div>`; }
         function toggleReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return; const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),on=!btn.classList.contains('on'); btn.classList.toggle('on',on); btn.setAttribute('aria-checked',on?'true':'false'); btn.querySelector('.ios-switch')?.classList.toggle('on',on); days?.classList.toggle('hidden',!on); }
         function resetReminderControl(key){const box=document.querySelector(`.reminder-control[data-reminder-key=\"${CSS.escape(key)}\"]`);if(!box)return;const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),inp=days?.querySelector('input');btn?.classList.remove('on');btn?.setAttribute('aria-checked','false');btn?.querySelector('.ios-switch')?.classList.remove('on');days?.classList.add('hidden');if(inp)inp.value=Math.max(0,parseInt(getWarnSettings().tage,10)||14);}
         function resetAddReminderForPanel(panelId){const map={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'};if(map[panelId])resetReminderControl(`add:${map[panelId]}`);}
         function readReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return {warnung:false,warnTage:14}; return {warnung:!!box.querySelector('.reminder-toggle')?.classList.contains('on'),warnTage:Math.max(0,parseInt(box.querySelector('.reminder-days input')?.value,10)||14)}; }
         function findReminderEntry(type,id){ const sid=String(id); if(type==='sparen')return(daten['Sparen & Investieren']||[]).find(e=>String(e.id)===sid); if(type==='geplant')return(daten['Geplante Ausgaben']||[]).find(e=>String(e.id)===sid); if(type==='fixkosten')return(daten['Laufende Kosten']?.fix||[]).find(e=>String(e.id)===sid); if(type==='versicherungen')return(daten.Versicherungen||[]).find(e=>String(e.id)===sid); if(type==='einnahmen')return(daten.Einnahmen||[]).find(e=>String(e.id)===sid); if(type==='haushalt'){for(const l of Object.values(daten.Haushalt||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} if(type==='freizeit'){for(const l of Object.values(daten.Freizeit||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} if(type==='reisen'){for(const r of Object.values(daten.Reisen||{}))for(const l of Object.values(r||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} return null; }
-        function decorateReminderControls(){ const addMap={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'}; Object.entries(addMap).forEach(([pid,type])=>{const p=document.getElementById(pid);if(!p||p.querySelector('[data-reminder-key]'))return;const b=p.querySelector('button.btn-primary');if(b)b.insertAdjacentHTML('beforebegin',reminderControlHtml(`add:${type}`,{warnTage:getWarnSettings().tage||14}));}); document.querySelectorAll('input[type="date"][id^="edit"]').forEach(inp=>{let type=null,id=null,m;if((m=inp.id.match(/^editSparenDatum-(.+)$/))){type='sparen';id=m[1];}else if((m=inp.id.match(/^editGeplantDatum-(.+)$/))){type='geplant';id=m[1];}else if((m=inp.id.match(/^editKostenDatum-(.+)$/))){type='fixkosten';id=m[1];}else if((m=inp.id.match(/^editEinnahmenDatum-(.+)$/))){type='einnahmen';id=m[1];}else if((m=inp.id.match(/^editFreizeitDatum-(.+)$/))){type='freizeit';id=m[1];}else if((m=inp.id.match(/^editDatum-(.+)$/))){id=m[1];if(inp.closest('#versicherungenView'))type='versicherungen';else if(inp.closest('#land'))type='reisen';else if(inp.closest('#haushaltView'))type='haushalt';} if(!type||!id)return;const key=`edit:${type}:${id}`,parent=inp.parentElement;if(parent?.querySelector(`[data-reminder-key="${CSS.escape(key)}"]`))return;inp.insertAdjacentHTML('afterend',reminderControlHtml(key,findReminderEntry(type,id)||{}));}); }
+        function decorateReminderControls(root=document){ const addMap={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'}; Object.entries(addMap).forEach(([pid,type])=>{const p=document.getElementById(pid);if(!p||!(root===document||root===p||root.contains(p))||p.querySelector('[data-reminder-key]'))return;const b=p.querySelector('button.btn-primary');if(b)b.insertAdjacentHTML('beforebegin',reminderControlHtml(`add:${type}`,{warnTage:getWarnSettings().tage||14}));}); [...(root.matches?.('input[type="date"][id^="edit"]')?[root]:[]),...root.querySelectorAll('input[type="date"][id^="edit"]')].forEach(inp=>{let type=null,id=null,m;if((m=inp.id.match(/^editSparenDatum-(.+)$/))){type='sparen';id=m[1];}else if((m=inp.id.match(/^editGeplantDatum-(.+)$/))){type='geplant';id=m[1];}else if((m=inp.id.match(/^editKostenDatum-(.+)$/))){type='fixkosten';id=m[1];}else if((m=inp.id.match(/^editEinnahmenDatum-(.+)$/))){type='einnahmen';id=m[1];}else if((m=inp.id.match(/^editFreizeitDatum-(.+)$/))){type='freizeit';id=m[1];}else if((m=inp.id.match(/^editDatum-(.+)$/))){id=m[1];if(inp.closest('#versicherungenView'))type='versicherungen';else if(inp.closest('#land'))type='reisen';else if(inp.closest('#haushaltView'))type='haushalt';} if(!type||!id)return;const key=`edit:${type}:${id}`,parent=inp.parentElement;if(parent?.querySelector(`[data-reminder-key="${CSS.escape(key)}"]`))return;inp.insertAdjacentHTML('afterend',reminderControlHtml(key,findReminderEntry(type,id)||{}));}); }
         function normalisierePushUhrzeit(wert) {
             const m = String(wert || "").match(/^([01]\d|2[0-3]):([0-5]\d)$/);
             return m ? `${m[1]}:${m[2]}` : "09:00";
@@ -3370,7 +3369,20 @@
             const erinnerungen=rows.filter(r=>!r.auto);
             h.innerHTML=renderHomeWarningGroup(hoheBetraege,true)+renderHomeWarningGroup(erinnerungen,false);
         }
-        document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{decorateReminderControls();renderWarnSettings();renderHomeWarnings();},0);new MutationObserver(()=>decorateReminderControls()).observe(document.body,{childList:true,subtree:true});});
+        document.addEventListener('DOMContentLoaded', () => {
+            decorateReminderControls();
+            renderWarnSettings();
+            renderHomeWarnings();
+            const relevantSelector = 'input[type="date"][id^="edit"], #sparenInvestierenAddPanel, #geplantAddPanel, #reiseAddPanel, #versAddPanel, #hausAddPanel, #freizeitAddPanel, #einnahmenAddPanel, #kostenAddPanel';
+            new MutationObserver(mutations => {
+                const roots = new Set();
+                mutations.forEach(mutation => mutation.addedNodes.forEach(node => {
+                    if (node instanceof Element && node.isConnected &&
+                        (node.matches(relevantSelector) || node.querySelector(relevantSelector))) roots.add(node);
+                }));
+                roots.forEach(root => decorateReminderControls(root));
+            }).observe(document.body, { childList: true, subtree: true });
+        });
 
         function speichernOhneHomeRender() {
             try {
@@ -3715,7 +3727,7 @@
         }
 
         function safeId(text) {
-            return text.replace(/\s+/g, '_');
+            return Array.from(String(text), char => Array.from({ length: char.length }, (_, i) => char.charCodeAt(i).toString(16).padStart(4, '0')).join('')).join('');
         }
 
         /* NAV */
@@ -3845,11 +3857,43 @@
             return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
         }
 
+        let testServiceWorkerPromise = null;
+
+        function withPushTimeout(promise, ms, message) {
+            return new Promise((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error(message)), ms);
+                Promise.resolve(promise).then(value => {
+                    clearTimeout(timer);
+                    resolve(value);
+                }, error => {
+                    clearTimeout(timer);
+                    reject(error);
+                });
+            });
+        }
+
         async function ensureTestServiceWorker() {
+            if (!window.isSecureContext || !/^https?:$/.test(location.protocol)) {
+                throw new Error("Für diesen Test muss die App über HTTPS geöffnet werden.");
+            }
             if (!("serviceWorker" in navigator)) throw new Error("Service Worker wird von diesem Browser nicht unterstützt.");
-            const reg = await navigator.serviceWorker.register("./service-worker.js", { scope: "./", updateViaCache: "none" });
-            await navigator.serviceWorker.ready;
-            return reg;
+            if (!testServiceWorkerPromise) {
+                testServiceWorkerPromise = (async () => {
+                    await withPushTimeout(
+                        navigator.serviceWorker.register("./service-worker.js", { scope: "./", updateViaCache: "none" }),
+                        10000, "Service Worker konnte nicht rechtzeitig geladen werden. Verbindung und service-worker.js prüfen."
+                    );
+                    const ready = await withPushTimeout(navigator.serviceWorker.ready, 10000,
+                        "Service Worker wird nicht aktiv. Bitte die App neu öffnen und die Zusatzdateien prüfen.");
+                    const scope = new URL("./", location.href).href;
+                    if (ready.scope !== scope || !ready.active) throw new Error("Der erwartete Service Worker ist noch nicht aktiv. Bitte die App neu öffnen.");
+                    return ready;
+                })().catch(error => {
+                    testServiceWorkerPromise = null;
+                    throw error;
+                });
+            }
+            return testServiceWorkerPromise;
         }
 
         async function renderPushTestStatus(message = "") {
@@ -3864,18 +3908,20 @@
             const permission = notifications ? Notification.permission : "unsupported";
 
             let swReady = false;
+            let swError = "";
             if (sw) {
                 try {
                     await ensureTestServiceWorker();
                     swReady = true;
-                } catch (_) {}
+                } catch (error) { swError = error?.message || String(error); }
             }
 
             let status = message ? `${message} ` : "";
             if (!standalone) status += "Für den iPhone-Test bitte über das Home-Screen-Icon öffnen. ";
             status += `Service Worker: ${swReady ? "bereit" : "nicht bereit"} · Mitteilungen: ${permission === "granted" ? "erlaubt" : permission === "denied" ? "blockiert" : permission === "default" ? "noch nicht erlaubt" : "nicht unterstützt"} · Push API: ${push ? "verfügbar" : "nicht verfügbar"}`;
+            if (swError) status += ` · ${swError}`;
             if (el) el.textContent = status;
-            if (menu) menu.textContent = permission === "granted" ? "Mitteilungen erlaubt · Test bereit" : "Mitteilungen auf dem iPhone testen";
+            if (menu) menu.textContent = permission === "granted" && swReady ? "Mitteilungen erlaubt · Test bereit" : "Mitteilungen auf dem iPhone testen";
         }
 
         function pushDiagLine(label, value, state = null) {
@@ -3886,6 +3932,7 @@
         async function runPushDiagnostics(testNotification = true) {
             const out = document.getElementById("pushDiagnostics");
             const lines = [];
+            let succeeded = true;
             const write = () => { if (out) out.textContent = lines.join("\n"); };
             try {
                 const standalone = istAlsWebAppGeoeffnet();
@@ -3898,7 +3945,7 @@
 
                 const swSupported = "serviceWorker" in navigator;
                 lines.push(pushDiagLine("Service Worker API", swSupported ? "verfügbar" : "nicht verfügbar", swSupported));
-                if (!swSupported) { write(); return; }
+                if (!swSupported) { write(); return false; }
 
                 const registrations = await navigator.serviceWorker.getRegistrations();
                 lines.push(pushDiagLine("Registrierte Service Worker", String(registrations.length), registrations.length > 0));
@@ -3917,6 +3964,7 @@
 
                 if (testNotification) {
                     if (permission !== "granted") {
+                        succeeded = false;
                         lines.push(pushDiagLine("Testmeldung", "nicht ausgeführt – Mitteilungen nicht erlaubt", false));
                     } else {
                         const tag = `kostentracker-diag-${Date.now()}`;
@@ -3937,10 +3985,12 @@
                     }
                 }
             } catch (error) {
+                succeeded = false;
                 lines.push(pushDiagLine("Fehler", error?.message || String(error), false));
             }
             write();
             await renderPushTestStatus();
+            return succeeded;
         }
 
         function openSettingsPushTest() {
@@ -3951,19 +4001,19 @@
         async function requestTestNotificationPermission() {
             const el = document.getElementById("pushTestStatus");
             try {
-                if (!("Notification" in window)) throw new Error("Mitteilungen werden hier nicht unterstützt.");
-                await ensureTestServiceWorker();
-                const permission = await Notification.requestPermission();
-                if (permission === "granted") {
-                    await renderPushTestStatus("Mitteilungen wurden erlaubt.");
-                } else if (permission === "denied") {
-                    await renderPushTestStatus("Mitteilungen wurden blockiert.");
-                } else {
-                    await renderPushTestStatus("Mitteilungen wurden noch nicht erlaubt.");
-                }
-                await runPushDiagnostics(false);
+                if (!window.isSecureContext) throw new Error("Bitte die App über HTTPS öffnen.");
+                if (!("Notification" in window)) throw new Error("Mitteilungen werden hier nicht unterstützt. Auf dem iPhone bitte über das Home-Screen-Icon öffnen.");
+                // Permission is requested during the tap, before any worker/network wait.
+                const permission = Notification.permission === "default"
+                    ? await Notification.requestPermission() : Notification.permission;
+                const message = permission === "granted" ? "Mitteilungen wurden erlaubt."
+                    : permission === "denied" ? "Mitteilungen sind blockiert. Bitte in den Mitteilungseinstellungen erlauben."
+                    : "Mitteilungen wurden noch nicht erlaubt.";
+                await renderPushTestStatus(message);
+                return permission === "granted";
             } catch (error) {
                 if (el) el.textContent = `Push-Test nicht möglich: ${error?.message || error}`;
+                return false;
             }
         }
 
@@ -3971,12 +4021,11 @@
             const el = document.getElementById("pushTestStatus");
             try {
                 if (!("Notification" in window)) throw new Error("Mitteilungen werden hier nicht unterstützt.");
-                if (Notification.permission !== "granted") {
-                    await requestTestNotificationPermission();
-                }
-                if (Notification.permission !== "granted") return;
-                await runPushDiagnostics(true);
-                await renderPushTestStatus("Direkter Benachrichtigungstest ausgeführt.");
+                if (Notification.permission !== "granted" && !await requestTestNotificationPermission()) return;
+                const success = await runPushDiagnostics(true);
+                await renderPushTestStatus(success
+                    ? "Testmeldung wurde an das System übergeben."
+                    : "Testmeldung fehlgeschlagen. Bitte die Diagnose unten prüfen.");
             } catch (error) {
                 if (el) el.textContent = `Testbenachrichtigung fehlgeschlagen: ${error?.message || error}`;
             }
@@ -3984,28 +4033,57 @@
 
         async function sendDelayedTestNotification() {
             const el = document.getElementById("pushTestStatus");
+            const out = document.getElementById("pushDiagnostics");
             try {
                 if (!("Notification" in window)) throw new Error("Mitteilungen werden hier nicht unterstützt.");
-                if (Notification.permission !== "granted") {
-                    await requestTestNotificationPermission();
-                }
-                if (Notification.permission !== "granted") return;
-
+                if (Notification.permission !== "granted" && !await requestTestNotificationPermission()) return;
                 const reg = await ensureTestServiceWorker();
-                const worker = reg.active || navigator.serviceWorker.controller;
+                const worker = reg.active;
                 if (!worker) throw new Error("Kein aktiver Service Worker gefunden.");
+                if (!("MessageChannel" in window)) throw new Error("Dieser Browser unterstützt die Testrückmeldung nicht.");
+                if (el) el.textContent = "Service Worker wird für den Test angefragt …";
 
-                worker.postMessage({
-                    type: "SCHEDULE_TEST_NOTIFICATION",
-                    delayMs: 5000,
-                    title: "Kostentracker Test",
-                    body: "5-Sekunden-Test: Die Hintergrund-Benachrichtigung funktioniert. ✅",
-                    tag: `kostentracker-delayed-${Date.now()}`
+                await new Promise((resolve, reject) => {
+                    const channel = new MessageChannel();
+                    let confirmed = false;
+                    const timer = setTimeout(() => {
+                        channel.port1.close();
+                        reject(new Error("Keine Rückmeldung vom Service Worker. Bitte die neue service-worker.js hochladen und die App neu öffnen."));
+                    }, 4000);
+                    channel.port1.onmessage = event => {
+                        const reply = event.data || {};
+                        if (!reply.ok) {
+                            clearTimeout(timer);
+                            channel.port1.close();
+                            const error = new Error(reply.error || "Test konnte nicht ausgeführt werden.");
+                            if (!confirmed) reject(error);
+                            else if (el) el.textContent = `5-Sekunden-Test fehlgeschlagen: ${error.message}`;
+                            return;
+                        }
+                        if (reply.status === "scheduled" && !confirmed) {
+                            confirmed = true;
+                            clearTimeout(timer);
+                            if (el) el.textContent = "Test bestätigt: Jetzt zum Home-Bildschirm wechseln. In etwa 5 Sekunden wird die Testmeldung ausgelöst.";
+                            if (out) out.textContent = "⏱️ Der Service Worker hat den kurzen Test bestätigt. Automatische Erinnerungen werden später über den Push-Dienst versendet.";
+                            resolve();
+                        } else if (reply.status === "shown") {
+                            channel.port1.close();
+                            if (el) el.textContent = "5-Sekunden-Test: Die Testmeldung wurde an das System übergeben.";
+                        }
+                    };
+                    try {
+                        worker.postMessage({
+                            type: "SCHEDULE_TEST_NOTIFICATION", delayMs: 5000,
+                            title: "Kostentracker Test",
+                            body: "Der kurze Benachrichtigungstest wurde ausgelöst. ✅",
+                            tag: `kostentracker-delayed-${Date.now()}`
+                        }, [channel.port2]);
+                    } catch (error) {
+                        clearTimeout(timer);
+                        channel.port1.close();
+                        reject(error);
+                    }
                 });
-
-                if (el) el.textContent = "Test läuft: In 5 Sekunden kommt die Benachrichtigung. Jetzt direkt zum Home-Bildschirm wechseln.";
-                const out = document.getElementById("pushDiagnostics");
-                if (out) out.textContent = "⏱️ 5-Sekunden-Test gestartet.\nJetzt die Test-App verlassen und zum Home-Bildschirm wechseln.";
             } catch (error) {
                 if (el) el.textContent = `5-Sekunden-Test fehlgeschlagen: ${error?.message || error}`;
             }
@@ -5795,7 +5873,7 @@
                 item.innerHTML = `
             <div class="land-main">
                 ${state.editLandName === land
-                    ? `<input id="editLand-${safeId(land)}" value="${land}">`
+                    ? `<input id="editLand-${safeId(land)}" value="${escapeHtml(land)}">`
                     : `<span class="land-name">${escapeHtml(land)}</span>`
                 }
                 <div class="land-stats">
@@ -5936,11 +6014,11 @@
                         <div class="date-range">
                             <div class="date-field">
                                 <label for="reiseVonEdit">Von</label>
-                                <input id="reiseVonEdit" type="date" value="${meta.von || ""}">
+                                <input id="reiseVonEdit" type="date" value="${escapeHtml(meta.von || "")}">
                             </div>
                             <div class="date-field">
                                 <label for="reiseBisEdit">Bis</label>
-                                <input id="reiseBisEdit" type="date" value="${meta.bis || ""}">
+                                <input id="reiseBisEdit" type="date" value="${escapeHtml(meta.bis || "")}">
                             </div>
                         </div>
                         <div class="row">
@@ -6016,17 +6094,20 @@
         function addKategorie() {
             let name = prompt("Neue Kategorie?");
             if (!name) return;
+            name = name.trim();
+            if (!name) return;
 
             if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
 
             name = name.charAt(0).toUpperCase() + name.slice(1);
 
-            if (!daten.Reisen[aktuellesLand][name]) {
-                daten.Reisen[aktuellesLand][name] = [];
+            if (!Object.hasOwn(daten.Reisen[aktuellesLand], name)) {
+                Object.defineProperty(daten.Reisen[aktuellesLand], name, { value: [], enumerable: true, writable: true, configurable: true });
             }
 
             speichern();
             updateDropdown();
+            renderListe();
         }
 
         function addItem(liste, item) {
@@ -6150,26 +6231,44 @@
                 let item = document.createElement("div");
                 item.className = "item";
 
-                item.innerHTML = `
-            <div onclick="${state.editKategorieName === k ? '' : `toggleKategorie('${k}')`}"
-                 style="display:flex; align-items:center; min-width:0; flex:1; cursor:${state.editKategorieName === k ? 'default' : 'pointer'}; padding:4px 0;">
-                ${state.editKategorieName === k ? `
-                    <input id="editKategorie-${k.replace(/\s+/g, '_')}" value="${k}" onclick="event.stopPropagation()">
-                ` : `
-                    <span style="font-weight:600; overflow-wrap:anywhere;">${k} – ${formatBetragText(sum)}</span>
-                `}
-            </div>
-
-            <div class="actions" style="display:flex; gap:8px; align-items:center;">
-                ${state.editKategorieName === k ? `
-                    <button onclick="saveEditKategorie('${k}')" class="btn btn-icon btn-primary">💾</button>
-                    <button onclick="cancelEditKategorie()" class="btn btn-icon btn-cancel">❌</button>
-                ` : `
-                    <button class="edit" onclick="event.stopPropagation(); startEditKategorie('${k}')">✏️</button>
-                    <button class="delete" onclick="event.stopPropagation(); deleteKategorie('${k}')">🗑️</button>
-                `}
-            </div>
-        `;
+                const editingCategory = state.editKategorieName === k;
+                const categoryMain = document.createElement("div");
+                categoryMain.style.cssText = `display:flex; align-items:center; min-width:0; flex:1; cursor:${editingCategory ? 'default' : 'pointer'}; padding:4px 0;`;
+                if (editingCategory) {
+                    const input = document.createElement("input");
+                    input.id = "editKategorie-" + safeId(k);
+                    input.value = k;
+                    input.addEventListener("click", event => event.stopPropagation());
+                    categoryMain.appendChild(input);
+                } else {
+                    const label = document.createElement("span");
+                    label.style.cssText = "font-weight:600; overflow-wrap:anywhere;";
+                    label.textContent = k + " – " + formatBetragText(sum);
+                    categoryMain.appendChild(label);
+                    categoryMain.addEventListener("click", () => toggleKategorie(k));
+                }
+                const categoryActions = document.createElement("div");
+                categoryActions.className = "actions";
+                categoryActions.style.cssText = "display:flex; gap:8px; align-items:center;";
+                const addCategoryAction = (label, className, action) => {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.className = className;
+                    button.textContent = label;
+                    button.addEventListener("click", event => {
+                        event.stopPropagation();
+                        action();
+                    });
+                    categoryActions.appendChild(button);
+                };
+                if (editingCategory) {
+                    addCategoryAction("💾", "btn btn-icon btn-primary", () => saveEditKategorie(k));
+                    addCategoryAction("❌", "btn btn-icon btn-cancel", cancelEditKategorie);
+                } else {
+                    addCategoryAction("✏️", "edit", () => startEditKategorie(k));
+                    addCategoryAction("🗑️", "delete", () => deleteKategorie(k));
+                }
+                item.append(categoryMain, categoryActions);
 
                 div.appendChild(item);
 
@@ -6182,7 +6281,7 @@
                 if (state.offeneKategorie === k) {
 
                     let letzteReiseDatumsGruppe = null;
-                    gefilterteEintraege.forEach((e, i) => {
+                    gefilterteEintraege.forEach(e => {
                         const gruppenKey = e.datum || "ohne-datum";
                         if (gruppenKey !== letzteReiseDatumsGruppe) {
                             appendDateGroupHeader(div, e.datum, { first: false, inset: true });
@@ -6198,7 +6297,7 @@
 
                             sub.innerHTML = `
                         <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
-                        <input id="editText-${e.id}" value="${e.text || ""}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                        <input id="editText-${e.id}" value="${escapeHtml(e.text || "")}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                         <input id="editDatum-${e.id}" type="date" value="${e.datum || ""}">
 
                         <div class="actions">
@@ -6226,7 +6325,7 @@
                                 <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                                     <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben">↪️</button>
                                     <button class="edit" onclick="event.stopPropagation(); startEditReise(${e.id})">✏️</button>
-                                    <button class="delete" onclick="event.stopPropagation(); deleteEintrag('${k}', ${i})">🗑️</button>
+                                    <button class="delete" data-delete-reise>🗑️</button>
                                 </div>
                             </div>
                             ${reiseOffen ? `
@@ -6238,6 +6337,11 @@
                     `;
                         }
 
+                        sub.querySelector('[data-delete-reise]')?.addEventListener("click", event => {
+                            event.stopPropagation();
+                            const index = alleEintraege.indexOf(e);
+                            if (index !== -1) deleteEintrag(k, index);
+                        });
                         div.appendChild(sub);
                     });
 
@@ -6247,11 +6351,15 @@
                         clearWrap.style.marginTop = "8px";
                         clearWrap.innerHTML = `
                             <button class="delete"
-                                    onclick="event.stopPropagation(); clearKategorie('${k}')"
+                                    data-clear-kategorie
                                     style="width:100%;padding:11px 14px;border-radius:12px;font-weight:700;">
                                 🗑️ Alle ${escapeHtml(k)}-Ausgaben löschen
                             </button>
                         `;
+                        clearWrap.querySelector('button').addEventListener("click", event => {
+                            event.stopPropagation();
+                            clearKategorie(k);
+                        });
                         div.appendChild(clearWrap);
                     }
                 }
@@ -7816,8 +7924,7 @@
 
         function setupKategorieEditEnterFlow(name) {
 
-            const id = name.replace(/\s+/g, '_');
-            const input = document.getElementById("editKategorie-" + id);
+            const input = document.getElementById("editKategorie-" + safeId(name));
 
             if (!input) return;
 
@@ -8665,8 +8772,7 @@
 
             if (!aktuellesLand || !daten.Reisen?.[aktuellesLand]) return;
 
-            let safeId = oldName.replace(/\s+/g, '_');
-            let input = document.getElementById("editKategorie-" + safeId);
+            let input = document.getElementById("editKategorie-" + safeId(oldName));
             if (!input) return;
 
             let newName = input.value.trim();
@@ -8678,17 +8784,23 @@
 
             if (!land || !land[oldName]) return;
 
-            if (land[newName]) {
+            if (newName === oldName) {
+                cancelEditKategorie();
+                return;
+            }
+            if (Object.hasOwn(land, newName)) {
                 alert("Kategorie existiert bereits!");
                 return;
             }
 
-            land[newName] = land[oldName];
+            Object.defineProperty(land, newName, { value: land[oldName], enumerable: true, writable: true, configurable: true });
             delete land[oldName];
-
+            if (state.offeneKategorie === oldName) state.offeneKategorie = newName;
+            if (getLetzteKategorie("reisen", "Essen") === oldName) merkeLetzteKategorie("reisen", newName);
             state.editKategorieName = null;
 
             speichern();
+            updateDropdown();
             renderListe();
         }
 
@@ -9672,9 +9784,9 @@
             const host=document.getElementById("grafikCompareSelection"); if(!host)return;
             host.innerHTML=grafikCompareGroups().map(g=>{
                 const totalKey=`${g.category}|all`, totalChecked=grafikCompareSelection.has(totalKey);
-                const subRows=g.subs.map(sub=>{const key=`${g.category}|${sub}`;return `<label class="grafik-compare-option"><input type="checkbox" ${grafikCompareSelection.has(key)?"checked":""} onchange='grafikCompareChoose(${JSON.stringify(g.category)},${JSON.stringify(sub)},this.checked)'><span>${escapeHtml(sub)}</span></label>`;}).join("");
+                const subRows=g.subs.map(sub=>{const key=`${g.category}|${sub}`;return `<label class="grafik-compare-option"><input type="checkbox" ${grafikCompareSelection.has(key)?"checked":""} onchange='grafikCompareChoose(${escapeHtml(JSON.stringify(g.category))},${escapeHtml(JSON.stringify(sub))},this.checked)'><span>${escapeHtml(sub)}</span></label>`;}).join("");
                 const selectedCount=[...grafikCompareSelection].filter(k=>k.startsWith(g.category+"|")).length;
-                return `<div class="grafik-compare-group"><div class="grafik-compare-group-head" onclick='grafikToggleCompareGroup(${JSON.stringify(g.category)})'><div><div class="grafik-compare-group-title">${escapeHtml(g.label)}</div><div class="grafik-compare-group-count">${selectedCount?selectedCount+" ausgewählt":"nichts ausgewählt"}</div></div><span id="grafikCompareChevron-${g.category}">⌄</span></div><div id="grafikCompareOptions-${g.category}" class="grafik-compare-options hidden"><label class="grafik-compare-option"><input type="checkbox" ${totalChecked?"checked":""} onchange='grafikCompareChoose(${JSON.stringify(g.category)},"all",this.checked)'><span>Gesamt</span></label>${subRows}</div></div>`;
+                return `<div class="grafik-compare-group"><div class="grafik-compare-group-head" onclick='grafikToggleCompareGroup(${escapeHtml(JSON.stringify(g.category))})'><div><div class="grafik-compare-group-title">${escapeHtml(g.label)}</div><div class="grafik-compare-group-count">${selectedCount?selectedCount+" ausgewählt":"nichts ausgewählt"}</div></div><span id="grafikCompareChevron-${g.category}">⌄</span></div><div id="grafikCompareOptions-${g.category}" class="grafik-compare-options hidden"><label class="grafik-compare-option"><input type="checkbox" ${totalChecked?"checked":""} onchange='grafikCompareChoose(${escapeHtml(JSON.stringify(g.category))},"all",this.checked)'><span>Gesamt</span></label>${subRows}</div></div>`;
             }).join("");
         }
 
@@ -10417,7 +10529,12 @@
                 rail.setAttribute('aria-hidden', 'true');
                 actions.querySelectorAll('button').forEach(btn => {
                     const clone = btn.cloneNode(true);
-                    clone.addEventListener('click', () => closeSwipe(shell));
+                    clone.addEventListener('click', event => {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                        btn.click();
+                        closeSwipe(shell);
+                    }, true);
                     rail.appendChild(clone);
                 });
 
