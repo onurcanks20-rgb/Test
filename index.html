@@ -2222,6 +2222,16 @@
                 <h2 style="flex:1;">Push-Test</h2>
             </div>
             <div class="settings-page-card">
+                <div style="font-weight:750;font-size:16px;">Cloudflare-Testserver</div>
+                <div class="settings-note" style="margin:7px 0 12px;">Zahlungen werden beim Öffnen oder Verbinden übernommen. Deine Testdaten bleiben offline verfügbar. Der Server speichert zusätzlich eine Sicherung.</div>
+                <label for="testServerToken">Zugangsschlüssel</label>
+                <input id="testServerToken" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Schlüssel aus der Einrichtung">
+                <button type="button" onclick="syncTestServer(true)">🔄 Verbinden &amp; synchronisieren</button>
+                <button type="button" onclick="activateTestServerPush()">📳 Server-Push aktivieren</button>
+                <button type="button" onclick="sendTestServerPush()" style="background:#3a3a3c;">🔔 Echten Server-Push testen</button>
+                <div id="testServerStatus" class="settings-note" style="margin-top:12px;">Noch nicht verbunden.</div>
+            </div>
+            <div class="settings-page-card">
                 <div style="font-weight:750;font-size:16px;">Test-App auf dem iPhone</div>
                 <div class="settings-note" style="margin:7px 0 14px;">Für den iPhone-Test die Testseite zuerst zum Home-Bildschirm hinzufügen und anschließend über das neue Test-Icon öffnen.</div>
                 <div id="pushTestStatus" class="settings-note" style="margin:0 0 12px;">Status wird geprüft …</div>
@@ -2238,7 +2248,7 @@
             </div>
             <div class="settings-page-card">
                 <div style="font-weight:750;font-size:16px;">Was dieser Test prüft</div>
-                <div class="settings-note" style="margin-top:7px;">Die Testbenachrichtigung prüft Installation, Service Worker und Mitteilungsberechtigung. Der 5-Sekunden-Test ist ein kurzer lokaler Test und keine dauerhafte Zeitplanung im Hintergrund. Eine echte Push-Subscription ist erst vorhanden, wenn wir später einen Push-Dienst mit VAPID anbinden. Deshalb ist „keine Push-Subscription“ in dieser Teststufe normal.</div>
+                <div class="settings-note" style="margin-top:7px;">Die Testbenachrichtigung prüft Installation, Service Worker und Mitteilungsberechtigung. Der 5-Sekunden-Test ist ein kurzer lokaler Test und keine dauerhafte Zeitplanung im Hintergrund. Für echte Nachrichten bei geschlossener App oben „Server-Push aktivieren“ verwenden. Zeitgesteuerte Erinnerungen werden in einem weiteren Schritt eingerichtet.</div>
             </div>
         </div>
     </div>
@@ -2397,7 +2407,7 @@
     <div id="weekPreviewSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) closeWeekPreview()">
         <div class="add-sheet">
             <h3>Wochenbudget</h3>
-            <div class="week-preview-note">Diese Woche ist fest. Die kommenden Wochen bleiben während der laufenden Woche unverändert. Ausgaben verändern nur den Rest dieser Woche. Am nächsten Wochenstart wird der tatsächliche Rest neu auf die verbleibenden Wochen verteilt.</div>
+            <div class="week-preview-note">Das Budget dieser Woche bleibt fest. Ein positiver Wochenrest bleibt für diese Woche reserviert. Wenn du das Wochenbudget überschreitest, werden die kommenden Wochen sofort angepasst. Die Überschreitung ist im Gesamtbetrag bereits verrechnet und wird nicht noch einmal abgezogen. Teilwochen werden nach ihren Tagen verteilt.</div>
             <div id="weekPreviewList" class="week-preview-list"></div>
             <div class="week-preview-total"><span>Noch frei bis Gehalt</span><span id="weekPreviewTotal">0,00 €</span></div>
             <button onclick="closeWeekPreview()" style="background:#3a3a3c; margin-top:14px;">Schließen</button>
@@ -3387,6 +3397,7 @@
         function speichernOhneHomeRender() {
             try {
                 localStorage.setItem("kostenApp_test", JSON.stringify(daten));
+                if (typeof scheduleTestServerSync === "function") scheduleTestServerSync();
                 return true;
             } catch (error) {
                 console.error("Speichern fehlgeschlagen:", error);
@@ -3995,6 +4006,7 @@
 
         function openSettingsPushTest() {
             show("settingsPushTestView");
+            renderTestServerSettings();
             renderPushTestStatus();
         }
 
@@ -4739,6 +4751,22 @@
             renderGlobalArchiv();
         }
 
+        function verteileWochenBetraege(betrag, segmente) {
+            const tage = segmente.map(seg => Math.max(1, Math.round((seg.ende - seg.start) / 86400000) + 1));
+            const gesamtTage = tage.reduce((sum, wert) => sum + wert, 0);
+            if (!gesamtTage) return [];
+            const gesamtCent = Math.round(betrag * 100);
+            let bisherTage = 0;
+            let bisherCent = 0;
+            return tage.map(wert => {
+                bisherTage += wert;
+                const bisHierCent = Math.round(gesamtCent * bisherTage / gesamtTage);
+                const anteil = (bisHierCent - bisherCent) / 100;
+                bisherCent = bisHierCent;
+                return anteil;
+            });
+        }
+
         function openWeekPreview() {
             const sheet = document.getElementById("weekPreviewSheet");
             const list = document.getElementById("weekPreviewList");
@@ -4769,38 +4797,33 @@
             const wochenBudgetStart = verfuegbarZuWochenbeginn * (tageInAktuellerWoche / verbleibendeTageAbWochenstart);
             const bisHeute = heute < wochenEnde ? heute : wochenEnde;
             const alltagDieseWoche = alltagImZeitraum(wochenStart, bisHeute).reduce((s,e)=>s+e.betrag,0);
-            const dieseWocheUebrig = wochenBudgetStart - alltagDieseWoche;
+            const dieseWocheUebrig = Math.round((wochenBudgetStart - alltagDieseWoche) * 100) / 100;
 
             const rows = [{
-                label: "Diese Woche · fest",
+                label: dieseWocheUebrig < 0 ? "Diese Woche · überschritten" : "Diese Woche · fest",
                 start: wochenStart,
                 ende: wochenEnde,
                 betrag: dieseWocheUebrig,
+                hinweis: dieseWocheUebrig < 0 ? "Bereits im Gesamtbetrag verrechnet" : "",
                 current: true
             }];
 
-            // Vorschau fuer kommende Wochen bleibt waehrend der laufenden Woche fest.
-            // Der aktuelle Wochenrest (auch wenn er negativ ist) wird bereits separat
-            // in dieserWocheUebrig angezeigt und darf deshalb nicht nochmals von den
-            // Folgewochen abgezogen werden. Erst am naechsten Wochenstart wird der
-            // tatsaechliche Gesamt-Rest neu verteilt.
+            // Ein positiver Wochenrest ist reserviert. Eine Überschreitung bleibt
+            // als Information sichtbar, ist aber bereits im frei verfügbaren Rest
+            // enthalten. Deshalb wird sie nicht ein zweites Mal verrechnet.
             let futureStart = addDays(kalenderSonntag, 1);
             if (futureStart < zeitraum.start) futureStart = new Date(zeitraum.start);
             if (futureStart <= zeitraum.ende) {
                 const futureSegments = wochenSegmente(futureStart, zeitraum.ende);
-                const futureDays = Math.max(1, Math.round((zeitraum.ende - futureStart) / 86400000) + 1);
-                // Gesamt der Folgewochen so berechnen, dass aktuelle Woche + Folgewochen
-                // exakt dem aktuell frei verfuegbaren Betrag entsprechen. Dadurch wird
-                // ein negatives Wochenbudget nicht doppelt beruecksichtigt.
-                const fuerFolgewochenAktuell = freiJetzt - dieseWocheUebrig;
+                const fuerFolgewochenAktuell = Math.round(freiJetzt * 100) / 100 - Math.max(0, dieseWocheUebrig);
+                const folgeBetraege = verteileWochenBetraege(fuerFolgewochenAktuell, futureSegments);
 
                 futureSegments.forEach((seg, idx) => {
-                    const days = Math.max(1, Math.round((seg.ende - seg.start) / 86400000) + 1);
                     rows.push({
                         label: idx === 0 ? "Nächste Woche · Vorschau" : `Woche ${idx + 2} · Vorschau`,
                         start: seg.start,
                         ende: seg.ende,
-                        betrag: fuerFolgewochenAktuell * (days / futureDays),
+                        betrag: folgeBetraege[idx],
                         current: false
                     });
                 });
@@ -4811,6 +4834,7 @@
                     <div class="week-preview-left">
                         <div class="week-preview-label">${r.label}</div>
                         <div class="week-preview-dates">${formatKurzDatum(r.start)} – ${formatKurzDatum(r.ende)}</div>
+                        ${r.hinweis ? `<div class="week-preview-dates">${r.hinweis}</div>` : ""}
                     </div>
                     <div class="week-preview-value">${formatBetrag(r.betrag)}</div>
                 </div>`).join("");
@@ -9336,8 +9360,8 @@
             // Wochenbudget-Logik:
             // - Montag bis Sonntag bleibt das Startbudget der aktuellen Woche unveraendert.
             // - Ausgaben der aktuellen Woche werden vom Wochenbudget abgezogen.
-            // - Die Vorschau der kommenden Wochen bleibt waehrend der laufenden Woche stabil.
-            //   Erst am naechsten Wochenstart wird der tatsaechliche Rest neu verteilt.
+            // - Eine Überschreitung reduziert die Vorschau der kommenden Wochen sofort.
+            //   Ein positiver Wochenrest bleibt für diese Woche reserviert.
             // - Angebrochene Wochen bis zum Gehalt werden nach ihren tatsaechlichen Tagen gewichtet.
             const kalenderMontag = montagDerWoche(heute);
             const kalenderSonntag = addDays(kalenderMontag, 6);
@@ -9362,8 +9386,10 @@
                 .reduce((s, e) => s + e.betrag, 0);
 
             // Waehrend der Woche bleibt wochenBudgetStart gleich. Nur der Restbetrag sinkt mit neuen Ausgaben.
-            const wochenBudgetUebrig = wochenBudgetStart - alltagDieseWoche;
+            const wochenBudgetUebrig = Math.round((wochenBudgetStart - alltagDieseWoche) * 100) / 100;
             set("homeWeekAmount", wochenBudgetUebrig);
+            const weekPreview = document.getElementById("weekPreviewSheet");
+            if (weekPreview && !weekPreview.classList.contains("hidden")) openWeekPreview();
 
             const weekDates = document.getElementById("homeWeekDates");
             if (weekDates) weekDates.innerText = `${formatKurzDatum(wochenStart)} – ${formatKurzDatum(wochenEnde)}`;
@@ -10809,6 +10835,110 @@
         })();
     </script>
 
+<script>
+// Server integration for the TEST storage only; credentials are never in a backup.
+var testServerConfig = (() => { try {return JSON.parse(localStorage.getItem('kostenApp_test_server'))||{};} catch {return {};} })();
+var testServerBusy = false, testServerTimer = null, testServerPending = false;
+const TEST_SERVER_URL = 'https://kostentracker-test.onurcanks20.workers.dev';
+function serverStatus(message) {const node=document.getElementById('testServerStatus');if(node) node.textContent=message;}
+function renderTestServerSettings() {
+  const node=document.getElementById('testServerToken');if(node) node.value=testServerConfig.token||'';
+  serverStatus(testServerConfig.token?'Zugangsschlüssel gespeichert. Bereit zum Verbinden.':'Zugangsschlüssel aus der Einrichtung eintragen.');
+}
+function saveTestServerSettings() {
+  const token=document.getElementById('testServerToken').value.trim();
+  if(token.length<32) throw new Error('Bitte den vollständigen Zugangsschlüssel eintragen.');
+  const config={token};localStorage.setItem('kostenApp_test_server',JSON.stringify(config));testServerConfig=config;
+}
+async function testServerRequest(path,value) {
+  if(!testServerConfig?.token) throw new Error('Zugangsschlüssel fehlt.');
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+  try {
+    const response=await fetch(TEST_SERVER_URL+path,{method:value===undefined?'GET':'POST',cache:'no-store',signal:controller.signal,
+      headers:{Authorization:'Bearer '+testServerConfig.token,...(value===undefined?{}:{'Content-Type':'application/json'})},
+      ...(value===undefined?{}:{body:JSON.stringify(value)})});
+    const data=await response.json();if(!response.ok) throw new Error(data.error||'Serverfehler '+response.status);return data;
+  } finally {clearTimeout(timer);}
+}
+function scheduleTestServerSync() {
+  if(!testServerConfig?.token) return;
+  clearTimeout(testServerTimer);testServerTimer=setTimeout(()=>syncTestServer(false),1800);
+}
+function importTestServerPayments(payments) {
+  if(!Array.isArray(payments)||payments.length>100) throw new Error('Ungültige Zahlungsliste.');
+  const ids=new Set(daten.Einstellungen?.serverImportIds||[]);
+  Object.values(daten.Haushalt||{}).forEach(list=>Array.isArray(list)&&list.forEach(e=>{if(e._serverPaymentId)ids.add(e._serverPaymentId);}));
+  const before=structuredClone(daten);let count=0;
+  try {
+    for(const payment of payments) {
+      if(!payment||typeof payment.id!=='string'||!/^[-A-Za-z0-9_:]{1,128}$/.test(payment.id)||!Number.isInteger(payment.amountCents)||payment.amountCents<=0||payment.amountCents>100000000||typeof payment.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(payment.date)||!Number.isFinite(Date.parse(payment.date+'T12:00:00Z'))||new Date(payment.date+'T12:00:00Z').toISOString().slice(0,10)!==payment.date) throw new Error('Ungültige Zahlung vom Server.');
+      if(ids.has(payment.id)) continue;
+      const month=Number(payment.date.slice(5,7));daten.Haushalt[month]??=[];
+      daten.Haushalt[month].push({id:generateId(),text:String(payment.merchant||'Apple Pay').slice(0,200),betrag:payment.amountCents/100,datum:payment.date,
+        kategorie:['Einkauf','Tanken','Drogerie','Sonstiges'].includes(payment.category)?payment.category:'Einkauf',_serverPaymentId:payment.id});
+      ids.add(payment.id);count++;
+    }
+    daten.Einstellungen??={};daten.Einstellungen.serverImportIds=[...ids];
+    // Save before acknowledgment: after a crash/retry the IDs prevent duplication.
+    localStorage.setItem('kostenApp_test',JSON.stringify(daten));
+  } catch(error) {daten=before;throw error;}
+  return count;
+}
+async function syncTestServer(saveSettings=false) {
+  if(testServerBusy) {testServerPending=true;return;}
+  try {
+    if(saveSettings) saveTestServerSettings();if(!testServerConfig?.token) return;
+    testServerBusy=true;serverStatus('Verbindung wird geprüft …');
+    await testServerRequest('/api/config');
+    let count=0;for(let page=0;page<10;page++) {
+      const result=await testServerRequest('/api/payments');
+      count+=importTestServerPayments(result.payments);
+      if(result.payments.length) renderHomeUebersicht();
+      if(result.payments.length) await testServerRequest('/api/payments/ack',{ids:result.payments.map(p=>p.id)});
+      if(result.payments.length<100) break;
+    }
+    renderHomeUebersicht();
+    await testServerRequest('/api/backup',{data:daten});
+    serverStatus('Verbunden. '+count+' neue Zahlung'+(count===1?'':'en')+' übernommen. Serverbackup aktualisiert.');
+  } catch(error) {serverStatus('Noch nicht synchronisiert: '+(error.name==='AbortError'?'Zeitüberschreitung. Später erneut verbinden.':error.message));}
+  finally {testServerBusy=false;if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
+}
+function pushKeyBytes(value) {return Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4)),c=>c.charCodeAt(0));}
+async function activateTestServerPush() {
+  try {
+    if(!('Notification' in window)) throw new Error('Bitte die Test-App über das Home-Bildschirm-Icon öffnen.');
+    // Request permission directly in the tap, before a network request.
+    const permission=Notification.permission==='default'?await Notification.requestPermission():Notification.permission;
+    if(permission!=='granted') throw new Error('Mitteilungen sind nicht erlaubt.');
+    saveTestServerSettings();serverStatus('Push wird eingerichtet …');
+    const config=await testServerRequest('/api/config');if(!config.publicKey) throw new Error('Push-Schlüssel fehlen noch im Server.');
+    const registration=await ensureTestServiceWorker(),desiredKey=pushKeyBytes(config.publicKey);
+    let sub=await registration.pushManager.getSubscription();
+    if(sub?.options?.applicationServerKey) {
+      const old=new Uint8Array(sub.options.applicationServerKey);
+      if(old.length!==desiredKey.length||old.some((n,i)=>n!==desiredKey[i])) {
+        if(!await sub.unsubscribe()) throw new Error('Alte Push-Anmeldung konnte nicht entfernt werden.');sub=null;
+      }
+    }
+    if(!sub) sub=await withPushTimeout(registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:desiredKey}),15000,'Push-Anmeldung dauert zu lange. Bitte erneut versuchen.');
+    await testServerRequest('/api/subscribe',sub.toJSON());serverStatus('Dieses Gerät ist für echte Server-Push-Nachrichten angemeldet.');
+    await renderPushTestStatus();
+  } catch(error) {serverStatus(error.message);}
+}
+async function sendTestServerPush() {
+  try {
+    saveTestServerSettings();const registration=await ensureTestServiceWorker(),sub=await registration.pushManager.getSubscription();
+    if(!sub) throw new Error('Zuerst „Server-Push aktivieren“ antippen.');
+    await testServerRequest('/api/subscribe',sub.toJSON());
+    await testServerRequest('/api/push-test',{endpoint:sub.endpoint});
+    serverStatus('Push-Dienst hat die Testnachricht angenommen. Die Anzeige übernimmt dein iPhone.');
+  } catch(error) {serverStatus(error.message);}
+}
+window.addEventListener('online',()=>syncTestServer(false));
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') syncTestServer(false);});
+window.addEventListener('load',()=>{renderTestServerSettings();if(testServerConfig.token) syncTestServer(false);});
+
+</script>
 </body>
 
 </html>
