@@ -2224,12 +2224,14 @@
             <div class="settings-page-card">
                 <div style="font-weight:750;font-size:16px;">Cloudflare-Testserver</div>
                 <div class="settings-note" style="margin:7px 0 12px;">Zahlungen werden beim Öffnen oder Verbinden übernommen. Deine Testdaten bleiben offline verfügbar. Der Server speichert zusätzlich eine Sicherung.</div>
-                <label for="testServerToken">Zugangsschlüssel</label>
-                <input id="testServerToken" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Schlüssel aus der Einrichtung">
+                <label for="testServerToken">Dein persönlicher Code</label>
+                <input id="testServerToken" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Einmal deinen Code eintragen">
+                <button id="testServerReveal" type="button" onclick="toggleTestServerCode()" style="background:#3a3a3c;">Code anzeigen</button>
                 <button type="button" onclick="syncTestServer(true)">🔄 Verbinden &amp; synchronisieren</button>
                 <button type="button" onclick="activateTestServerPush()">📳 Server-Push aktivieren</button>
                 <button type="button" onclick="sendTestServerPush()" style="background:#3a3a3c;">🔔 Echten Server-Push testen</button>
-                <div id="testServerStatus" class="settings-note" style="margin-top:12px;">Noch nicht verbunden.</div>
+                <button type="button" onclick="restoreTestServerBackup()" style="background:#3a3a3c;">Serverbackup wiederherstellen</button>
+                <div id="testServerStatus" class="settings-note" style="margin-top:12px;">Persönlichen Code einmal eintragen.</div>
             </div>
             <div class="settings-page-card">
                 <div style="font-weight:750;font-size:16px;">Test-App auf dem iPhone</div>
@@ -10838,24 +10840,35 @@
 <script>
 // Server integration for the TEST storage only; credentials are never in a backup.
 var testServerConfig = (() => { try {return JSON.parse(localStorage.getItem('kostenApp_test_server'))||{};} catch {return {};} })();
+// Legacy saved credentials belong to the existing primary account.
+var testServerBoundUser = (() => {try {return localStorage.getItem('kostenApp_test_user')||testServerConfig.userId||(testServerConfig.token?'person1':null);} catch {return testServerConfig.token?'person1':null;}})();
 var testServerBusy = false, testServerTimer = null, testServerPending = false;
 const TEST_SERVER_URL = 'https://kostentracker-test.onurcanks20.workers.dev';
 function serverStatus(message) {const node=document.getElementById('testServerStatus');if(node) node.textContent=message;}
 function renderTestServerSettings() {
   const node=document.getElementById('testServerToken');if(node) node.value=testServerConfig.token||'';
-  serverStatus(testServerConfig.token?'Zugangsschlüssel gespeichert. Bereit zum Verbinden.':'Zugangsschlüssel aus der Einrichtung eintragen.');
+  serverStatus(testServerConfig.token?'Persönlicher Code gespeichert. Die App öffnet sich weiterhin direkt.':'Persönlichen Code einmal eintragen.');
 }
-function saveTestServerSettings() {
+function bindTestServerUser(config) {
+  if(!config.userId||!/^[-a-zA-Z0-9_]{1,40}$/.test(config.userId)) throw new Error('Bitte zuerst den neuen Worker für getrennte Zugänge deployen.');
+  if(testServerBoundUser&&testServerBoundUser!==config.userId) throw new Error('Dieser Code gehört zu einer anderen Person. Dieses App-Profil bleibt bei deinem bisherigen Zugang. Für die zweite Person deren eigenes Handy verwenden.');
+  if(!testServerBoundUser) localStorage.setItem('kostenApp_test_backup_check',config.userId);
+  localStorage.setItem('kostenApp_test_user',config.userId);testServerBoundUser=config.userId;
+}
+async function saveTestServerSettings() {
   const token=document.getElementById('testServerToken').value.trim();
   if(token.length<32) throw new Error('Bitte den vollständigen Zugangsschlüssel eintragen.');
-  const config={token};localStorage.setItem('kostenApp_test_server',JSON.stringify(config));testServerConfig=config;
+  const remote=await testServerRequest('/api/config',undefined,token);
+  bindTestServerUser(remote);
+  const config={token,userId:remote.userId};localStorage.setItem('kostenApp_test_server',JSON.stringify(config));testServerConfig=config;
+  return remote;
 }
-async function testServerRequest(path,value) {
-  if(!testServerConfig?.token) throw new Error('Zugangsschlüssel fehlt.');
+async function testServerRequest(path,value,token=testServerConfig?.token) {
+  if(!token) throw new Error('Persönlicher Code fehlt.');
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try {
     const response=await fetch(TEST_SERVER_URL+path,{method:value===undefined?'GET':'POST',cache:'no-store',signal:controller.signal,
-      headers:{Authorization:'Bearer '+testServerConfig.token,...(value===undefined?{}:{'Content-Type':'application/json'})},
+      headers:{Authorization:'Bearer '+token,...(value===undefined?{}:{'Content-Type':'application/json'})},
       ...(value===undefined?{}:{body:JSON.stringify(value)})});
     const data=await response.json();if(!response.ok) throw new Error(data.error||'Serverfehler '+response.status);return data;
   } finally {clearTimeout(timer);}
@@ -10887,9 +10900,17 @@ function importTestServerPayments(payments) {
 async function syncTestServer(saveSettings=false) {
   if(testServerBusy) {testServerPending=true;return;}
   try {
-    if(saveSettings) saveTestServerSettings();if(!testServerConfig?.token) return;
     testServerBusy=true;serverStatus('Verbindung wird geprüft …');
-    await testServerRequest('/api/config');
+    if(saveSettings) await saveTestServerSettings();else {
+      if(!testServerConfig?.token) return;
+      bindTestServerUser(await testServerRequest('/api/config'));
+    }
+    // A fresh device must not overwrite an existing personal server backup.
+    if(localStorage.getItem('kostenApp_test_backup_check')===testServerBoundUser) {
+      const saved=await testServerRequest('/api/backup');
+      if(saved.data) {serverStatus('Für deinen Zugang gibt es bereits ein Serverbackup. Bitte „Serverbackup wiederherstellen“ verwenden. Deine lokalen Daten bleiben bis dahin erhalten.');return;}
+      localStorage.removeItem('kostenApp_test_backup_check');
+    }
     let count=0;for(let page=0;page<10;page++) {
       const result=await testServerRequest('/api/payments');
       count+=importTestServerPayments(result.payments);
@@ -10905,13 +10926,15 @@ async function syncTestServer(saveSettings=false) {
 }
 function pushKeyBytes(value) {return Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4)),c=>c.charCodeAt(0));}
 async function activateTestServerPush() {
+  if(testServerBusy) {serverStatus('Bitte den laufenden Vorgang kurz abwarten.');return;}
+  testServerBusy=true;
   try {
     if(!('Notification' in window)) throw new Error('Bitte die Test-App über das Home-Bildschirm-Icon öffnen.');
     // Request permission directly in the tap, before a network request.
     const permission=Notification.permission==='default'?await Notification.requestPermission():Notification.permission;
     if(permission!=='granted') throw new Error('Mitteilungen sind nicht erlaubt.');
-    saveTestServerSettings();serverStatus('Push wird eingerichtet …');
-    const config=await testServerRequest('/api/config');if(!config.publicKey) throw new Error('Push-Schlüssel fehlen noch im Server.');
+    const config=await saveTestServerSettings();serverStatus('Push wird eingerichtet …');
+    if(!config.publicKey) throw new Error('Push-Schlüssel fehlen noch im Server.');
     const registration=await ensureTestServiceWorker(),desiredKey=pushKeyBytes(config.publicKey);
     let sub=await registration.pushManager.getSubscription();
     if(sub?.options?.applicationServerKey) {
@@ -10924,15 +10947,33 @@ async function activateTestServerPush() {
     await testServerRequest('/api/subscribe',sub.toJSON());serverStatus('Dieses Gerät ist für echte Server-Push-Nachrichten angemeldet.');
     await renderPushTestStatus();
   } catch(error) {serverStatus(error.message);}
+  finally {testServerBusy=false;if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
 }
 async function sendTestServerPush() {
+  if(testServerBusy) {serverStatus('Bitte den laufenden Vorgang kurz abwarten.');return;}
+  testServerBusy=true;
   try {
-    saveTestServerSettings();const registration=await ensureTestServiceWorker(),sub=await registration.pushManager.getSubscription();
+    await saveTestServerSettings();const registration=await ensureTestServiceWorker(),sub=await registration.pushManager.getSubscription();
     if(!sub) throw new Error('Zuerst „Server-Push aktivieren“ antippen.');
     await testServerRequest('/api/subscribe',sub.toJSON());
     await testServerRequest('/api/push-test',{endpoint:sub.endpoint});
     serverStatus('Push-Dienst hat die Testnachricht angenommen. Die Anzeige übernimmt dein iPhone.');
   } catch(error) {serverStatus(error.message);}
+  finally {testServerBusy=false;if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
+}
+function toggleTestServerCode() {const node=document.getElementById('testServerToken'),button=document.getElementById('testServerReveal');if(!node)return;node.type=node.type==='password'?'text':'password';if(button)button.textContent=node.type==='text'?'Code verbergen':'Code anzeigen';}
+async function restoreTestServerBackup() {
+  if(testServerBusy) {serverStatus('Bitte den laufenden Vorgang kurz abwarten.');return;}
+  testServerBusy=true;
+  try {
+    await saveTestServerSettings();
+    const saved=await testServerRequest('/api/backup');if(!saved.data) throw new Error('Für deinen Zugang gibt es noch kein Serverbackup.');
+    if(!saved.data.Haushalt||typeof saved.data.Haushalt!=='object'||!saved.data.Einstellungen||typeof saved.data.Einstellungen!=='object') throw new Error('Das Serverbackup ist nicht gültig.');
+    if(!confirm('Deine lokalen Testdaten durch dein Serverbackup ersetzen? Vorher bei Bedarf deine lokalen Daten in den Backup-Einstellungen exportieren.')) return;
+    localStorage.setItem('kostenApp_test',JSON.stringify(saved.data));
+    localStorage.removeItem('kostenApp_test_backup_check');location.reload();
+  } catch(error) {serverStatus(error.message);}
+  finally {testServerBusy=false;}
 }
 window.addEventListener('online',()=>syncTestServer(false));
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') syncTestServer(false);});
