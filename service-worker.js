@@ -1,4 +1,4 @@
-const WORKER_VERSION = "bank-push-test-v4";
+const WORKER_VERSION = "bank-push-test-v5";
 const APP_SCOPE = new URL(self.registration.scope);
 const CACHE_PREFIX = `kostentracker-test:${encodeURIComponent(APP_SCOPE.pathname)}:`;
 const CACHE_NAME = `${CACHE_PREFIX}${WORKER_VERSION}`;

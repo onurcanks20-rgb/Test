@@ -1830,7 +1830,40 @@
 
         :root[data-theme="light"] .warning-fixed-row { background:#f2f2f7; }
         :root[data-theme="light"] .warning-fixed-pill { background:rgba(52,199,89,.13); color:#1f7a37; }
-</style>
+
+        #paymentImportedNotice {
+            position: fixed;
+            top: calc(env(safe-area-inset-top, 0px) + 12px);
+            left: 50%;
+            z-index: 12000;
+            max-width: calc(100vw - 32px);
+            padding: 12px 18px;
+            border-radius: 16px;
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid rgba(52,199,89,.35);
+            box-shadow: 0 6px 24px rgba(0,0,0,.18);
+            font-size: 15px;
+            font-weight: 650;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transform: translate3d(-50%, -14px, 0);
+            transition: opacity .2s ease, transform .25s cubic-bezier(.25,.6,.25,1), visibility 0s .25s;
+        }
+        #paymentImportedNotice.is-error { border-color: rgba(255,69,58,.45); }
+        #paymentImportedNotice.is-visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translate3d(-50%, 0, 0);
+            transition-delay: 0s;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #paymentImportedNotice { transition: none; }
+        }
+
+    </style>
 </head>
 
 <body>
@@ -10922,6 +10955,18 @@ function scheduleTestServerSync() {
   clearTimeout(testServerTimer);testServerTimer=setTimeout(()=>syncTestServer(false),1800);
 }
 function normalizedProvider(value) {return String(value||'').normalize('NFKC').toLocaleLowerCase('de-DE').replace(/\s+/g,' ').trim();}
+function showPaymentImportedNotice(success=true) {
+  const node=document.getElementById('paymentImportedNotice');if(!node)return;
+  clearTimeout(showPaymentImportedNotice.hideTimer);
+  node.textContent=success?'✅ Zahlung übernommen':'❌ Zahlung fehlgeschlagen';
+  node.classList.toggle('is-error',!success);
+  node.classList.add('is-visible');
+  showPaymentImportedNotice.hideTimer=setTimeout(()=>{
+    node.classList.remove('is-visible');
+    showPaymentImportedNotice.hideTimer=null;
+  },3000);
+}
+
 function classifyPushPayment(payment) {
   if(payment.reviewReason) return {review:payment.reviewReason};
   if(payment.source!=='bank-push') return {normal:true};
@@ -10975,7 +11020,8 @@ function resolveServerPaymentReview(id,book) {
     if(book) appendImportedPayment(payment);
     daten.Einstellungen.serverPendingReview=pending.filter(p=>p.id!==id);
     localStorage.setItem('kostenApp_test',JSON.stringify(daten));
-  } catch(error) {daten=before;serverStatus('Entscheidung konnte nicht gespeichert werden. Bitte erneut versuchen.');return;}
+  } catch(error) {daten=before;showPaymentImportedNotice(false);serverStatus('Entscheidung konnte nicht gespeichert werden. Bitte erneut versuchen.');return;}
+  if(book) showPaymentImportedNotice();
   renderServerPaymentReview();renderHomeUebersicht();renderRecentAusgaben('haushalt');scheduleTestServerSync();
 }
 
@@ -11002,7 +11048,8 @@ function importTestServerPayments(payments) {
     daten.Einstellungen??={};daten.Einstellungen.serverImportIds=[...ids];
     // Save before acknowledgment: after a crash/retry the IDs prevent duplication.
     localStorage.setItem('kostenApp_test',JSON.stringify(daten));
-  } catch(error) {daten=before;throw error;}
+  } catch(error) {daten=before;showPaymentImportedNotice(false);throw error;}
+  if(count>0) showPaymentImportedNotice();
   renderServerPaymentReview();
   return count;
 }
@@ -11088,6 +11135,7 @@ window.addEventListener('online',()=>syncTestServer(false));
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') syncTestServer(false);});
 window.addEventListener('load',()=>{renderTestServerSettings();if(testServerConfig.token) syncTestServer(false);});
 </script>
+<div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
 </body>
 
 </html>
