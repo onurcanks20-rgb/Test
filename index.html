@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#5b21b6">
+    <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Kostentracker Test">
+    <meta name="apple-mobile-web-app-title" content="Kostentracker">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Kostentracker Test">
+    <meta name="application-name" content="Kostentracker">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -1264,27 +1264,6 @@
         .settings-switch-button:active { transform:none; opacity:.9; }
         .reminder-days { margin-top:10px; }
         .warning-settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-        .warning-fixed-row {
-            margin-top:12px; padding:12px 14px; border-radius:14px; background:#2c2c2e;
-            display:flex; align-items:center; justify-content:space-between; gap:12px;
-        }
-        .warning-fixed-main { min-width:0; display:flex; flex-direction:column; gap:3px; }
-        .warning-fixed-title { font-size:14px; font-weight:750; }
-        .warning-fixed-sub { font-size:12px; opacity:.62; line-height:1.35; }
-        .warning-fixed-pill {
-            flex:0 0 auto; padding:6px 9px; border-radius:999px; font-size:12px; font-weight:750;
-            background:rgba(52,199,89,.16); color:#78e08f; white-space:nowrap;
-        }
-        .warning-push-note { margin-top:10px; }
-
-        /* iOS: Zeitfeld darf die Einstellungs-Karte nicht ueberragen. */
-        #warnPushUhrzeit {
-            display: block;
-            width: 100%;
-            max-width: 100%;
-            min-width: 0;
-            box-sizing: border-box;
-        }
         .warning-cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
         .warning-cat { display:flex; align-items:center; gap:8px; background:#2c2c2e; border-radius:12px; padding:10px; font-size:14px; }
         .warning-cat input { width:auto; margin:0; }
@@ -1827,10 +1806,6 @@
             .quick-amount-btn { font-size:13px; padding:8px 4px; }
         }
 
-
-        :root[data-theme="light"] .warning-fixed-row { background:#f2f2f7; }
-        :root[data-theme="light"] .warning-fixed-pill { background:rgba(52,199,89,.13); color:#1f7a37; }
-
         #paymentImportedNotice {
             position: fixed;
             top: calc(env(safe-area-inset-top, 0px) + 12px);
@@ -2098,12 +2073,7 @@
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsWarnings()">
                     <span class="settings-menu-icon">🔔</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Erinnerungen & Warnungen</span><span class="settings-menu-sub">Hohe Beträge, Vorlauf und Push-Uhrzeit</span></span>
-                    <span class="settings-menu-chevron">›</span>
-                </button>
-                <button class="settings-menu-item" type="button" onclick="openSettingsPushTest()">
-                    <span class="settings-menu-icon">📳</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Push-Test</span><span id="settingsPushMenuSub" class="settings-menu-sub">Mitteilungen auf dem iPhone testen</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Erinnerungen & Warnungen</span><span class="settings-menu-sub">Große Ausgaben und Hinweise auf der Startseite</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsDesign()">
@@ -2125,11 +2095,44 @@
                     <span class="settings-menu-main"><span class="settings-menu-title">Archiv</span><span class="settings-menu-sub">Alle gespeicherten Einträge durchsuchen und exportieren</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
+                <button class="settings-menu-item" type="button" onclick="openServerSettings()">
+                    <span class="settings-menu-icon">🔄</span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Server & Synchronisierung</span><span class="settings-menu-sub">Persönlicher Zugang, Sicherung und Benachrichtigungen</span></span>
+                    <span class="settings-menu-chevron">›</span>
+                </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsBackup()">
                     <span class="settings-menu-icon">💾</span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Backup</span><span class="settings-menu-sub">Daten sichern oder wiederherstellen</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="serverSettingsView" class="hidden">
+        <div class="container">
+            <div class="topbar">
+                <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 style="flex:1;">Server & Synchronisierung</h2>
+            </div>
+            <div class="settings-page-card">
+                <h3>Dein persönlicher Zugang</h3>
+                <div class="settings-note" style="margin-bottom:16px;">Trage deinen Code einmal ein. Danach öffnet sich die App direkt. Deine Daten bleiben offline verfügbar. Mit Internet werden neue Zahlungen übernommen und deine Daten auf dem Server gesichert.</div>
+                <label for="testServerToken">Persönlicher Code</label>
+                <input id="testServerToken" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Deinen neuen persönlichen Code einfügen">
+                <button id="testServerReveal" onclick="toggleTestServerCode()" style="background:#3a3a3c;">Code anzeigen</button>
+                <button onclick="syncTestServer(true)">🔄 Verbinden & synchronisieren</button>
+                <button onclick="activateTestServerPush()">🔔 Benachrichtigungen aktivieren</button>
+                <div id="serverNotificationStatus" class="settings-note" style="margin:12px 0;"></div>
+                <button onclick="restoreTestServerBackup()" style="background:#3a3a3c;">Serverbackup wiederherstellen</button>
+                <div id="testServerStatus" class="settings-note" role="status" aria-live="polite" style="margin-top:16px;">Persönlichen Code einmal eintragen.</div>
+            </div>
+            <div class="settings-page-card"><div id="serverPaymentReview"></div></div>
+            <div class="settings-page-card">
+                <h3>Zahlungen</h3>
+                <div class="settings-note">Dein Kurzbefehl übermittelt Bank-Mitteilungen an deinen persönlichen Zugang. Bäckereien werden unter Freizeit → Essen / Trinken erfasst. Neue Zahlungen werden beim Öffnen der App mit Internet übernommen. Aktuell werden Euro-Zahlungen unterstützt.</div>
+                <h3>Benachrichtigungen auf dem iPhone</h3>
+                <div class="settings-note">Öffne die App über ihr Home-Bildschirm-Icon und erlaube Mitteilungen. Die Anmeldung richtet den Empfang von Servernachrichten ein; automatische Erinnerungen werden später ergänzt.</div>
             </div>
         </div>
     </div>
@@ -2214,77 +2217,14 @@
                 </div>
                 <div id="warnGlobalFields">
                     <div class="warning-settings-grid">
-                        <div>
-                            <label for="warnSchwelle">Ab Betrag</label>
-                            <input id="warnSchwelle" type="text" inputmode="decimal" placeholder="200">
-                        </div>
-                        <div>
-                            <label for="warnTage">Erste Warnung</label>
-                            <input id="warnTage" type="number" min="1" max="365" placeholder="14">
-                            <div class="settings-note" style="margin-top:5px;">Tage vorher</div>
-                        </div>
+                        <div><label for="warnSchwelle">Ab Betrag</label><input id="warnSchwelle" type="text" inputmode="decimal" placeholder="100"></div>
+                        <div><label for="warnTage">Warnzeit (Tage)</label><input id="warnTage" type="number" min="0" max="365" placeholder="14"></div>
                     </div>
-
-                    <div class="warning-fixed-row">
-                        <div class="warning-fixed-main">
-                            <div class="warning-fixed-title">Zusätzliche Warnung</div>
-                            <div class="warning-fixed-sub">Automatisch noch einmal 1 Tag vor der Fälligkeit.</div>
-                        </div>
-                        <div class="warning-fixed-pill">✓ 1 Tag vorher</div>
-                    </div>
-
-                    <div style="margin-top:14px;">
-                        <label for="warnPushUhrzeit">Push-Uhrzeit</label>
-                        <input id="warnPushUhrzeit" type="time" value="09:00">
-                    </div>
-                    <div class="settings-note warning-push-note">Beispiel: Bei 14 Tagen kommt die erste Push-Warnung 14 Tage vorher und zusätzlich immer 1 Tag vorher. Die Uhrzeit gilt für beide. Die echte automatische Push-Zustellung wird erst mit dem Push-Dienst aktiviert.</div>
-
+                    <div class="settings-note">Automatische Hinweise nutzen Schwellwert und Warnzeit. Manuell markierte Einträge werden unabhängig vom Schwellwert angezeigt.</div>
                     <div style="font-weight:700;margin-top:16px;">Automatisch berücksichtigen</div>
                     <div id="warnKategorieGrid" class="warning-cat-grid"></div>
                     <button onclick="saveWarnSettings()" style="margin-top:14px;">Warnungen speichern</button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===================== EINSTELLUNGEN: PUSH-TEST ===================== -->
-    <div id="settingsPushTestView" class="hidden">
-        <div class="container">
-            <div class="topbar">
-                <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
-                <h2 style="flex:1;">Push-Test</h2>
-            </div>
-            <div class="settings-page-card">
-                <div style="font-weight:750;font-size:16px;">Cloudflare-Testserver</div>
-                <div class="settings-note" style="margin:7px 0 12px;">Zahlungen werden beim Öffnen oder Verbinden übernommen. Deine Testdaten bleiben offline verfügbar. Der Server speichert zusätzlich eine Sicherung.</div>
-                <label for="testServerToken">Dein persönlicher Code</label>
-                <input id="testServerToken" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Einmal deinen Code eintragen">
-                <button id="testServerReveal" type="button" onclick="toggleTestServerCode()" style="background:#3a3a3c;">Code anzeigen</button>
-                <button type="button" onclick="syncTestServer(true)">🔄 Verbinden &amp; synchronisieren</button>
-                <button type="button" onclick="activateTestServerPush()">📳 Server-Push aktivieren</button>
-                <button type="button" onclick="sendTestServerPush()" style="background:#3a3a3c;">🔔 Echten Server-Push testen</button>
-                <button type="button" onclick="restoreTestServerBackup()" style="background:#3a3a3c;">Serverbackup wiederherstellen</button>
-                <div id="testServerStatus" class="settings-note" style="margin-top:12px;">Persönlichen Code einmal eintragen.</div>
-                <div id="serverPaymentReview" style="margin-top:18px;"></div>
-            </div>
-            <div class="settings-page-card">
-                <div style="font-weight:750;font-size:16px;">Test-App auf dem iPhone</div>
-                <div class="settings-note" style="margin:7px 0 14px;">Für den iPhone-Test die Testseite zuerst zum Home-Bildschirm hinzufügen und anschließend über das neue Test-Icon öffnen.</div>
-                <div id="pushTestStatus" class="settings-note" style="margin:0 0 12px;">Status wird geprüft …</div>
-                <button type="button" onclick="requestTestNotificationPermission()">📳 Mitteilungen aktivieren</button>
-                <button type="button" onclick="sendTestNotification()" style="background:#3a3a3c;">🔔 Testbenachrichtigung anzeigen</button>
-            </div>
-            <div class="settings-page-card">
-                <div style="font-weight:750;font-size:16px;">Diagnose</div>
-                <div class="settings-note" style="margin:7px 0 12px;">Damit sehen wir, ob iOS die Test-App wirklich über den richtigen Service Worker steuert und ob eine Benachrichtigung intern angelegt wird.</div>
-                <button type="button" onclick="runPushDiagnostics(false)" style="background:#3a3a3c;">🩺 Diagnose ausführen</button>
-                <button type="button" onclick="sendDelayedTestNotification()" style="background:#3a3a3c;">⏱️ Test in 5 Sekunden</button>
-                <div class="settings-note" style="margin-top:8px;">Beim 5-Sekunden-Test nach dem Antippen direkt zum Home-Bildschirm wechseln. So testen wir, ob iOS die Meldung zeigt, wenn die Test-App nicht im Vordergrund ist.</div>
-                <div id="pushDiagnostics" class="settings-note" style="margin-top:12px;white-space:pre-line;line-height:1.55;">Noch keine Diagnose ausgeführt.</div>
-            </div>
-            <div class="settings-page-card">
-                <div style="font-weight:750;font-size:16px;">Was dieser Test prüft</div>
-                <div class="settings-note" style="margin-top:7px;">Die Testbenachrichtigung prüft Installation, Service Worker und Mitteilungsberechtigung. Der 5-Sekunden-Test ist ein kurzer lokaler Test und keine dauerhafte Zeitplanung im Hintergrund. Für echte Nachrichten bei geschlossener App oben „Server-Push aktivieren“ verwenden. Zeitgesteuerte Erinnerungen werden in einem weiteren Schritt eingerichtet.</div>
             </div>
         </div>
     </div>
@@ -2376,6 +2316,13 @@
                 <button onclick="document.getElementById('backupImportInput')?.click()" style="background:#3a3a3c;">⬆️ Backup auswählen</button>
                 <input id="backupImportInput" type="file" accept="application/json,.json" class="hidden" onchange="importBackup(event)">
                 <div id="backupStatus" class="settings-note" style="margin-top:10px;"></div>
+            </div>
+            <div class="settings-page-card">
+                <h3>Alle Einträge löschen</h3>
+                <div class="settings-note" style="margin-bottom:12px;">Löscht alle Ausgaben, Einnahmen, Fixkosten, Versicherungen sowie Spar- und Investitionseinträge aus allen Zeiträumen, einschließlich der Reiseeinträge. Länder, Kategorien, Budgets und Einstellungen bleiben erhalten. Erstelle vorher ein Backup, wenn du die Einträge später wiederherstellen möchtest.</div>
+                <button type="button" onclick="exportBackup()" style="background:#3a3a3c;">⬇️ Vorher Backup erstellen</button>
+                <button type="button" onclick="deleteAllAppEntries()" style="background:#c0392b;">🗑️ Alle Einträge löschen</button>
+                <div id="deleteAllEntriesStatus" class="settings-note" role="status" aria-live="polite" style="margin-top:10px;"></div>
             </div>
         </div>
     </div>
@@ -2841,9 +2788,9 @@
         </div>
 
         <div class="container">
-            <input id="einnahmenSuche" class="list-search" type="search" placeholder="🔎 Einnahmen durchsuchen" oninput="renderEinnahmen()">
+            <div class="total" id="einnahmenGesamt" style="margin:0 0 14px;"></div>
+            <input id="einnahmenSuche" class="list-search" type="search" placeholder="🔎 Aktuelle und monatliche Einnahmen durchsuchen" oninput="renderEinnahmen()">
             <div id="einnahmenListe"></div>
-            <div class="total" id="einnahmenGesamt"></div>
         </div>
 
         <div class="container">
@@ -2871,7 +2818,7 @@
             <div class="info-text">Name aus der Zahlungsmitteilung. Mehrere Namen mit einem Semikolon trennen.</div>
             <label for="costZuordnungTage" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">Zeitfenster zur Fälligkeit (± Tage)</label>
             <input id="costZuordnungTage" type="number" inputmode="numeric" min="0" max="31" step="1" value="5" enterkeyhint="next">
-            <div class="info-text">5 bedeutet bis zu 5 Tage vor oder nach der Fälligkeit.</div>
+            <div class="info-text">Vorbereitung für die Push-Erfassung: 5 bedeutet bis zu 5 Tage vor oder nach der Fälligkeit.</div>
 
             <label for="costDatum" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">
                 Erste Abbuchung
@@ -2901,12 +2848,10 @@
 
     <script>
 
-        // PWA / Offline-Unterstützung der TEST-App.
-        // Der Service Worker liegt im Test-Repository und bleibt dadurch auf diesen Pfad begrenzt.
+        // PWA / Offline-Unterstützung
         if ("serviceWorker" in navigator && window.isSecureContext && /^https?:$/.test(location.protocol)) {
             window.addEventListener("load", () => {
-                ensureTestServiceWorker()
-                    .then(() => renderPushTestStatus?.())
+                navigator.serviceWorker.register("./service-worker.js")
                     .catch(error => console.warn("Service Worker konnte nicht registriert werden:", error));
             });
         }
@@ -2935,7 +2880,7 @@
                 designModus: "system",
                 rechtsSwipeAktion: "aus",
                 ausgeblendeteEintraege: {},
-                warnungen: { aktiv:true, schwelle:200, tage:14, pushUhrzeit:"09:00", kategorien:{ haushalt:false, freizeit:false, fixkosten:true, versicherungen:true, reisen:true, geplant:true, sparen:true } }
+                warnungen: { aktiv:true, schwelle:100, tage:14, kategorien:{ haushalt:false, freizeit:false, fixkosten:true, versicherungen:true, reisen:true, geplant:true, sparen:true } }
             },
             geloeschteKategorien: {}
         };
@@ -3008,7 +2953,7 @@
                 kategorie: e.kategorie || "Sonstiges",
                 // Bestehende geplante Haushalt/Freizeit-Ausgaben waren immer budgetwirksam.
                 budgetWirksam: typeof e.budgetWirksam === "boolean" ? e.budgetWirksam : bereich !== "reisen",
-                warnung: !!e.warnung, warnTage: Math.max(0, parseInt(e.warnTage,10) || 14)
+                warnung: !!e.warnung, warnTage: normalizeWarnTage(e.warnTage)
             };
         });
 
@@ -3022,7 +2967,7 @@
             text: (e.text && !["Sparen", "Investieren"].includes(String(e.text).trim())) ? String(e.text).trim() : "",
             betrag: parseBetrag(e.betrag) || 0,
             datum: e.datum || heuteISO(),
-            warnung: !!e.warnung, warnTage: Math.max(0, parseInt(e.warnTage,10) || 14)
+            warnung: !!e.warnung, warnTage: normalizeWarnTage(e.warnTage)
         }));
 
         daten.Einnahmen = daten.Einnahmen.map(e => ({
@@ -3032,7 +2977,7 @@
             betrag: parseBetrag(e.betrag) || 0,
             datum: e.datum || heuteISO(),
             wiederholung: e.wiederholung === "monatlich" ? "monatlich" : "einmalig",
-            von: e.von || "", warnung: !!e.warnung, warnTage: Math.max(0, parseInt(e.warnTage,10) || 14)
+            von: e.von || "", warnung: !!e.warnung, warnTage: normalizeWarnTage(e.warnTage)
         }));
 
         if (!daten.geloeschteKategorien || typeof daten.geloeschteKategorien !== "object" || Array.isArray(daten.geloeschteKategorien)) {
@@ -3173,7 +3118,7 @@
                 if (e.kategorie === "Kino/Event" || e.kategorie === "Kino / Event") e.kategorie = "Aktivität";
             });
         });
-        const normalizeReminder = e => { if (!e || typeof e !== "object") return; e.warnung=!!e.warnung; e.warnTage=Math.max(0,parseInt(e.warnTage,10)||14); };
+        const normalizeReminder = e => { if (!e || typeof e !== "object") return; e.warnung=!!e.warnung; e.warnTage=normalizeWarnTage(e.warnTage); };
         Object.values(daten.Haushalt).forEach(l=>Array.isArray(l)&&l.forEach(normalizeReminder));
         Object.values(daten.Freizeit).forEach(l=>Array.isArray(l)&&l.forEach(normalizeReminder));
         daten.Versicherungen.forEach(normalizeReminder);
@@ -3232,6 +3177,7 @@
             offeneVersicherungen: {},
             offeneFixkosten: {},
             offeneEinnahmen: {},
+            einnahmenMonatlichOffen: false,
             offeneHaushaltEintraege: {},
             offeneFreizeitEintraege: {},
             offeneReiseEintraege: {},
@@ -3287,7 +3233,7 @@
         }
 
         function beginUndoDelete(label = "Eintrag gelöscht") {
-            undoDeleteState = { daten: cloneDatenForUndo(), label };
+            undoDeleteState = { daten: cloneDatenForUndo(), danach: null, label };
         }
 
         function showUndoDelete(label) {
@@ -3303,13 +3249,74 @@
             }, 6000);
         }
 
-        function undoDelete() {
-            if (!undoDeleteState) return;
-            daten = undoDeleteState.daten;
+        function mergeUndoData(before, after, current) {
+            const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+            const copy = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+            const isObject = value => value !== null && typeof value === "object" && !Array.isArray(value);
+            const entryKey = value => isObject(value) && value.id != null ? "id:" + String(value.id) : "value:" + JSON.stringify(value);
+            // A later edit may have moved an entry to a different month or category.
+            const currentIds = new Set();
+            const scan = value => {
+                if (Array.isArray(value)) value.forEach(item => {
+                    if (isObject(item) && item.id != null) currentIds.add(entryKey(item));
+                    scan(item);
+                });
+                else if (isObject(value)) Object.values(value).forEach(scan);
+            };
+            scan(current);
+            const merge = (oldValue, actionValue, now) => {
+                if (equal(oldValue, actionValue)) return copy(now);
+                if (Array.isArray(oldValue) && (actionValue === undefined || Array.isArray(actionValue)) && (now === undefined || Array.isArray(now))) {
+                    const oldItems = new Map(oldValue.map(item => [entryKey(item), item]));
+                    const actionItems = new Map((actionValue || []).map(item => [entryKey(item), item]));
+                    const result = (now || []).filter(item => {
+                        const key = entryKey(item);
+                        return oldItems.has(key) || !actionItems.has(key) || !equal(item, actionItems.get(key));
+                    }).map(item => {
+                        const key = entryKey(item);
+                        return oldItems.has(key) && actionItems.has(key) ? merge(oldItems.get(key), actionItems.get(key), item) : copy(item);
+                    });
+                    oldValue.forEach((item, index) => {
+                        const key = entryKey(item);
+                        if (actionItems.has(key) || result.some(x => entryKey(x) === key) || (item?.id != null && currentIds.has(key))) return;
+                        // Reinsert before the next surviving neighbour; keep later additions.
+                        const next = oldValue.slice(index + 1).map(entryKey).find(k => result.some(x => entryKey(x) === k));
+                        const position = next === undefined ? result.length : result.findIndex(x => entryKey(x) === next);
+                        result.splice(position, 0, copy(item));
+                        if (item?.id != null) currentIds.add(key);
+                    });
+                    return result;
+                }
+                if (isObject(oldValue) && (actionValue === undefined || isObject(actionValue)) && (now === undefined || isObject(now))) {
+                    const result = copy(now || {});
+                    const keys = new Set([...Object.keys(oldValue), ...Object.keys(actionValue || {})]);
+                    keys.forEach(key => {
+                        const oldItem = Object.hasOwn(oldValue, key) ? oldValue[key] : undefined;
+                        const actionItem = actionValue && Object.hasOwn(actionValue, key) ? actionValue[key] : undefined;
+                        const nowItem = now && Object.hasOwn(now, key) ? now[key] : undefined;
+                        const restored = merge(oldItem, actionItem, nowItem);
+                        if (restored === undefined) delete result[key];
+                        else Object.defineProperty(result, key, { value: restored, enumerable: true, writable: true, configurable: true });
+                    });
+                    return result;
+                }
+                // Preserve subsequent edits; revert only the value left by this action.
+                return equal(now, actionValue) ? copy(oldValue) : copy(now);
+            };
+            return merge(before, after, current);
+        }
+
+        function clearUndoDelete() {
             undoDeleteState = null;
             clearTimeout(undoDeleteTimer);
             document.getElementById("undoToast")?.classList.add("hidden");
-            speichern();
+        }
+
+        function undoDelete() {
+            if (!undoDeleteState?.danach) return;
+            daten = mergeUndoData(undoDeleteState.daten, undoDeleteState.danach, daten);
+            if (speichern() === false) return;
+            clearUndoDelete();
             renderHomeUebersicht();
             renderHaushalt();
             renderFreizeit();
@@ -3325,63 +3332,29 @@
         }
 
         function finishUndoDelete(label) {
+            if (!undoDeleteState) return;
+            undoDeleteState.danach = cloneDatenForUndo();
             showUndoDelete(label);
         }
 
         const WARN_KATEGORIEN = [["haushalt","Haushalt"],["freizeit","Freizeit"],["fixkosten","Fixkosten"],["versicherungen","Versicherungen"],["reisen","Reisen"],["geplant","Geplante Ausgaben"],["sparen","Sparen & Investieren"]];
+        function normalizeWarnTage(value) {
+            const days = parseInt(value, 10);
+            return Number.isNaN(days) ? 14 : Math.min(365, Math.max(0, days));
+        }
         function getWarnSettings(){ daten.Einstellungen??={}; daten.Einstellungen.warnungen??=structuredClone(STANDARD_DATEN.Einstellungen.warnungen); return daten.Einstellungen.warnungen; }
-        function reminderControlHtml(key,value={}){ const on=!!value.warnung,tage=Math.max(0,parseInt(value.warnTage,10)||14); return `<div class="reminder-control" data-reminder-key="${escapeHtml(key)}"><button type="button" class="reminder-toggle ${on?'on':''}" role="switch" aria-checked="${on?'true':'false'}" onclick="toggleReminderControl(this.closest('[data-reminder-key]').dataset.reminderKey)"><span>🔔 Auf Startseite erinnern</span><span class="ios-switch ${on?'on':''}" aria-hidden="true"></span></button><div class="reminder-days ${on?'':'hidden'}"><label>Warnzeit vorher (Tage)</label><input type="number" min="0" max="365" value="${tage}"></div></div>`; }
+        function reminderControlHtml(key,value={}){ const on=!!value.warnung,tage=normalizeWarnTage(value.warnTage); return `<div class="reminder-control" data-reminder-key="${escapeHtml(key)}"><button type="button" class="reminder-toggle ${on?'on':''}" role="switch" aria-checked="${on?'true':'false'}" onclick="toggleReminderControl(this.closest('[data-reminder-key]').dataset.reminderKey)"><span>🔔 Auf Startseite erinnern</span><span class="ios-switch ${on?'on':''}" aria-hidden="true"></span></button><div class="reminder-days ${on?'':'hidden'}"><label>Warnzeit vorher (Tage)</label><input type="number" min="0" max="365" value="${tage}"></div></div>`; }
         function toggleReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return; const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),on=!btn.classList.contains('on'); btn.classList.toggle('on',on); btn.setAttribute('aria-checked',on?'true':'false'); btn.querySelector('.ios-switch')?.classList.toggle('on',on); days?.classList.toggle('hidden',!on); }
-        function resetReminderControl(key){const box=document.querySelector(`.reminder-control[data-reminder-key=\"${CSS.escape(key)}\"]`);if(!box)return;const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),inp=days?.querySelector('input');btn?.classList.remove('on');btn?.setAttribute('aria-checked','false');btn?.querySelector('.ios-switch')?.classList.remove('on');days?.classList.add('hidden');if(inp)inp.value=Math.max(0,parseInt(getWarnSettings().tage,10)||14);}
+        function resetReminderControl(key){const box=document.querySelector(`.reminder-control[data-reminder-key=\"${CSS.escape(key)}\"]`);if(!box)return;const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),inp=days?.querySelector('input');btn?.classList.remove('on');btn?.setAttribute('aria-checked','false');btn?.querySelector('.ios-switch')?.classList.remove('on');days?.classList.add('hidden');if(inp)inp.value=normalizeWarnTage(getWarnSettings().tage);}
         function resetAddReminderForPanel(panelId){const map={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'};if(map[panelId])resetReminderControl(`add:${map[panelId]}`);}
-        function readReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return {warnung:false,warnTage:14}; return {warnung:!!box.querySelector('.reminder-toggle')?.classList.contains('on'),warnTage:Math.max(0,parseInt(box.querySelector('.reminder-days input')?.value,10)||14)}; }
+        function readReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return {warnung:false,warnTage:14}; return {warnung:!!box.querySelector('.reminder-toggle')?.classList.contains('on'),warnTage:normalizeWarnTage(box.querySelector('.reminder-days input')?.value)}; }
         function findReminderEntry(type,id){ const sid=String(id); if(type==='sparen')return(daten['Sparen & Investieren']||[]).find(e=>String(e.id)===sid); if(type==='geplant')return(daten['Geplante Ausgaben']||[]).find(e=>String(e.id)===sid); if(type==='fixkosten')return(daten['Laufende Kosten']?.fix||[]).find(e=>String(e.id)===sid); if(type==='versicherungen')return(daten.Versicherungen||[]).find(e=>String(e.id)===sid); if(type==='einnahmen')return(daten.Einnahmen||[]).find(e=>String(e.id)===sid); if(type==='haushalt'){for(const l of Object.values(daten.Haushalt||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} if(type==='freizeit'){for(const l of Object.values(daten.Freizeit||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} if(type==='reisen'){for(const r of Object.values(daten.Reisen||{}))for(const l of Object.values(r||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} return null; }
-        function decorateReminderControls(root=document){ const addMap={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'}; Object.entries(addMap).forEach(([pid,type])=>{const p=document.getElementById(pid);if(!p||!(root===document||root===p||root.contains(p))||p.querySelector('[data-reminder-key]'))return;const b=p.querySelector('button.btn-primary');if(b)b.insertAdjacentHTML('beforebegin',reminderControlHtml(`add:${type}`,{warnTage:getWarnSettings().tage||14}));}); [...(root.matches?.('input[type="date"][id^="edit"]')?[root]:[]),...root.querySelectorAll('input[type="date"][id^="edit"]')].forEach(inp=>{let type=null,id=null,m;if((m=inp.id.match(/^editSparenDatum-(.+)$/))){type='sparen';id=m[1];}else if((m=inp.id.match(/^editGeplantDatum-(.+)$/))){type='geplant';id=m[1];}else if((m=inp.id.match(/^editKostenDatum-(.+)$/))){type='fixkosten';id=m[1];}else if((m=inp.id.match(/^editEinnahmenDatum-(.+)$/))){type='einnahmen';id=m[1];}else if((m=inp.id.match(/^editFreizeitDatum-(.+)$/))){type='freizeit';id=m[1];}else if((m=inp.id.match(/^editDatum-(.+)$/))){id=m[1];if(inp.closest('#versicherungenView'))type='versicherungen';else if(inp.closest('#land'))type='reisen';else if(inp.closest('#haushaltView'))type='haushalt';} if(!type||!id)return;const key=`edit:${type}:${id}`,parent=inp.parentElement;if(parent?.querySelector(`[data-reminder-key="${CSS.escape(key)}"]`))return;inp.insertAdjacentHTML('afterend',reminderControlHtml(key,findReminderEntry(type,id)||{}));}); }
-        function normalisierePushUhrzeit(wert) {
-            const m = String(wert || "").match(/^([01]\d|2[0-3]):([0-5]\d)$/);
-            return m ? `${m[1]}:${m[2]}` : "09:00";
-        }
-
-        function renderWarnSettings() {
-            const w = getWarnSettings();
-            const a = document.getElementById('warnungenAktiv');
-            if (a) {
-                const on = w.aktiv !== false;
-                a.setAttribute('aria-checked', on ? 'true' : 'false');
-                a.querySelector('.ios-switch')?.classList.toggle('on', on);
-            }
-            const s = document.getElementById('warnSchwelle');
-            if (s) s.value = formatInputBetrag(w.schwelle ?? 200);
-            const t = document.getElementById('warnTage');
-            if (t) t.value = Math.max(1, parseInt(w.tage, 10) || 14);
-            const u = document.getElementById('warnPushUhrzeit');
-            if (u) u.value = normalisierePushUhrzeit(w.pushUhrzeit);
-            document.getElementById('warnGlobalFields')?.classList.toggle('hidden', w.aktiv === false);
-            const g = document.getElementById('warnKategorieGrid');
-            if (g) g.innerHTML = WARN_KATEGORIEN.map(([k,l]) => `<label class="warning-cat"><input type="checkbox" data-warn-cat="${k}" ${w.kategorien?.[k]?'checked':''} onchange="saveWarnSettings(false)"><span>${l}</span></label>`).join('');
-        }
+        function decorateReminderControls(root=document){ const addMap={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'}; Object.entries(addMap).forEach(([pid,type])=>{const p=document.getElementById(pid);if(!p||!(root===document||root===p||root.contains(p))||p.querySelector('[data-reminder-key]'))return;const b=p.querySelector('button.btn-primary');if(b)b.insertAdjacentHTML('beforebegin',reminderControlHtml(`add:${type}`,{warnTage:normalizeWarnTage(getWarnSettings().tage)}));}); [...(root.matches?.('input[type="date"][id^="edit"]')?[root]:[]),...root.querySelectorAll('input[type="date"][id^="edit"]')].forEach(inp=>{let type=null,id=null,m;if((m=inp.id.match(/^editSparenDatum-(.+)$/))){type='sparen';id=m[1];}else if((m=inp.id.match(/^editGeplantDatum-(.+)$/))){type='geplant';id=m[1];}else if((m=inp.id.match(/^editKostenDatum-(.+)$/))){type='fixkosten';id=m[1];}else if((m=inp.id.match(/^editEinnahmenDatum-(.+)$/))){type='einnahmen';id=m[1];}else if((m=inp.id.match(/^editFreizeitDatum-(.+)$/))){type='freizeit';id=m[1];}else if((m=inp.id.match(/^editDatum-(.+)$/))){id=m[1];if(inp.closest('#versicherungenView'))type='versicherungen';else if(inp.closest('#land'))type='reisen';else if(inp.closest('#haushaltView'))type='haushalt';} if(!type||!id)return;const key=`edit:${type}:${id}`,parent=inp.parentElement;if(parent?.querySelector(`[data-reminder-key="${CSS.escape(key)}"]`))return;inp.insertAdjacentHTML('afterend',reminderControlHtml(key,findReminderEntry(type,id)||{}));}); }
+        function renderWarnSettings(){ const w=getWarnSettings(),a=document.getElementById('warnungenAktiv');if(a){const on=w.aktiv!==false;a.setAttribute('aria-checked',on?'true':'false');a.querySelector('.ios-switch')?.classList.toggle('on',on);}const s=document.getElementById('warnSchwelle');if(s)s.value=formatInputBetrag(w.schwelle??100);const t=document.getElementById('warnTage');if(t)t.value=normalizeWarnTage(w.tage);document.getElementById('warnGlobalFields')?.classList.toggle('hidden',w.aktiv===false);const g=document.getElementById('warnKategorieGrid');if(g)g.innerHTML=WARN_KATEGORIEN.map(([k,l])=>`<label class="warning-cat"><input type="checkbox" data-warn-cat="${k}" ${w.kategorien?.[k]?'checked':''} onchange="saveWarnSettings(false)"><span>${l}</span></label>`).join(''); }
         function toggleWarnungenAktiv(){ const a=document.getElementById('warnungenAktiv');if(!a)return;const on=a.getAttribute('aria-checked')!=='true';a.setAttribute('aria-checked',on?'true':'false');a.querySelector('.ios-switch')?.classList.toggle('on',on);saveWarnSettings();renderWarnSettings();renderHomeWarnings(); }
-        function saveWarnSettings(doSave = true) {
-            const w = getWarnSettings();
-            const a = document.getElementById('warnungenAktiv');
-            if (a) w.aktiv = a.getAttribute('aria-checked') !== 'false';
-
-            const s = parseBetrag(document.getElementById('warnSchwelle')?.value);
-            if (!isNaN(s) && s >= 0) w.schwelle = s;
-
-            const t = parseInt(document.getElementById('warnTage')?.value, 10);
-            if (!isNaN(t) && t >= 1) w.tage = Math.min(365, t);
-
-            const u = document.getElementById('warnPushUhrzeit')?.value;
-            w.pushUhrzeit = normalisierePushUhrzeit(u || w.pushUhrzeit);
-
-            w.kategorien ??= {};
-            document.querySelectorAll('[data-warn-cat]').forEach(el => w.kategorien[el.dataset.warnCat] = el.checked);
-            document.getElementById('warnGlobalFields')?.classList.toggle('hidden', !w.aktiv);
-            if (doSave) speichern();
-        }
+        function saveWarnSettings(doSave=true){ const w=getWarnSettings();const a=document.getElementById('warnungenAktiv');if(a)w.aktiv=a.getAttribute('aria-checked')!=='false';const s=parseBetrag(document.getElementById('warnSchwelle')?.value);if(!isNaN(s)&&s>=0)w.schwelle=s;const t=parseInt(document.getElementById('warnTage')?.value,10);if(!isNaN(t)&&t>=0)w.tage=Math.min(365,t);w.kategorien??={};document.querySelectorAll('[data-warn-cat]').forEach(el=>w.kategorien[el.dataset.warnCat]=el.checked);document.getElementById('warnGlobalFields')?.classList.toggle('hidden',!w.aktiv);if(doSave && speichern() === false)return; }
         function daysBetween(a,b){return Math.round((b-a)/86400000);}
-        function collectUpcomingWarnings(){ const w=getWarnSettings(),today=startOfToday(),horizon=addDays(today,365),rows=[]; const push=(type,label,entry,date,amount,name)=>{if(!date||date<today||date>horizon)return;const days=daysBetween(today,date),manual=!!entry?.warnung,own=Math.max(0,parseInt(entry?.warnTage,10)||14),auto=type!=='einnahmen'&&w.aktiv!==false&&!!w.kategorien?.[type]&&(parseBetrag(amount)||0)>=(parseBetrag(w.schwelle)||0)&&days<=Math.max(0,parseInt(w.tage,10)||14),manualAktiv=manual&&days<=own;if(!manualAktiv&&!auto)return;rows.push({type,label,name:name||label,betrag:parseBetrag(amount)||0,datum:new Date(date),manual:manualAktiv,auto});}; Object.values(daten.Haushalt||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('haushalt','Haushalt',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.values(daten.Freizeit||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('freizeit','Freizeit',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.entries(daten.Reisen||{}).forEach(([land,r])=>Object.values(r||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('reisen',`Reise · ${land}`,e,parseISODate(e.datum),e.betrag,e.text||land))));(daten['Geplante Ausgaben']||[]).forEach(e=>push('geplant','Geplante Ausgabe',e,parseISODate(e.datum),e.betrag,e.text)); const fix=(daten['Laufende Kosten']?.fix||[]);laufendeKostenImZeitraum(today,horizon).forEach(x=>{const e=fix.find(k=>String(k.id)===String(x.sourceId))||fix.find(k=>(k.text||k.name||'Fixkosten')===x.name&&(parseBetrag(k.betrag)||0)===x.betrag);push('fixkosten','Fixkosten',e||{},x.datum,x.betrag,x.name);});versicherungsZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Versicherungen||[]).find(v=>String(v.id)===String(x.sourceId))||(daten.Versicherungen||[]).find(v=>(v.name||'Versicherung')===x.name&&(parseBetrag(v.betrag)||0)===x.betrag);push('versicherungen','Versicherung',e||{},x.datum,x.betrag,x.name);});einnahmenZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Einnahmen||[]).find(v=>String(v.id)===String(x.id));push('einnahmen','Einnahme',e||x,x.datumObj,x.betrag,x.text);});const z=getGehaltszeitraum(),next=z.naechstesGehalt||addDays(today,30);(daten['Sparen & Investieren']||[]).forEach(e=>{const a=parseISODate(e.datum),d=a&&a>=today?a:next;push('sparen',e.typ==='sparen'?'Sparen':'Investieren',e,d,e.betrag,e.text||(e.typ==='sparen'?'Sparen':'Investieren'));});return rows.sort((a,b)=>a.datum-b.datum||b.betrag-a.betrag);}
+        function collectUpcomingWarnings(){ const w=getWarnSettings(),today=startOfToday(),horizon=addDays(today,365),rows=[]; const push=(type,label,entry,date,amount,name)=>{if(!date||date<today||date>horizon)return;const days=daysBetween(today,date),manual=!!entry?.warnung,own=normalizeWarnTage(entry?.warnTage),auto=type!=='einnahmen'&&w.aktiv!==false&&!!w.kategorien?.[type]&&(parseBetrag(amount)||0)>=(parseBetrag(w.schwelle)||0)&&days<=normalizeWarnTage(w.tage),manualAktiv=manual&&days<=own;if(!manualAktiv&&!auto)return;rows.push({type,label,name:name||label,betrag:parseBetrag(amount)||0,datum:new Date(date),manual:manualAktiv,auto});}; Object.values(daten.Haushalt||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('haushalt','Haushalt',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.values(daten.Freizeit||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('freizeit','Freizeit',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.entries(daten.Reisen||{}).forEach(([land,r])=>Object.values(r||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('reisen',`Reise · ${land}`,e,parseISODate(e.datum),e.betrag,e.text||land))));(daten['Geplante Ausgaben']||[]).forEach(e=>push('geplant','Geplante Ausgabe',e,parseISODate(e.datum),e.betrag,e.text)); const fix=(daten['Laufende Kosten']?.fix||[]);laufendeKostenImZeitraum(today,horizon).forEach(x=>{const e=fix.find(k=>String(k.id)===String(x.sourceId))||fix.find(k=>(k.text||k.name||'Fixkosten')===x.name&&(parseBetrag(k.betrag)||0)===x.betrag);push('fixkosten','Fixkosten',e||{},x.datum,x.betrag,x.name);});versicherungsZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Versicherungen||[]).find(v=>String(v.id)===String(x.sourceId))||(daten.Versicherungen||[]).find(v=>(v.name||'Versicherung')===x.name&&(parseBetrag(v.betrag)||0)===x.betrag);push('versicherungen','Versicherung',e||{},x.datum,x.betrag,x.name);});einnahmenZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Einnahmen||[]).find(v=>String(v.id)===String(x.id));push('einnahmen','Einnahme',e||x,x.datumObj,x.betrag,x.text);});const z=getGehaltszeitraum(),next=z.naechstesGehalt||addDays(today,30);(daten['Sparen & Investieren']||[]).forEach(e=>{const a=parseISODate(e.datum),d=a&&a>=today?a:next;push('sparen',e.typ==='sparen'?'Sparen':'Investieren',e,d,e.betrag,e.text||(e.typ==='sparen'?'Sparen':'Investieren'));});return rows.sort((a,b)=>a.datum-b.datum||b.betrag-a.betrag);}
         function formatReminderCountdown(tage) {
             if (tage <= 0) return "heute";
             if (tage === 1) return "in 1 Tag";
@@ -3438,21 +3411,60 @@
             }).observe(document.body, { childList: true, subtree: true });
         });
 
-        function speichernOhneHomeRender() {
+        let zuletztGespeicherteDaten = JSON.stringify(daten);
+
+        function speichernOhneHomeRender(showError = true) {
             try {
-                localStorage.setItem("kostenApp_test", JSON.stringify(daten));
+                const serialized = JSON.stringify(daten);
+                localStorage.setItem("kostenApp_test", serialized);
+                zuletztGespeicherteDaten = serialized;
                 if (typeof scheduleTestServerSync === "function") scheduleTestServerSync();
                 return true;
             } catch (error) {
+                daten = JSON.parse(zuletztGespeicherteDaten);
                 console.error("Speichern fehlgeschlagen:", error);
-                alert("Speichern im Browser ist fehlgeschlagen. Öffne die heruntergeladene HTML-Datei direkt im Browser und nicht nur in einer Vorschau.");
+                if (showError) alert("Speichern im Browser ist fehlgeschlagen. Deine Eingabe bleibt stehen. Bitte versuche es erneut. Falls es weiterhin nicht funktioniert, sichere deine Daten als Backup und prüfe den verfügbaren Browserspeicher.");
                 return false;
             }
         }
 
         function speichern() {
-            speichernOhneHomeRender();
+            if (!speichernOhneHomeRender()) return false;
             renderHomeUebersicht();
+            return true;
+        }
+
+
+        function deleteAllAppEntries() {
+            if (!confirm("Alle Einträge in der gesamten App löschen?\n\nAuch Einnahmen, Fixkosten, Versicherungen, geplante Ausgaben, Spar-/Investitionseinträge und Reiseeinträge werden aus allen Zeiträumen entfernt. Länder, Kategorien, Budgets und Einstellungen bleiben erhalten.\n\nDies kann nur mit einem zuvor gespeicherten Backup rückgängig gemacht werden.")) return;
+            const status = document.getElementById("deleteAllEntriesStatus");
+            try {
+                const cleared = structuredClone(daten);
+                // Keep category/country structure and settings; clear entries only.
+                for (const area of ["Haushalt", "Freizeit"]) {
+                    for (const key of Object.keys(cleared[area] || {})) {
+                        if (Array.isArray(cleared[area][key])) cleared[area][key] = [];
+                    }
+                }
+                for (const country of Object.values(cleared.Reisen || {})) {
+                    for (const category of Object.keys(country || {})) {
+                        if (Array.isArray(country[category])) country[category] = [];
+                    }
+                }
+                for (const area of ["Versicherungen", "Einnahmen", "Geplante Ausgaben", "Sparen & Investieren"]) cleared[area] = [];
+                for (const key of Object.keys(cleared["Laufende Kosten"] || {})) {
+                    if (Array.isArray(cleared["Laufende Kosten"][key])) cleared["Laufende Kosten"][key] = [];
+                }
+                // Commit before replacing the in-memory data, so storage failure loses nothing.
+                localStorage.setItem("kostenApp_test", JSON.stringify(cleared));
+                daten = cleared;
+                zuletztGespeicherteDaten = JSON.stringify(cleared);
+                clearUndoDelete();
+            } catch (error) {
+                if (status) status.textContent = "Die Einträge konnten nicht gelöscht werden. Deine Daten bleiben erhalten.";
+                return;
+            }
+            if (status) status.textContent = "Alle Einträge wurden gelöscht. Länder, Kategorien, Budgets und Einstellungen bleiben erhalten.";
         }
 
         function backupDateiname() {
@@ -3534,6 +3546,9 @@
 
                 const neueDaten = parsed.daten ?? parsed;
                 localStorage.setItem("kostenApp_test", JSON.stringify(neueDaten));
+                daten = neueDaten;
+                zuletztGespeicherteDaten = JSON.stringify(neueDaten);
+                clearUndoDelete();
                 setBackupStatus("Backup wurde wiederhergestellt. Die App wird neu geladen …");
                 setTimeout(() => location.reload(), 400);
             } catch (error) {
@@ -3606,7 +3621,7 @@
 
             if (input) input.value = tag;
 
-            speichern();
+            if (speichern() === false) return;
         }
 
         function parseISODate(datum) {
@@ -3787,6 +3802,7 @@
 
         /* NAV */
         function show(id) {
+            window.kostentrackerRememberView?.(id);
 
             const views = [
                 "home",
@@ -3807,10 +3823,10 @@
                 "settingsBudgetView",
                 "settingsQuickAddView",
                 "settingsWarningsView",
-                "settingsPushTestView",
                 "settingsDesignView",
                 "settingsGesturesView",
-                "settingsBackupView"
+                "settingsBackupView",
+                "serverSettingsView"
             ];
 
             // Alle Views verstecken
@@ -3884,7 +3900,6 @@
             show("settingsView");
             renderDesignMenuStatus();
             renderGestureSettings();
-            renderPushTestStatus();
         }
 
         function openSettingsBudget() {
@@ -3906,243 +3921,6 @@
         function openSettingsWarnings() {
             show("settingsWarningsView");
             renderWarnSettings();
-        }
-
-        function istAlsWebAppGeoeffnet() {
-            return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
-        }
-
-        let testServiceWorkerPromise = null;
-
-        function withPushTimeout(promise, ms, message) {
-            return new Promise((resolve, reject) => {
-                const timer = setTimeout(() => reject(new Error(message)), ms);
-                Promise.resolve(promise).then(value => {
-                    clearTimeout(timer);
-                    resolve(value);
-                }, error => {
-                    clearTimeout(timer);
-                    reject(error);
-                });
-            });
-        }
-
-        async function ensureTestServiceWorker() {
-            if (!window.isSecureContext || !/^https?:$/.test(location.protocol)) {
-                throw new Error("Für diesen Test muss die App über HTTPS geöffnet werden.");
-            }
-            if (!("serviceWorker" in navigator)) throw new Error("Service Worker wird von diesem Browser nicht unterstützt.");
-            if (!testServiceWorkerPromise) {
-                testServiceWorkerPromise = (async () => {
-                    await withPushTimeout(
-                        navigator.serviceWorker.register("./service-worker.js", { scope: "./", updateViaCache: "none" }),
-                        10000, "Service Worker konnte nicht rechtzeitig geladen werden. Verbindung und service-worker.js prüfen."
-                    );
-                    const ready = await withPushTimeout(navigator.serviceWorker.ready, 10000,
-                        "Service Worker wird nicht aktiv. Bitte die App neu öffnen und die Zusatzdateien prüfen.");
-                    const scope = new URL("./", location.href).href;
-                    if (ready.scope !== scope || !ready.active) throw new Error("Der erwartete Service Worker ist noch nicht aktiv. Bitte die App neu öffnen.");
-                    return ready;
-                })().catch(error => {
-                    testServiceWorkerPromise = null;
-                    throw error;
-                });
-            }
-            return testServiceWorkerPromise;
-        }
-
-        async function renderPushTestStatus(message = "") {
-            const el = document.getElementById("pushTestStatus");
-            const menu = document.getElementById("settingsPushMenuSub");
-            if (!el && !menu) return;
-
-            const standalone = istAlsWebAppGeoeffnet();
-            const notifications = "Notification" in window;
-            const sw = "serviceWorker" in navigator;
-            const push = "PushManager" in window;
-            const permission = notifications ? Notification.permission : "unsupported";
-
-            let swReady = false;
-            let swError = "";
-            if (sw) {
-                try {
-                    await ensureTestServiceWorker();
-                    swReady = true;
-                } catch (error) { swError = error?.message || String(error); }
-            }
-
-            let status = message ? `${message} ` : "";
-            if (!standalone) status += "Für den iPhone-Test bitte über das Home-Screen-Icon öffnen. ";
-            status += `Service Worker: ${swReady ? "bereit" : "nicht bereit"} · Mitteilungen: ${permission === "granted" ? "erlaubt" : permission === "denied" ? "blockiert" : permission === "default" ? "noch nicht erlaubt" : "nicht unterstützt"} · Push API: ${push ? "verfügbar" : "nicht verfügbar"}`;
-            if (swError) status += ` · ${swError}`;
-            if (el) el.textContent = status;
-            if (menu) menu.textContent = permission === "granted" && swReady ? "Mitteilungen erlaubt · Test bereit" : "Mitteilungen auf dem iPhone testen";
-        }
-
-        function pushDiagLine(label, value, state = null) {
-            const icon = state === true ? "✅" : state === false ? "❌" : "ℹ️";
-            return `${icon} ${label}: ${value}`;
-        }
-
-        async function runPushDiagnostics(testNotification = true) {
-            const out = document.getElementById("pushDiagnostics");
-            const lines = [];
-            let succeeded = true;
-            const write = () => { if (out) out.textContent = lines.join("\n"); };
-            try {
-                const standalone = istAlsWebAppGeoeffnet();
-                lines.push(pushDiagLine("Home-Screen-App", standalone ? "ja" : "nein", standalone));
-
-                const notificationSupported = "Notification" in window;
-                lines.push(pushDiagLine("Notification API", notificationSupported ? "verfügbar" : "nicht verfügbar", notificationSupported));
-                const permission = notificationSupported ? Notification.permission : "unsupported";
-                lines.push(pushDiagLine("Mitteilungsrecht", permission, permission === "granted" ? true : permission === "denied" ? false : null));
-
-                const swSupported = "serviceWorker" in navigator;
-                lines.push(pushDiagLine("Service Worker API", swSupported ? "verfügbar" : "nicht verfügbar", swSupported));
-                if (!swSupported) { write(); return false; }
-
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                lines.push(pushDiagLine("Registrierte Service Worker", String(registrations.length), registrations.length > 0));
-
-                const reg = await ensureTestServiceWorker();
-                lines.push(pushDiagLine("Service-Worker-Scope", reg.scope, true));
-                lines.push(pushDiagLine("Aktiver Worker", reg.active?.state || "keiner", !!reg.active));
-                lines.push(pushDiagLine("Controller dieser Seite", navigator.serviceWorker.controller ? "ja" : "nein", !!navigator.serviceWorker.controller));
-
-                const pushSupported = "PushManager" in window && !!reg.pushManager;
-                lines.push(pushDiagLine("Push API", pushSupported ? "verfügbar" : "nicht verfügbar", pushSupported));
-                if (pushSupported) {
-                    const subscription = await reg.pushManager.getSubscription();
-                    lines.push(pushDiagLine("Push-Subscription", subscription ? "vorhanden" : "noch keine – aktuell normal", subscription ? true : null));
-                }
-
-                if (testNotification) {
-                    if (permission !== "granted") {
-                        succeeded = false;
-                        lines.push(pushDiagLine("Testmeldung", "nicht ausgeführt – Mitteilungen nicht erlaubt", false));
-                    } else {
-                        const tag = `kostentracker-diag-${Date.now()}`;
-                        await reg.showNotification("Kostentracker Test · Diagnose", {
-                            body: "Wenn du diese Meldung siehst, funktioniert die lokale Systembenachrichtigung. ✅",
-                            icon: "./icon-192.png",
-                            badge: "./icon-192.png",
-                            tag,
-                            data: { url: "./index.html" }
-                        });
-                        lines.push(pushDiagLine("showNotification()", "ohne Fehler ausgeführt", true));
-                        await new Promise(resolve => setTimeout(resolve, 700));
-                        const found = await reg.getNotifications({ tag });
-                        lines.push(pushDiagLine("Vom Service Worker erkannte Testmeldungen", String(found.length), found.length > 0));
-                        if (found.length > 0) {
-                            lines.push(pushDiagLine("Hinweis", "Wenn trotzdem kein Banner erscheint, teste zusätzlich den 5-Sekunden-Test und wechsle direkt zum Home-Bildschirm.", null));
-                        }
-                    }
-                }
-            } catch (error) {
-                succeeded = false;
-                lines.push(pushDiagLine("Fehler", error?.message || String(error), false));
-            }
-            write();
-            await renderPushTestStatus();
-            return succeeded;
-        }
-
-        function openSettingsPushTest() {
-            show("settingsPushTestView");
-            renderTestServerSettings();
-            renderPushTestStatus();
-        }
-
-        async function requestTestNotificationPermission() {
-            const el = document.getElementById("pushTestStatus");
-            try {
-                if (!window.isSecureContext) throw new Error("Bitte die App über HTTPS öffnen.");
-                if (!("Notification" in window)) throw new Error("Mitteilungen werden hier nicht unterstützt. Auf dem iPhone bitte über das Home-Screen-Icon öffnen.");
-                // Permission is requested during the tap, before any worker/network wait.
-                const permission = Notification.permission === "default"
-                    ? await Notification.requestPermission() : Notification.permission;
-                const message = permission === "granted" ? "Mitteilungen wurden erlaubt."
-                    : permission === "denied" ? "Mitteilungen sind blockiert. Bitte in den Mitteilungseinstellungen erlauben."
-                    : "Mitteilungen wurden noch nicht erlaubt.";
-                await renderPushTestStatus(message);
-                return permission === "granted";
-            } catch (error) {
-                if (el) el.textContent = `Push-Test nicht möglich: ${error?.message || error}`;
-                return false;
-            }
-        }
-
-        async function sendTestNotification() {
-            const el = document.getElementById("pushTestStatus");
-            try {
-                if (!("Notification" in window)) throw new Error("Mitteilungen werden hier nicht unterstützt.");
-                if (Notification.permission !== "granted" && !await requestTestNotificationPermission()) return;
-                const success = await runPushDiagnostics(true);
-                await renderPushTestStatus(success
-                    ? "Testmeldung wurde an das System übergeben."
-                    : "Testmeldung fehlgeschlagen. Bitte die Diagnose unten prüfen.");
-            } catch (error) {
-                if (el) el.textContent = `Testbenachrichtigung fehlgeschlagen: ${error?.message || error}`;
-            }
-        }
-
-        async function sendDelayedTestNotification() {
-            const el = document.getElementById("pushTestStatus");
-            const out = document.getElementById("pushDiagnostics");
-            try {
-                if (!("Notification" in window)) throw new Error("Mitteilungen werden hier nicht unterstützt.");
-                if (Notification.permission !== "granted" && !await requestTestNotificationPermission()) return;
-                const reg = await ensureTestServiceWorker();
-                const worker = reg.active;
-                if (!worker) throw new Error("Kein aktiver Service Worker gefunden.");
-                if (!("MessageChannel" in window)) throw new Error("Dieser Browser unterstützt die Testrückmeldung nicht.");
-                if (el) el.textContent = "Service Worker wird für den Test angefragt …";
-
-                await new Promise((resolve, reject) => {
-                    const channel = new MessageChannel();
-                    let confirmed = false;
-                    const timer = setTimeout(() => {
-                        channel.port1.close();
-                        reject(new Error("Keine Rückmeldung vom Service Worker. Bitte die neue service-worker.js hochladen und die App neu öffnen."));
-                    }, 4000);
-                    channel.port1.onmessage = event => {
-                        const reply = event.data || {};
-                        if (!reply.ok) {
-                            clearTimeout(timer);
-                            channel.port1.close();
-                            const error = new Error(reply.error || "Test konnte nicht ausgeführt werden.");
-                            if (!confirmed) reject(error);
-                            else if (el) el.textContent = `5-Sekunden-Test fehlgeschlagen: ${error.message}`;
-                            return;
-                        }
-                        if (reply.status === "scheduled" && !confirmed) {
-                            confirmed = true;
-                            clearTimeout(timer);
-                            if (el) el.textContent = "Test bestätigt: Jetzt zum Home-Bildschirm wechseln. In etwa 5 Sekunden wird die Testmeldung ausgelöst.";
-                            if (out) out.textContent = "⏱️ Der Service Worker hat den kurzen Test bestätigt. Automatische Erinnerungen werden später über den Push-Dienst versendet.";
-                            resolve();
-                        } else if (reply.status === "shown") {
-                            channel.port1.close();
-                            if (el) el.textContent = "5-Sekunden-Test: Die Testmeldung wurde an das System übergeben.";
-                        }
-                    };
-                    try {
-                        worker.postMessage({
-                            type: "SCHEDULE_TEST_NOTIFICATION", delayMs: 5000,
-                            title: "Kostentracker Test",
-                            body: "Der kurze Benachrichtigungstest wurde ausgelöst. ✅",
-                            tag: `kostentracker-delayed-${Date.now()}`
-                        }, [channel.port2]);
-                    } catch (error) {
-                        clearTimeout(timer);
-                        channel.port1.close();
-                        reject(error);
-                    }
-                });
-            } catch (error) {
-                if (el) el.textContent = `5-Sekunden-Test fehlgeschlagen: ${error?.message || error}`;
-            }
         }
 
         function openSettingsDesign() {
@@ -4176,7 +3954,7 @@
             if (!["aus", "erneut", "ausblenden", "bearbeiten", "verschieben"].includes(value)) return;
             daten.Einstellungen ??= {};
             daten.Einstellungen.rechtsSwipeAktion = value;
-            speichern();
+            if (speichern() === false) return;
             renderGestureSettings();
             document.dispatchEvent(new CustomEvent("kostentracker:rightSwipeSettingChanged"));
         }
@@ -4236,10 +4014,10 @@
             beginUndoDelete("Eintrag ausgeblendet");
             setEintragAusgeblendet(type, id, true);
             restoreEintragNachSichtbarkeit(type, id, snapshot);
-            speichernOhneHomeRender();
+            if (!speichernOhneHomeRender()) return;
             renderNachEintragsAktion(type);
             restoreEintragNachSichtbarkeit(type, id, snapshot);
-            speichernOhneHomeRender();
+            if (!speichernOhneHomeRender()) return;
             finishUndoDelete("Eintrag ausgeblendet");
         }
 
@@ -4250,10 +4028,10 @@
             beginUndoDelete("Eintrag eingeblendet");
             setEintragAusgeblendet(type, id, false);
             restoreEintragNachSichtbarkeit(type, id, snapshot);
-            speichernOhneHomeRender();
+            if (!speichernOhneHomeRender()) return;
             renderNachEintragsAktion(type);
             restoreEintragNachSichtbarkeit(type, id, snapshot);
-            speichernOhneHomeRender();
+            if (!speichernOhneHomeRender()) return;
             finishUndoDelete("Eintrag eingeblendet");
         }
 
@@ -4274,7 +4052,7 @@
                 daten.Reisen[gefunden.land][gefunden.kategorie] ??= [];
                 daten.Reisen[gefunden.land][gefunden.kategorie].push(copy);
             }
-            speichern();
+            if (speichern() === false) return;
             renderNachEintragsAktion(type);
             finishUndoDelete("Eintrag erneut gebucht");
         }
@@ -4314,7 +4092,7 @@
             if (!["dunkel", "hell", "system"].includes(mode)) return;
             daten.Einstellungen ??= {};
             daten.Einstellungen.designModus = mode;
-            speichern();
+            if (speichern() === false) return;
             applyDesignTheme();
         }
 
@@ -4383,7 +4161,7 @@
             daten.Einstellungen.aktionsfarben = colors;
             delete daten.Einstellungen.aktionsfarbenModus;
             delete daten.Einstellungen.akzentfarbe;
-            speichern();
+            if (speichern() === false) return;
             applyActionColors(colors);
             renderDesignSettings();
             setActionColorStatus("Gespeichert ✓");
@@ -4399,7 +4177,7 @@
             daten.Einstellungen.aktionsfarben = defaults;
             delete daten.Einstellungen.aktionsfarbenModus;
             delete daten.Einstellungen.akzentfarbe;
-            speichern();
+            if (speichern() === false) return;
             applyActionColors(defaults);
             [
                 ["actionColorCommon", DEFAULT_ACTION_COLOR],
@@ -4689,7 +4467,7 @@
                     } else ungueltig++;
                 });
 
-                if (neu > 0) speichern();
+                if (neu > 0 && speichern() === false) return;
                 populateGlobalArchivJahre();
                 renderGlobalArchiv();
                 setGlobalArchivTransferStatus(`${neu} Einträge importiert${doppelt ? ` · ${doppelt} bereits vorhanden` : ""}${ungueltig ? ` · ${ungueltig} übersprungen` : ""}.`);
@@ -4961,7 +4739,7 @@
                 return;
             }
             daten.Einstellungen.schnellbetraege = values;
-            speichern();
+            if (speichern() === false) return;
             renderQuickAmountSettings();
         }
 
@@ -5012,7 +4790,7 @@
             } else {
                 daten.Einstellungen.quickAddFavoriten = aktuell.filter(x => x !== key);
             }
-            speichern();
+            if (speichern() === false) return;
             renderQuickAddSettings();
         }
 
@@ -5023,7 +4801,7 @@
             if (index < 0 || neu < 0 || neu >= aktiv.length) return;
             [aktiv[index], aktiv[neu]] = [aktiv[neu], aktiv[index]];
             daten.Einstellungen.quickAddFavoriten = aktiv;
-            speichern();
+            if (speichern() === false) return;
             renderQuickAddSettings();
         }
 
@@ -5420,7 +5198,7 @@
             if (isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
             daten["Sparen & Investieren"] ??= [];
             daten["Sparen & Investieren"].push({ id: generateId(), typ, text, betrag, datum, ...readReminderControl("add:sparen") });
-            speichern();
+            if (speichern() === false) return;
             document.getElementById("sparenInvestierenBetrag").value = "";
             document.getElementById("sparenInvestierenText").value = "";
             document.getElementById("sparenInvestierenAddPanel")?.classList.add("hidden");
@@ -5434,7 +5212,7 @@
             if (idx < 0) return;
             beginUndoDelete("Spar-/Investment-Eintrag gelöscht");
             liste.splice(idx, 1);
-            speichern();
+            if (speichern() === false) return;
             renderSparenInvestieren();
             renderUebersicht();
             finishUndoDelete("Spar-/Investment-Eintrag gelöscht");
@@ -5446,8 +5224,8 @@
             if (!confirm("Alle Spar- und Investment-Einträge wirklich löschen?")) return;
             beginUndoDelete("Alle Spar- und Investment-Einträge gelöscht");
             daten["Sparen & Investieren"] = [];
+            if (speichern() === false) return;
             state.editSparenInvestierenId = null;
-            speichern();
             renderSparenInvestieren();
             renderUebersicht();
             renderHomeUebersicht();
@@ -5478,8 +5256,8 @@
             e.betrag = betrag;
             e.datum = datum;
             Object.assign(e, readReminderControl(`edit:sparen:${id}`));
+            if (speichern() === false) return;
             state.editSparenInvestierenId = null;
-            speichern();
             renderSparenInvestieren();
             renderUebersicht();
         }
@@ -5609,7 +5387,7 @@
 
             daten["Geplante Ausgaben"] ??= [];
             daten["Geplante Ausgaben"].push({ id: generateId(), text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl("add:geplant") });
-            speichern();
+            if (speichern() === false) return;
             document.getElementById("geplantText").value = "";
             document.getElementById("geplantBetrag").value = "";
             document.getElementById("geplantDatum").value = heuteISO();
@@ -5629,7 +5407,7 @@
             if (idx < 0) return;
             beginUndoDelete("Geplante Ausgabe gelöscht");
             liste.splice(idx, 1);
-            speichern();
+            if (speichern() === false) return;
             renderGeplanteAusgaben();
             renderUebersicht();
             finishUndoDelete("Geplante Ausgabe gelöscht");
@@ -5641,8 +5419,8 @@
             if (!confirm("Alle geplanten Ausgaben wirklich löschen?")) return;
             beginUndoDelete("Alle geplanten Ausgaben gelöscht");
             daten["Geplante Ausgaben"] = [];
+            if (speichern() === false) return;
             state.editGeplanteAusgabeId = null;
-            speichern();
             renderGeplanteAusgaben();
             renderUebersicht();
             renderHomeUebersicht();
@@ -5713,8 +5491,8 @@
             if (!text || isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
             if (bereich === "reisen" && (!land || !daten.Reisen?.[land])) { alert("Bitte wähle eine vorhandene Reise aus."); return; }
             Object.assign(e, { text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl(`edit:geplant:${id}`) });
+            if (speichern() === false) return;
             state.editGeplanteAusgabeId = null;
-            speichern();
             verarbeiteFaelligeGeplanteAusgaben();
             renderGeplanteAusgaben();
             renderUebersicht();
@@ -5786,7 +5564,7 @@
 
             if (geaendert) {
                 daten["Geplante Ausgaben"] = offen;
-                try { localStorage.setItem("kostenApp_test", JSON.stringify(daten)); } catch (_) {}
+                if (!speichernOhneHomeRender(false)) return false;
             }
             return geaendert;
         }
@@ -5900,7 +5678,7 @@
             daten.ReisenMeta ||= {};
             daten.ReisenMeta[name] = { budget, von, bis };
 
-            speichern();
+            if (speichern() === false) return;
             document.getElementById("landInput").value = "";
             if (document.getElementById("landBudget")) document.getElementById("landBudget").value = "";
             if (document.getElementById("landVon")) document.getElementById("landVon").value = "";
@@ -6125,8 +5903,8 @@
             }
             daten.ReisenMeta ||= {};
             daten.ReisenMeta[aktuellesLand] = { budget, von, bis };
+            if (speichern() === false) return;
             state.reiseBudgetEdit = false;
-            speichern();
             renderReiseBudget();
             renderLaender();
         }
@@ -6173,7 +5951,7 @@
                 Object.defineProperty(daten.Reisen[aktuellesLand], name, { value: [], enumerable: true, writable: true, configurable: true });
             }
 
-            speichern();
+            if (speichern() === false) return;
             updateDropdown();
             renderListe();
         }
@@ -6186,7 +5964,7 @@
             }
 
             liste.push(item);
-            speichern();
+            return speichern();
         }
 
         /* Eintrag */
@@ -6206,13 +5984,13 @@
             }
 
             merkeLetzteKategorie("reisen", kat);
-            addItem(daten.Reisen[aktuellesLand][kat], {
+            if (addItem(daten.Reisen[aktuellesLand][kat], {
                 id: generateId(),
                 betrag,
                 text,
                 datum,
                 ...readReminderControl("add:reisen")
-            });
+            }) === false) return;
 
             const betragInput = document.getElementById("betrag");
             const textInput = document.getElementById("text");
@@ -6462,7 +6240,7 @@
             daten.Reisen[aktuellesLand][neuerName] = daten.Reisen[aktuellesLand][k];
             delete daten.Reisen[aktuellesLand][k];
 
-            speichern();
+            if (speichern() === false) return;
             updateDropdown();
             renderListe();
         }
@@ -6476,7 +6254,7 @@
 
             daten.Reisen[aktuellesLand][k] = [];
 
-            speichern();
+            if (speichern() === false) return;
             renderListe();
         }
 
@@ -6500,7 +6278,7 @@
 
             delete daten.Reisen[aktuellesLand][k];
 
-            speichern();
+            if (speichern() === false) return;
             updateDropdown();
             renderListe();
         }
@@ -6604,7 +6382,7 @@
                         <div class="info-text">Mehrere Namen mit einem Semikolon trennen.</div>
                         <label for="editKostenZuordnungTage-${k.id}" style="opacity:0.7; font-size:13px; margin-top:4px;">Zeitfenster zur Fälligkeit (± Tage)</label>
                         <input id="editKostenZuordnungTage-${k.id}" type="number" inputmode="numeric" min="0" max="31" step="1" value="${normalizeFixkostenZuordnungTage(k.zuordnungTage)}">
-                        <div class="info-text">Tage vor oder nach der Fälligkeit.</div>
+                        <div class="info-text">Vorbereitung für die Push-Erfassung: Tage vor oder nach der Fälligkeit.</div>
                         <label for="editKostenDatum-${k.id}" style="opacity:0.7; font-size:13px; margin-top:4px;">Erste Abbuchung · danach monatlich</label>
                         <input id="editKostenDatum-${k.id}" type="date" value="${datum}">
 
@@ -6621,17 +6399,13 @@
                     const istOffen = !!state.offeneFixkosten[String(k.id)];
                     item = createItem(`
                     <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
-                        <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="toggleFixkostenDetails('${k.id}')"
-                                 style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
-                                    <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(k.text || k.name || "-")}</span>
-                                    <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;">
-                                        <strong style="font-size:18px;">${formatBetrag(k.betrag)}</strong>
-                                        <span style="font-size:14px;opacity:.72;">· am ${String(tag).padStart(2, "0")}.</span>
-                                    </div>
-                                </div>
+                        <div class="compact-alltag-content">
+                            <div class="compact-alltag-main" onclick="toggleFixkostenDetails('${k.id}')" style="cursor:pointer;">
+                                <span class="compact-alltag-title">${escapeHtml(k.text || k.name || "-")}</span>
+                                ${k.haendler ? `<span class="compact-alltag-sub">${escapeHtml(k.haendler)}</span>` : ''}
+                                <span class="compact-alltag-sub">Monatlich am ${String(tag).padStart(2, "0")}.</span>
                             </div>
+                            <strong class="compact-alltag-amount">${formatBetrag(k.betrag)}</strong>
                             <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                                 <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben">↪️</button>
                                 <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')">✏️</button>
@@ -6651,6 +6425,7 @@
                 `);
                 }
 
+                if (!isEdit) item.classList.add("compact-alltag-card");
                 div.appendChild(item);
             });
 
@@ -6694,7 +6469,7 @@
                 daten["Laufende Kosten"].fix = [];
             }
 
-            addItem(daten["Laufende Kosten"].fix, {
+            if (addItem(daten["Laufende Kosten"].fix, {
                 id: generateId(),
                 text,
                 betrag,
@@ -6704,9 +6479,8 @@
                 datum,
                 tag,
                 ...readReminderControl("add:fixkosten")
-            });
+            }) === false) return;
 
-            speichern();
 
             // reset
             document.getElementById("costText").value = "";
@@ -6738,7 +6512,7 @@
                 liste.splice(index, 1);
             }
 
-            speichern();
+            if (speichern() === false) return;
             renderLaufendeKosten();
             renderHomeUebersicht();
             if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
@@ -6785,7 +6559,7 @@
             item.tag = tagAusDatum(datum);
             Object.assign(item, readReminderControl(`edit:fixkosten:${id}`));
 
-            speichern();
+            if (speichern() === false) return;
             state.editKostenId = null;
             renderLaufendeKosten();
             renderHomeUebersicht();
@@ -6808,7 +6582,7 @@
                 daten["Laufende Kosten"].fix = [];
             }
 
-            speichern();
+            if (speichern() === false) return;
             state.editKostenId = null;
             renderLaufendeKosten();
             renderHomeUebersicht();
@@ -6874,7 +6648,7 @@
                 datum: neuesDatum
             };
 
-            speichern();
+            if (speichern() === false) return;
             renderListe();
         }
 
@@ -6888,7 +6662,7 @@
 
             daten.Reisen[aktuellesLand][k].splice(i, 1);
 
-            speichern();
+            if (speichern() === false) return;
             renderListe();
             finishUndoDelete("Reiseausgabe gelöscht");
         }
@@ -6915,7 +6689,7 @@
 
             if (isNaN(monat)) monat = 1;
 
-            addItem(daten.Versicherungen, {
+            if (addItem(daten.Versicherungen, {
                 id: generateId(),
                 name,
                 betrag,
@@ -6925,9 +6699,8 @@
                 intervall,
                 monat,
                 ...readReminderControl("add:versicherungen")
-            });
+            }) === false) return;
 
-            speichern();
 
             // Reset
             document.getElementById("versName").value = "";
@@ -7001,18 +6774,16 @@
                 item.className = "item";
 
                 if (!isEdit) {
-
+                    item.classList.add("compact-alltag-card");
                     item.innerHTML = `
                 <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
 
-                    <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; width:100%; gap:10px;">
-                        <div onclick="toggleVersicherungDetails('${v.id}')"
-                             style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                            <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
-                                <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(v.name || "Versicherung")}</span>
-                                <strong style="font-size:18px;">${formatBetrag(v.betrag)}</strong>
-                            </div>
+                    <div class="compact-alltag-content">
+                        <div class="compact-alltag-main" onclick="toggleVersicherungDetails('${v.id}')" style="cursor:pointer;">
+                            <span class="compact-alltag-title">${escapeHtml(v.name || "Versicherung")}</span>
+                            ${v.anbieter ? `<span class="compact-alltag-sub">${escapeHtml(v.anbieter)}</span>` : ''}
                         </div>
+                        <strong class="compact-alltag-amount">${formatBetrag(v.betrag)}</strong>
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                             <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben">↪️</button>
                             <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')">✏️</button>
@@ -7175,7 +6946,7 @@
                 daten.Versicherungen.splice(index, 1);
             }
 
-            speichern();
+            if (speichern() === false) return;
             renderVersicherungen();
             finishUndoDelete("Versicherung gelöscht");
         }
@@ -7451,7 +7222,7 @@
             }
 
             gefunden.entfernen();
-            speichern();
+            if (speichern() === false) return;
             closeMoveSheet();
             renderHomeUebersicht(); renderHaushalt(); renderFreizeit(); renderLaufendeKosten(); renderVersicherungen(); renderEinnahmen(); renderLaender();
             if (aktuellesLand) renderListe();
@@ -7469,7 +7240,7 @@
                 daten.Versicherungen.length = 0;
             }
 
-            speichern();
+            if (speichern() === false) return;
             renderVersicherungen();
             finishUndoDelete("Alle Versicherungen gelöscht");
         }
@@ -7500,7 +7271,7 @@
                 delete daten.geloeschteKategorien[land];
             }
 
-            speichern();
+            if (speichern() === false) return;
             renderLaender();
             finishUndoDelete(`Reise „${land}“ gelöscht`);
         }
@@ -7518,7 +7289,7 @@
                 }
             }
 
-            speichern();
+            if (speichern() === false) return;
             renderListe();
             finishUndoDelete("Alle Reisekosten gelöscht");
         }
@@ -7533,7 +7304,7 @@
             if (!text || isNaN(betrag) || betrag <= 0 || !datum) return;
             daten.Einnahmen ??= [];
             daten.Einnahmen.push({ id: generateId(), text, betrag, von, datum, wiederholung, ...readReminderControl("add:einnahmen") });
-            speichern();
+            if (speichern() === false) return;
 
             document.getElementById("einnahmenText").value = "";
             document.getElementById("einnahmenBetrag").value = "";
@@ -7541,6 +7312,7 @@
             document.getElementById("einnahmenDatum").value = heuteISO();
             document.getElementById("einnahmenWiederholung").value = "einmalig";
             document.getElementById("einnahmenAddPanel")?.classList.add("hidden");
+            if (wiederholung === "monatlich") state.einnahmenMonatlichOffen = true;
             renderEinnahmen();
             renderHomeUebersicht();
             if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
@@ -7554,22 +7326,64 @@
             const suche = getSearchTerm("einnahmenSuche");
             const alleEinnahmen = Array.isArray(daten.Einnahmen) ? daten.Einnahmen : [];
             document.getElementById("einnahmenDeleteAllBtn")?.classList.toggle("hidden", alleEinnahmen.length === 0);
-            const liste = [...alleEinnahmen]
+            const sichtbar = alleEinnahmen
                 .filter(e => !istEintragAusgeblendet("einnahmen", e.id))
-                .filter(e => matchesSearch(suche, e.text, e.von, e.wiederholung, e.datum, e.betrag))
-                .sort((a,b) => String(b.datum).localeCompare(String(a.datum)));
+                .filter(e => matchesSearch(suche, e.text, e.von, e.wiederholung, e.datum, e.betrag));
+            const einmalig = sichtbar.filter(e => e.wiederholung !== "monatlich" && (
+                istInLetztenTagen(e.datum, 7) || parseISODate(e.datum) > startOfToday() || String(state.editEinnahmeId) === String(e.id)
+            )).sort((a,b) => String(b.datum).localeCompare(String(a.datum)));
+            const monatlich = sichtbar.filter(e => e.wiederholung === "monatlich")
+                .sort((a,b) => (parseISODate(a.datum)?.getDate() || 0) - (parseISODate(b.datum)?.getDate() || 0) || String(a.text || '').localeCompare(String(b.text || ''),'de'));
+            const z = getGehaltszeitraum();
+            const sum = einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((a,e)=>a+e.betrag,0);
+            if (total) total.innerHTML = `<div style="opacity:.7;font-size:12px;margin-bottom:4px;">Einnahmen im aktuellen Gehaltszeitraum</div><strong style="font-size:24px;">+${formatBetrag(sum)}</strong>`;
 
-            if (!liste.length) {
-                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-title">Noch keine Einnahmen</div><div class="empty-state-text">Zusätzliche oder wiederkehrende Einnahmen erscheinen hier.</div></div>`;
-                if (total) total.innerHTML = "";
-                return;
+            const monthlySum = monatlich.reduce((sum,e)=>sum+(parseBetrag(e.betrag)||0),0);
+            if (state.einnahmenLetzteSuche !== suche) {
+                if (suche) state.einnahmenMonatlichOffen = true;
+                state.einnahmenLetzteSuche = suche;
+            }
+            const expanded = !!state.einnahmenMonatlichOffen || monatlich.some(e=>String(state.editEinnahmeId)===String(e.id));
+            const toggle = document.createElement("button");
+            toggle.type = "button";
+            toggle.id = "einnahmenMonatlichToggle";
+            toggle.setAttribute("aria-expanded",String(expanded));
+            toggle.setAttribute("aria-controls","einnahmenMonatlichListe");
+            toggle.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:var(--secondary);color:var(--text);text-align:left;margin:10px 0 14px;padding:16px;border-radius:16px;";
+            toggle.innerHTML = `<span><strong style="display:block;">Monatlich wiederkehrend</strong><span style="display:block;font-size:13px;opacity:.7;margin-top:4px;">${monatlich.length} ${monatlich.length === 1 ? 'Eintrag' : 'Einträge'} · +${formatBetrag(monthlySum)} / Monat</span></span><span aria-hidden="true" style="font-size:20px;">${expanded ? '⌃' : '⌄'}</span>`;
+            toggle.addEventListener("click",()=>{state.einnahmenMonatlichOffen=!expanded;renderEinnahmen();});
+            container.appendChild(toggle);
+            const monthlyList = document.createElement("div");
+            monthlyList.id = "einnahmenMonatlichListe";
+            if (!expanded) monthlyList.classList.add("hidden");
+            container.appendChild(monthlyList);
+            if (expanded) {
+                if (monatlich.length) renderRows(monthlyList,monatlich,true);
+                else monthlyList.innerHTML = `<div class="info-text">${suche ? 'Keine passenden monatlichen Einnahmen.' : 'Noch keine monatlich wiederkehrenden Einnahmen hinterlegt.'}</div>`;
             }
 
+            const label = document.createElement("div");
+            label.className = "section-label";
+            label.textContent = "Einmalige Einnahmen";
+            container.appendChild(label);
+            const note = document.createElement("div");
+            note.className = "info-text";
+            note.textContent = "Letzte 7 Tage und kommende Zahlungen. Ältere Einträge bleiben unter Einstellungen → Archiv erhalten.";
+            container.appendChild(note);
+            if (!einmalig.length) {
+                const empty = document.createElement("div");
+                empty.className = "empty-state";
+                empty.innerHTML = `<div class="empty-state-icon">💰</div><div class="empty-state-title">${suche ? 'Keine passenden einmaligen Einnahmen' : 'Keine aktuellen einmaligen Einnahmen'}</div><div class="empty-state-text">Neue Einnahmen erscheinen hier.</div>`;
+                container.appendChild(empty);
+            }
+            renderRows(container,einmalig,false);
+
+            function renderRows(host,liste,recurring) {
             let letzteEinnahmenGruppe = null;
             liste.forEach(e => {
                 const gruppenKey = e.datum || "ohne-datum";
-                if (gruppenKey !== letzteEinnahmenGruppe) {
-                    appendDateGroupHeader(container, e.datum, { first: letzteEinnahmenGruppe === null, note: e.wiederholung === "monatlich" ? "Startdatum" : "Datum" });
+                if (!recurring && gruppenKey !== letzteEinnahmenGruppe) {
+                    appendDateGroupHeader(host, e.datum, { first: letzteEinnahmenGruppe === null, note: e.wiederholung === "monatlich" ? "Startdatum" : "Datum" });
                     letzteEinnahmenGruppe = gruppenKey;
                 }
                 const isEdit = String(state.editEinnahmeId) === String(e.id);
@@ -7587,13 +7401,13 @@
                     const info = e.wiederholung === "monatlich" ? `Monatlich am ${parseISODate(e.datum)?.getDate() || '-'} · seit ${formatDatum(e.datum)}` : `Einmalig · ${formatDatum(e.datum)}`;
                     const istOffen = !!state.offeneEinnahmen[String(e.id)];
                     html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
-                        <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="toggleEinnahmeDetails('${e.id}')" style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                <span style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0;">
-                                    <strong style="overflow-wrap:anywhere;">${escapeHtml(e.text || 'Einnahme')}</strong>
-                                    <strong style="font-size:18px;">+${formatBetrag(e.betrag)}</strong>
-                                </span>
+                        <div class="compact-alltag-content">
+                            <div class="compact-alltag-main" onclick="toggleEinnahmeDetails('${e.id}')" style="cursor:pointer;">
+                                <span class="compact-alltag-title">${escapeHtml(e.text || 'Einnahme')}</span>
+                                ${e.von ? `<span class="compact-alltag-sub">${escapeHtml(e.von)}</span>` : ''}
+                                ${recurring ? `<span class="compact-alltag-sub">Monatlich am ${parseISODate(e.datum)?.getDate() || '-'}.${parseISODate(e.datum) > startOfToday() ? ' · ab '+formatDatum(e.datum) : ''}</span>` : ''}
                             </div>
+                            <strong class="compact-alltag-amount">+${formatBetrag(e.betrag)}</strong>
                             <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><button onclick="event.stopPropagation(); moveAusgabe('einnahmen','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="event.stopPropagation(); startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="event.stopPropagation(); deleteEinnahme('${e.id}')">🗑️</button></div>
                         </div>
                         ${istOffen ? `<div onclick="toggleEinnahmeDetails('${e.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
@@ -7603,13 +7417,12 @@
                     </div>`;
                 }
                 const item = createItem(html);
+                if (!isEdit) item.classList.add("compact-alltag-card");
                 item.style.background = "#3a3a3c";
-                container.appendChild(item);
+                host.appendChild(item);
             });
 
-            const z = getGehaltszeitraum();
-            const sum = einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((a,e)=>a+e.betrag,0);
-            if (total) total.innerHTML = "Einnahmen im aktuellen Gehaltszeitraum: +" + formatBetrag(sum);
+            }
         }
 
         function toggleEinnahmeDetails(id) {
@@ -7632,8 +7445,8 @@
             const wiederholung = document.getElementById(`editEinnahmenWiederholung-${id}`)?.value === "monatlich" ? "monatlich" : "einmalig";
             if (!text || isNaN(betrag) || betrag <= 0 || !datum) return;
             daten.Einnahmen[index] = { ...daten.Einnahmen[index], text, betrag, von, datum, wiederholung, ...readReminderControl(`edit:einnahmen:${id}`) };
+            if (speichern() === false) return;
             state.editEinnahmeId = null;
-            speichern();
             renderEinnahmen();
         }
 
@@ -7641,7 +7454,7 @@
             if (!confirm("Einnahme wirklich löschen?")) return;
             beginUndoDelete("Einnahme gelöscht");
             daten.Einnahmen = (daten.Einnahmen || []).filter(e => String(e.id) !== String(id));
-            speichern();
+            if (speichern() === false) return;
             renderEinnahmen();
             finishUndoDelete("Einnahme gelöscht");
         }
@@ -7651,7 +7464,7 @@
             if (!confirm("Alle Einnahmen wirklich löschen?")) return;
             beginUndoDelete("Alle Einnahmen gelöscht");
             daten.Einnahmen = [];
-            speichern();
+            if (speichern() === false) return;
             renderEinnahmen();
             finishUndoDelete("Alle Einnahmen gelöscht");
         }
@@ -7749,7 +7562,7 @@
             });
             merkeLetzteKategorie("haushalt", kategorie);
 
-            speichern();
+            if (speichern() === false) return;
 
             // reset
             document.getElementById("hausText").value = "";
@@ -7776,7 +7589,7 @@
             daten.Freizeit[monat] ??= [];
             daten.Freizeit[monat].push({ id: generateId(), text, betrag, datum, kategorie, ...readReminderControl("add:freizeit") });
             merkeLetzteKategorie("freizeit", kategorie);
-            speichern();
+            if (speichern() === false) return;
 
             document.getElementById("freizeitText").value = "";
             document.getElementById("freizeitBetrag").value = "";
@@ -7885,7 +7698,7 @@
             });
             merkeLetzteKategorie("reisen", quickKategorie);
 
-            speichern();
+            if (speichern() === false) return;
 
             const box = document.getElementById("quickBox");
 
@@ -8326,7 +8139,7 @@
                 }
             }
 
-            speichern();
+            if (speichern() === false) return;
             renderHaushalt();
             finishUndoDelete("Alle Haushalt-Einträge gelöscht");
         }
@@ -8441,7 +8254,7 @@
                 daten.Haushalt[neuerMonat].push(updated);
             }
 
-            speichern();
+            if (speichern() === false) return;
             renderHaushalt();
         }
 
@@ -8466,7 +8279,7 @@
                 }
             }
 
-            speichern();
+            if (speichern() === false) return;
             renderHaushalt();
             finishUndoDelete("Haushalt-Eintrag gelöscht");
         }
@@ -8529,7 +8342,7 @@
                 }
             }
 
-            speichern();
+            if (speichern() === false) return;
             state.editHaushaltId = null;
             renderHaushalt();
         }
@@ -8600,8 +8413,8 @@
             bereich[neuerMonat] ??= [];
             bereich[neuerMonat].push(updated);
 
+            if (speichern() === false) return;
             state.editAusgabenArchivId = null;
-            speichern();
             renderAusgabenArchiv();
         }
 
@@ -8746,14 +8559,15 @@
             daten.Freizeit[oldMonat].splice(oldIndex,1);
             const neuerMonat=new Date(datum).getMonth()+1; daten.Freizeit[neuerMonat]??=[];
             daten.Freizeit[neuerMonat].push({...found,id:found.id,text:formatText(text),betrag,datum,kategorie:found.kategorie || "Sonstiges",...readReminderControl(`edit:freizeit:${id}`)});
-            state.editFreizeitId=null; speichern(); renderFreizeit();
+            if (speichern() === false) return;
+            state.editFreizeitId=null; renderFreizeit();
         }
 
         function deleteFreizeit(id){
             if(!confirm('Eintrag löschen?')) return;
             beginUndoDelete("Freizeit-Eintrag gelöscht");
             for(const monat in daten.Freizeit){ const liste=daten.Freizeit[monat]; if(!Array.isArray(liste)) continue; const i=liste.findIndex(e=>String(e.id)===String(id)); if(i!==-1){liste.splice(i,1);break;} }
-            speichern(); renderFreizeit(); finishUndoDelete("Freizeit-Eintrag gelöscht");
+            if (speichern() === false) return; renderFreizeit(); finishUndoDelete("Freizeit-Eintrag gelöscht");
         }
 
         function deleteAlleFreizeit(){
@@ -8761,7 +8575,7 @@
             beginUndoDelete("Alle Freizeit-Einträge gelöscht");
             daten.Freizeit ??= {};
             for(const monat in daten.Freizeit) if(Array.isArray(daten.Freizeit[monat])) daten.Freizeit[monat]=[];
-            speichern(); renderFreizeit(); finishUndoDelete("Alle Freizeit-Einträge gelöscht");
+            if (speichern() === false) return; renderFreizeit(); finishUndoDelete("Alle Freizeit-Einträge gelöscht");
         }
 
         function startEditVersicherung(id) {
@@ -8811,7 +8625,7 @@
             v.monat = monat;
             Object.assign(v, readReminderControl(`edit:versicherungen:${id}`));
 
-            speichern();
+            if (speichern() === false) return;
 
             state.editVersicherungId = null;
             renderVersicherungen();
@@ -8860,7 +8674,7 @@
                 }
             }
 
-            speichern();
+            if (speichern() === false) return;
             state.editReiseId = null; // 👈 vereinheitlicht
             renderListe();
         }
@@ -8899,9 +8713,8 @@
             delete land[oldName];
             if (state.offeneKategorie === oldName) state.offeneKategorie = newName;
             if (getLetzteKategorie("reisen", "Essen") === oldName) merkeLetzteKategorie("reisen", newName);
+            if (speichern() === false) return;
             state.editKategorieName = null;
-
-            speichern();
             updateDropdown();
             renderListe();
         }
@@ -8987,7 +8800,7 @@
                 delete daten.geloeschteKategorien[oldName];
             }
 
-            speichern();
+            if (speichern() === false) return;
             renderLaender();
         }
 
@@ -9055,7 +8868,7 @@
                 delete daten.geloeschteKategorien[oldName];
             }
 
-            speichern();
+            if (speichern() === false) return;
             state.editLandName = null;
             renderLaender();
         }
@@ -9205,7 +9018,7 @@
             daten.Einstellungen ??= {};
             daten.Einstellungen.startgehaelter ??= {};
             daten.Einstellungen.startgehaelter[gehaltsmonatKey()] = wert;
-            speichern();
+            if (speichern() === false) return;
         }
 
         function renderNextSalarySettings(message = "") {
@@ -9248,8 +9061,8 @@
             }
             daten.Einstellungen ??= {};
             daten.Einstellungen.naechstesGehaltPlan = { datum, betrag, periodenStart: isoAusDate(aktuellerStart) };
+            if (speichern() === false) return;
             state.nextSalaryPromptSnoozed = false;
-            speichern();
             renderNextSalarySettings("Nächstes Gehalt gespeichert. Der neue Zeitraum startet erst nach deiner Bestätigung.");
         }
 
@@ -9260,7 +9073,7 @@
             daten.Einstellungen.naechstesGehaltPlan = { datum: "", betrag: "", periodenStart: "" };
             state.nextSalaryPromptSnoozed = false;
             document.getElementById("nextSalaryPromptSheet")?.classList.add("hidden");
-            speichern();
+            if (speichern() === false) return;
             renderNextSalarySettings("Vormerkung gelöscht. Es gilt wieder der reguläre Gehaltstag.");
         }
 
@@ -9290,7 +9103,7 @@
             daten.Einstellungen.naechstesGehaltPlan = { datum: "", betrag: "", periodenStart: "" };
             state.nextSalaryPromptSnoozed = false;
             document.getElementById("nextSalaryPromptSheet")?.classList.add("hidden");
-            speichern();
+            if (speichern() === false) return;
         }
 
         function editNextSalaryFromPrompt() {
@@ -9438,8 +9251,8 @@
             // Wochenbudget-Logik:
             // - Montag bis Sonntag bleibt das Startbudget der aktuellen Woche unveraendert.
             // - Ausgaben der aktuellen Woche werden vom Wochenbudget abgezogen.
-            // - Eine Überschreitung reduziert die Vorschau der kommenden Wochen sofort.
-            //   Ein positiver Wochenrest bleibt für diese Woche reserviert.
+            // - Sobald die aktuelle Woche ins Minus rutscht, wird dieses Minus in der Vorschau
+            //   sofort auf die kommenden Wochen verteilt. Positive Reste werden erst Montag neu verteilt.
             // - Angebrochene Wochen bis zum Gehalt werden nach ihren tatsaechlichen Tagen gewichtet.
             const kalenderMontag = montagDerWoche(heute);
             const kalenderSonntag = addDays(kalenderMontag, 6);
@@ -10088,10 +9901,30 @@
             transform: translate3d(0,0,0);
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
-            transition: transform .22s cubic-bezier(.22,.61,.36,1);
+            transition: transform .38s cubic-bezier(.25,.6,.25,1);
         }
-        .swipe-entry-shell.swipe-entry-dragging > .item.swipe-entry-ready {
+        .swipe-entry-shell.swipe-entry-removing {
+            background: #ff3b30;
+            pointer-events: none;
+        }
+        .swipe-entry-shell.swipe-entry-removing.swipe-entry-hiding {
+            background: #8e8e93;
+        }
+        .swipe-entry-shell.swipe-entry-hiding::before { opacity: 0 !important; }
+        .swipe-entry-shell.swipe-entry-removing > .swipe-action-rail,
+        .swipe-entry-shell.swipe-entry-removing > .swipe-right-action-rail {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .swipe-entry-shell.swipe-entry-removing > .item.swipe-entry-ready {
+            transition: transform var(--swipe-removal-duration, .24s) cubic-bezier(.25,.6,.25,1);
+        }
+        .swipe-entry-shell.swipe-entry-dragging > .item.swipe-entry-ready,
+        .swipe-entry-shell.swipe-entry-right-dragging > .item.swipe-entry-ready {
             transition: none !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .swipe-entry-shell > .item.swipe-entry-ready { transition: none; }
         }
         .swipe-entry-shell > .swipe-right-action-rail {
             position: absolute;
@@ -10301,7 +10134,30 @@
             let latestDeleteVisualProgress = 0;
             let framePending = false;
             let frameId = 0;
+            let activeCard = null;
+            let activeRightRail = null;
+            let activeDeleteButton = null;
+            let dragDirection = '';
+            let lastTouchX = 0;
+            let lastTouchTime = 0;
+            let swipeVelocity = 0;
+            const swipeReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
 
+            function eventTime(event) { return event.timeStamp || performance.now(); }
+
+            function flushSwipeFrame(shell) {
+                cancelPendingFrame();
+                const card = shell === activeShell ? activeCard : cardOf(shell);
+                if (card) card.style.transform = `translate3d(${-latestOffset}px,0,0)`;
+                shell?.style.setProperty('--swipe-delete-progress', latestDeleteVisualProgress.toFixed(3));
+            }
+
+            function setDragDirection(direction) {
+                if (dragDirection === direction) return;
+                dragDirection = direction;
+                activeShell.classList.toggle('swipe-entry-dragging', direction === 'left');
+                activeShell.classList.toggle('swipe-entry-right-dragging', direction === 'right');
+            }
 
             /* Long Press -> neuer, DOM-basierter Auswahlmodus.
                Bewusst ohne App-Render beim Antippen, damit die Swipe-Wrapper stabil bleiben. */
@@ -10323,7 +10179,7 @@
                 frameId = requestAnimationFrame(() => {
                     framePending = false;
                     frameId = 0;
-                    const card = cardOf(shell);
+                    const card = shell === activeShell ? activeCard : cardOf(shell);
                     if (card) card.style.transform = `translate3d(${-latestOffset}px,0,0)`;
                     if (shell?.isConnected) {
                         shell.style.setProperty('--swipe-delete-progress', latestDeleteVisualProgress.toFixed(3));
@@ -10347,7 +10203,7 @@
             }
 
             function closeSwipe(shell = openShell, animate = true) {
-                if (!shell) return;
+                if (!shell || shell.classList.contains('swipe-entry-removing')) return;
                 const card = cardOf(shell);
                 cancelPendingFrame();
                 shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging', 'swipe-entry-right-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
@@ -10359,6 +10215,61 @@
                     if (!animate) requestAnimationFrame(() => { card.style.transition = ''; });
                 }
                 if (openShell === shell) openShell = null;
+            }
+
+            function animateSwipeDelete(shell, deleteButton, width) {
+                animateSwipeRemoval(shell, width, -1, () => {
+                    const oldConfirm = window.confirm;
+                    try {
+                        window.confirm = () => true;
+                        deleteButton.click();
+                    } finally { window.confirm = oldConfirm; }
+                });
+            }
+
+            function animateSwipeRemoval(shell, width, direction, action) {
+                if (!shell || shell.classList.contains('swipe-entry-removing')) return;
+                const card = cardOf(shell);
+                const originalHeight = shell.style.height;
+                const originalMarginTop = shell.style.marginTop;
+                const originalMarginBottom = shell.style.marginBottom;
+                const originalTransition = shell.style.transition;
+                const originalSlideDuration = shell.style.getPropertyValue('--swipe-removal-duration');
+                const slideDuration = direction > 0 ? 420 : 240;
+                const finish = () => {
+                    if (!shell.isConnected) return;
+                    try {
+                        // Keep the existing persistence and undo path for either action.
+                        action();
+                    } finally {
+                        // A failed save must leave the entry visible and usable.
+                        shell.classList.remove('swipe-entry-removing', 'swipe-entry-hiding');
+                        shell.style.height = originalHeight;
+                        shell.style.marginTop = originalMarginTop;
+                        shell.style.marginBottom = originalMarginBottom;
+                        shell.style.transition = originalTransition;
+                        if (originalSlideDuration) shell.style.setProperty('--swipe-removal-duration', originalSlideDuration);
+                        else shell.style.removeProperty('--swipe-removal-duration');
+                        if (shell.isConnected) closeSwipe(shell, false);
+                    }
+                };
+                if (swipeReducedMotion?.matches) { finish(); return; }
+                shell.style.height = `${shell.getBoundingClientRect().height}px`;
+                shell.classList.remove('swipe-entry-open', 'swipe-entry-right-dragging');
+                shell.style.setProperty('--swipe-removal-duration', `${slideDuration}ms`);
+                shell.classList.add('swipe-entry-removing');
+                shell.classList.toggle('swipe-entry-hiding', direction > 0);
+                shell.style.setProperty('--swipe-delete-progress', direction < 0 ? '1' : '0');
+                if (card) card.style.transform = `translate3d(${direction * width}px,0,0)`;
+                // Slide out, hold the action color briefly, then close the gap in the list.
+                window.setTimeout(() => {
+                    if (!shell.isConnected) return;
+                    shell.style.transition = 'height .26s cubic-bezier(.25,.6,.25,1), margin-top .26s cubic-bezier(.25,.6,.25,1), margin-bottom .26s cubic-bezier(.25,.6,.25,1)';
+                    shell.style.height = '0px';
+                    shell.style.marginTop = '0px';
+                    shell.style.marginBottom = '0px';
+                    window.setTimeout(finish, 260);
+                }, slideDuration + 80);
             }
 
             function railWidth(shell) {
@@ -10380,7 +10291,7 @@
             }
 
             function isSelectableShell(shell) {
-                return !!(shell && shell.querySelector(':scope > .swipe-action-rail .delete'));
+                return !!(shell && !shell.classList.contains('swipe-entry-removing') && shell.querySelector(':scope > .swipe-action-rail .delete'));
             }
 
             function ensureSelectionDot(shell) {
@@ -10653,7 +10564,13 @@
             }
 
             document.addEventListener('touchstart', event => {
-                if (event.touches.length !== 1) return;
+                if (event.touches.length !== 1) {
+                    clearLongPressTimer();
+                    if (activeShell) closeSwipe(activeShell);
+                    activeShell = null;
+                    horizontal = false;
+                    return;
+                }
                 const shell = event.target.closest('.swipe-entry-shell');
 
                 if (!shell) {
@@ -10662,6 +10579,7 @@
                     return;
                 }
 
+                if (shell.classList.contains('swipe-entry-removing')) return;
                 if (event.target.closest('.swipe-action-rail')) return;
 
                 /* Im Auswahlmodus sind normale Taps nur Auswahl-Taps; Swipe bleibt aus. */
@@ -10675,7 +10593,15 @@
 
                 const touch = event.touches[0];
                 clearNativeTextSelection();
+                cancelPendingFrame();
                 activeShell = shell;
+                activeCard = cardOf(shell);
+                activeRightRail = shell.querySelector(':scope > .swipe-right-action-rail');
+                activeDeleteButton = shell.querySelector('.swipe-action-rail .delete');
+                dragDirection = '';
+                lastTouchX = touch.clientX;
+                lastTouchTime = eventTime(event);
+                swipeVelocity = 0;
                 startLongPress(shell, touch.clientX, touch.clientY);
                 startX = touch.clientX;
                 startY = touch.clientY;
@@ -10683,6 +10609,14 @@
                 activeShellWidth = Math.max(activeRailWidth, shell.getBoundingClientRect().width);
                 activeDeleteThreshold = Math.max(activeRailWidth + 56, activeShellWidth * 0.72);
                 startOffset = shell.classList.contains('swipe-entry-open') ? activeRailWidth : 0;
+                // Read the current visual position once, including a still-settling card.
+                const transform = activeCard ? getComputedStyle(activeCard).transform : '';
+                const matrix = transform?.match(/^matrix(3d)?\(([^)]+)\)$/);
+                if (matrix) {
+                    const parts = matrix[2].split(',').map(Number);
+                    const translate = parts[matrix[1] ? 12 : 4];
+                    if (Number.isFinite(translate)) startOffset = -translate;
+                }
                 latestOffset = startOffset;
                 latestDeleteVisualProgress = 0;
                 shell.style.setProperty('--swipe-delete-progress', '0');
@@ -10694,6 +10628,14 @@
                 const touch = event.touches[0];
                 const dx = touch.clientX - startX;
                 const dy = touch.clientY - startY;
+                const now = eventTime(event);
+                const elapsed = now - lastTouchTime;
+                if (elapsed > 0) {
+                    const sample = (touch.clientX - lastTouchX) / elapsed;
+                    swipeVelocity = elapsed > 80 ? sample : swipeVelocity * .25 + sample * .75;
+                    lastTouchTime = now;
+                    lastTouchX = touch.clientX;
+                }
 
                 if (longPressShell) {
                     const ldx = touch.clientX - longPressStartX;
@@ -10710,28 +10652,34 @@
                     }
                     clearLongPressTimer();
                     horizontal = true;
-                    activeShell.classList.add('swipe-entry-dragging');
+                    suppressClickUntil = Date.now() + 450;
+                    suppressClickShell = activeShell;
                 }
 
                 event.preventDefault();
 
-                const rightRail = activeShell.querySelector(':scope > .swipe-right-action-rail');
-                if (startOffset === 0 && dx > 0 && rightRail) {
-                    activeShell.classList.remove('swipe-entry-dragging');
-                    activeShell.classList.add('swipe-entry-right-dragging');
-                    const rightOffset = Math.min(activeShellWidth * 0.42, dx);
+                const rightRail = activeRightRail;
+                if (startOffset <= 0 && dx > 0 && rightRail) {
+                    setDragDirection('right');
+                    const isHideGesture = rightRail.dataset.action === 'ausblenden';
+                    const limit = isHideGesture ? activeShellWidth : activeShellWidth * 0.42;
+                    const travel = dx - startOffset;
+                    // Hiding removes the row, so follow the finger beyond the middle.
+                    // Actions that keep the row still use resistance at their reveal limit.
+                    const rightOffset = isHideGesture
+                        ? Math.min(activeShellWidth, travel)
+                        : (travel <= limit ? travel : limit + (travel - limit) * .18);
                     setCardTranslate(activeShell, rightOffset);
                     return;
                 }
 
-                activeShell.classList.remove('swipe-entry-right-dragging');
-                activeShell.classList.add('swipe-entry-dragging');
+                setDragDirection('left');
                 const offset = Math.max(0, Math.min(activeShellWidth, startOffset - dx));
 
                 /* Hinter den normalen Aktionen beginnt die rote Voll-Swipe-Zone.
                    Transform und Rot-Fortschritt werden gemeinsam nur einmal pro
                    Animation-Frame aktualisiert. */
-                const hasDelete = !!activeShell.querySelector('.swipe-action-rail .delete');
+                const hasDelete = !!activeDeleteButton;
                 const deleteVisualStart = activeRailWidth + 8;
                 const deleteVisualRange = Math.max(1, activeDeleteThreshold - deleteVisualStart);
                 const deleteVisualProgress = hasDelete
@@ -10759,29 +10707,47 @@
                 const max = activeRailWidth || railWidth(shell);
                 const shellWidth = activeShellWidth || Math.max(max, shell.getBoundingClientRect().width);
 
-                const rightRail = shell.querySelector(':scope > .swipe-right-action-rail');
-                if (horizontal && startOffset === 0 && dx > 0 && rightRail) {
+                const rightRail = activeRightRail;
+                const velocity = eventTime(event) - lastTouchTime <= 80 ? swipeVelocity : 0;
+                if (horizontal) {
+                    suppressClickUntil = Date.now() + 350;
+                    suppressClickShell = shell;
+                    // Paint the last finger position before enabling the settling animation.
+                    flushSwipeFrame(shell);
+                    if (activeCard) void activeCard.offsetWidth;
+                }
+                if (horizontal && startOffset <= 0 && dx > 0 && rightRail) {
                     const trigger = Math.min(120, Math.max(86, shellWidth * 0.28));
                     const shouldRun = dx >= trigger;
                     const card = cardOf(shell);
                     cancelPendingFrame();
                     shell.classList.remove('swipe-entry-right-dragging', 'swipe-entry-dragging');
-                    if (card) card.style.transform = 'translate3d(0,0,0)';
+                    const cfg = shouldRun ? rightSwipeConfigFor(shell) : null;
+                    const shouldHide = cfg?.action === 'ausblenden';
+                    if (shouldHide) {
+                        animateSwipeRemoval(shell, shellWidth, 1, () => ausblendenEintrag(cfg.meta.type, cfg.meta.id));
+                    } else if (card) card.style.transform = 'translate3d(0,0,0)';
                     activeShell = null;
                     horizontal = false;
                     activeRailWidth = 0;
                     activeShellWidth = 0;
                     activeDeleteThreshold = 0;
                     latestDeleteVisualProgress = 0;
-                    if (shouldRun) window.setTimeout(() => executeRightSwipe(shell), 30);
+                    if (shouldRun && !shouldHide) window.setTimeout(() => {
+                        if (shell.isConnected && !selectionMode) executeRightSwipe(shell);
+                    }, swipeReducedMotion?.matches ? 0 : 380);
                     return;
                 }
 
                 const offset = Math.max(0, Math.min(shellWidth, startOffset - dx));
                 const deleteThreshold = activeDeleteThreshold || Math.max(max + 56, shellWidth * 0.72);
-                const deleteButton = shell.querySelector('.swipe-action-rail .delete');
+                const deleteButton = activeDeleteButton;
                 const shouldDelete = horizontal && !!deleteButton && offset >= deleteThreshold;
-                const shouldOpen = !shouldDelete && horizontal && offset > Math.min(46, max * 0.32);
+                const wasOpen = shell.classList.contains('swipe-entry-open');
+                const projectedOffset = Math.max(0, offset - velocity * 140);
+                const shouldOpen = !shouldDelete && (horizontal
+                    ? projectedOffset > (wasOpen ? max * .55 : Math.min(46, max * .32))
+                    : wasOpen);
 
                 cancelPendingFrame();
                 shell.classList.remove('swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
@@ -10789,21 +10755,12 @@
                 latestDeleteVisualProgress = 0;
 
                 if (shouldDelete) {
-                    /* Voll-Swipe: dieselbe Loeschlogik wie beim roten Button,
-                       aber die Sicherheitsabfrage wird fuer genau diesen Aufruf uebersprungen.
-                       Dadurch bleiben bestehendes Rendering und Rueckgaengig-Funktion erhalten. */
-                    const oldConfirm = window.confirm;
-                    try {
-                        window.confirm = () => true;
-                        deleteButton.click();
-                    } finally {
-                        window.confirm = oldConfirm;
-                    }
+                    animateSwipeDelete(shell, deleteButton, shellWidth);
                     openShell = null;
                 } else {
                     const card = cardOf(shell);
                     latestOffset = shouldOpen ? max : 0;
-                    if (card) card.style.transform = `translate3d(${shouldOpen ? -max : 0}px,0,0)`;
+                    if (card && horizontal) card.style.transform = `translate3d(${shouldOpen ? -max : 0}px,0,0)`;
                     shell.classList.toggle('swipe-entry-open', shouldOpen);
                     openShell = shouldOpen ? shell : null;
                 }
@@ -10832,7 +10789,13 @@
                 /* Nur den synthetischen Klick des Eintrags schlucken, der den Long Press
                    ausgeloest hat. Andere Eintraege sind sofort anklickbar. */
                 const clickedShell = event.target.closest('.swipe-entry-shell');
-                if (Date.now() < suppressClickUntil && clickedShell && clickedShell === suppressClickShell) {
+                if (event.isTrusted && clickedShell?.classList.contains('swipe-entry-removing')) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
+                // Block Safari's follow-up tap, while allowing the swipe's programmatic action click.
+                if (event.isTrusted && Date.now() < suppressClickUntil && clickedShell && clickedShell === suppressClickShell) {
                     suppressClickUntil = 0;
                     suppressClickShell = null;
                     event.preventDefault();
@@ -10913,8 +10876,361 @@
         })();
     </script>
 
+    <script>
+        // Interactive edge navigation. Visual copies live in a shadow root so
+        // duplicate form IDs never affect the app's renderers or saved inputs.
+        (() => {
+            const viewIds = ['home','reisen','land','haushaltView','freizeitView','ausgabenArchivView','globalArchivView','geplanteAusgabenView','sparenInvestierenView','einnahmenView','kostenView','versicherungenView','uebersichtView','grafikView','settingsView','settingsBudgetView','settingsQuickAddView','settingsWarningsView','settingsDesignView','settingsGesturesView','settingsBackupView'];
+            const cache = new Map();
+            const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+            const overlay = document.createElement('div');
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.inert = true;
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;overflow:hidden;pointer-events:none;display:none;';
+            const shadow = overlay.attachShadow({mode:'closed'});
+            const style = document.createElement('style');
+            style.textContent = [...document.querySelectorAll('style')].map(el => el.textContent)
+                .join('\n').replace(/:root\[data-theme="(light|dark)"\]/g, ':host([data-theme="$1"])')
+                .replace(/:root/g, ':host').replace(/\bbody\b/g, '.edge-page-content').replace(/\bhtml\b/g, '.edge-page-content') + `
+                :host { font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",sans-serif; }
+                .edge-back-layer { position:absolute; inset:0; overflow:hidden; background:var(--bg); will-change:transform; contain:paint; }
+                .edge-page-content * { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; animation:none !important; transition:none !important; }
+                .edge-back-front { box-shadow:-8px 0 24px rgba(0,0,0,.18); }
+                .edge-page-content { position:absolute; left:0; width:100%; margin:0; box-sizing:border-box; }
+                .edge-back-shade { position:absolute; inset:0; background:#000; pointer-events:none; will-change:opacity; }
+                `;
+            shadow.appendChild(style);
+            document.body.appendChild(overlay);
+            let gesture = null;
+            let frame = 0;
+            let cleanupTimer = 0;
+            let suppressClickUntil = 0;
+            let warmed = null;
+            let prepareFrame = 0;
+            let prepareIdle = 0;
+            const activeView = () => viewIds.map(id => document.getElementById(id)).find(el => el && !el.classList.contains('hidden'));
+
+            function snapshot(view) {
+                const copy = view.cloneNode(true);
+                copy.classList.remove('hidden');
+                // cloneNode copies attributes; live field values and canvas pixels need copying.
+                const originalFields = view.querySelectorAll('input,textarea,select');
+                copy.querySelectorAll('input,textarea,select').forEach((el,i) => {
+                    const original = originalFields[i];
+                    if (!original) return;
+                    if (el.type !== 'file') el.value = original.value;
+                    if ('checked' in el) el.checked = original.checked;
+                });
+                const canvases = view.querySelectorAll('canvas');
+                copy.querySelectorAll('canvas').forEach((el,i) => {
+                    try { el.getContext('2d')?.drawImage(canvases[i],0,0); } catch (_) {}
+                });
+                return copy;
+            }
+
+            function cleanup() {
+                cancelAnimationFrame(frame);
+                clearTimeout(cleanupTimer);
+                frame = 0;
+                if (gesture?.front) gesture.front.remove();
+                if (gesture?.back) gesture.back.remove();
+                overlay.style.display = 'none';
+                gesture = null;
+                schedulePreparation();
+            }
+
+            function discardPrepared() {
+                warmed?.front.remove();
+                warmed?.back.remove();
+                warmed = null;
+            }
+
+            function syncPreviewTheme() {
+                overlay.dataset.theme = document.documentElement.dataset.theme;
+                const theme = getComputedStyle(document.documentElement);
+                for (let i = 0; i < theme.length; i++) {
+                    const key = theme[i];
+                    if (key.startsWith('--')) overlay.style.setProperty(key, theme.getPropertyValue(key));
+                }
+            }
+
+            function prepareViews() {
+                prepareIdle = 0;
+                if (gesture || document.hidden || document.activeElement?.matches('input,textarea,select,[contenteditable="true"]')) return;
+                discardPrepared();
+                const view = activeView();
+                const button = view?.querySelector('.back-btn');
+                const targetId = button && destination(button);
+                const target = targetId && document.getElementById(targetId);
+                if (!target) return;
+                syncPreviewTheme();
+                const cached = cache.get(targetId);
+                const back = layer(cached ? cached.node.cloneNode(true) : snapshot(target), cached?.scroll || 0, false);
+                const sourceSnapshot = snapshot(view);
+                const front = layer(sourceSnapshot, window.scrollY, true);
+                warmed = {view,button,targetId,target,back,front,sourceSnapshot,width:window.innerWidth,shade:back.querySelector('.edge-back-shade')};
+                front.style.transform = 'translate3d(0,0,0)';
+                back.style.transform = `translate3d(${-window.innerWidth*.22}px,0,0)`;
+                warmed.shade.style.opacity = '.22';
+            }
+
+            function cancelPreparation() {
+                cancelAnimationFrame(prepareFrame);
+                prepareFrame = 0;
+                if (prepareIdle) {
+                    if (window.cancelIdleCallback) window.cancelIdleCallback(prepareIdle);
+                    else clearTimeout(prepareIdle);
+                    prepareIdle = 0;
+                }
+            }
+
+            function schedulePreparation() {
+                if (prepareFrame || prepareIdle || gesture || document.hidden) return;
+                // Wait until the page renderer has completed, then copy in idle time.
+                prepareFrame = requestAnimationFrame(() => {
+                    prepareFrame = 0;
+                    prepareIdle = window.requestIdleCallback
+                        ? window.requestIdleCallback(prepareViews, {timeout:250})
+                        : setTimeout(prepareViews,40);
+                });
+            }
+
+            function invalidatePrepared() {
+                if (gesture) return;
+                discardPrepared();
+                schedulePreparation();
+            }
+
+            // Called before show() clears the outgoing travel lists.
+            window.kostentrackerRememberView = nextId => {
+                const view = activeView();
+                if (gesture && !gesture.navigating) cleanup();
+                if (view && view.id !== nextId) {
+                    const prepared = gesture?.navigating && gesture.view === view;
+                    cache.set(view.id, {node:prepared ? gesture.sourceSnapshot : snapshot(view),scroll:prepared ? gesture.sourceScroll : window.scrollY});
+                }
+            };
+
+            function destination(button) {
+                const action = (button.getAttribute('onclick') || '').trim();
+                const targets = {'goHome()':'home','openUebersicht()':'uebersichtView','openSettings()':'settingsView','backToReisen()':'reisen'};
+                if (action === 'closeAusgabenArchiv()') return state.ausgabenArchivTyp === 'freizeit' ? 'freizeitView' : 'haushaltView';
+                return targets[action.replace(/;$/, '')];
+            }
+
+            function layer(node, scroll, front) {
+                const el = document.createElement('div');
+                el.className = 'edge-back-layer' + (front ? ' edge-back-front' : '');
+                const content = document.createElement('div');
+                content.className = 'edge-page-content';
+                content.style.top = -scroll + 'px';
+                content.appendChild(node);
+                el.appendChild(content);
+                if (!front) {
+                    const shade = document.createElement('div');
+                    shade.className = 'edge-back-shade';
+                    el.appendChild(shade);
+                }
+                shadow.appendChild(el);
+                return el;
+            }
+
+            function paint() {
+                frame = 0;
+                if (!gesture?.dragging || gesture.settling) return;
+                const progress = gesture.distance / gesture.width;
+                gesture.front.style.transform = `translate3d(${gesture.distance}px,0,0)`;
+                gesture.back.style.transform = `translate3d(${-gesture.width * .22 * (1-progress)}px,0,0)`;
+                gesture.shade.style.opacity = String(.22 * (1-progress));
+            }
+
+            function settle(commit) {
+                const g = gesture;
+                if (!g?.dragging || g.settling) { cleanup(); return; }
+                cancelAnimationFrame(frame);
+                paint();
+                g.settling = true;
+                const duration = reducedMotion?.matches ? 0 : (commit ? 380 : 300);
+                // Resolve the current finger position before starting the release animation.
+                g.front.getBoundingClientRect();
+                g.front.style.transition = `transform ${duration}ms cubic-bezier(.25,.6,.25,1)`;
+                g.back.style.transition = g.front.style.transition;
+                g.shade.style.transition = `opacity ${duration}ms ease-out`;
+                g.front.style.transform = `translate3d(${commit ? g.width : 0}px,0,0)`;
+                g.back.style.transform = `translate3d(${commit ? 0 : -g.width*.22}px,0,0)`;
+                g.shade.style.opacity = commit ? '0' : '.22';
+                suppressClickUntil = performance.now() + duration + 180;
+                const complete = () => {
+                    if (gesture !== g) return;
+                    if (commit && !g.navigating) navigate();
+                    cleanup();
+                };
+                const navigate = () => {
+                    if (gesture !== g || g.navigating) return;
+                    g.navigating = true;
+                    // Render only once the slide is finished: DOM work must not interrupt it.
+                    g.button.click();
+                    window.scrollTo(0, cache.get(g.targetId)?.scroll || 0);
+                };
+                g.front.addEventListener('transitionend', event => {
+                    if (event.target === g.front && event.propertyName === 'transform') complete();
+                });
+                // The cached destination stays visible until the real view is ready.
+                cleanupTimer = setTimeout(complete, duration + 70);
+            }
+
+            document.addEventListener('touchstart', event => {
+                if (gesture?.settling) { event.stopImmediatePropagation(); return; }
+                cleanup();
+                if (event.touches.length !== 1) return;
+                const touch = event.touches[0];
+                if (touch.clientX > 24 || touch.clientX < 0) return;
+                if (document.activeElement?.matches('input,textarea,select,[contenteditable="true"]')) return;
+                if (event.target.closest('input,textarea,select,[contenteditable="true"]')) return;
+                if ([...document.querySelectorAll('.sheet-backdrop')].some(el => !el.classList.contains('hidden'))) return;
+                if (document.querySelector('.swipe-selection-mode')) return;
+                const view = activeView();
+                const button = view?.querySelector('.back-btn');
+                if (!button) return;
+                const targetId = destination(button);
+                const target = document.getElementById(targetId);
+                if (!target) return;
+                cancelPreparation();
+                if (warmed && (warmed.view !== view || warmed.targetId !== targetId || warmed.width !== window.innerWidth)) discardPrepared();
+                const prepared = warmed;
+                warmed = null;
+                gesture = {view,button,targetId,target,startX:touch.clientX,startY:touch.clientY,lastX:touch.clientX,lastTime:performance.now(),velocity:0,distance:0,width:window.innerWidth,dragging:false,settling:false};
+                if (prepared) {
+                    Object.assign(gesture,prepared);
+                    // Scrolling does not require copying the page again.
+                    gesture.front.querySelector('.edge-page-content').style.top = -window.scrollY + 'px';
+                } else {
+                    // Fallback for an immediate swipe before the idle preparation ran.
+                    syncPreviewTheme();
+                    const cached = cache.get(targetId);
+                    gesture.back = layer(cached ? cached.node.cloneNode(true) : snapshot(target), cached?.scroll || 0, false);
+                    gesture.sourceSnapshot = snapshot(view);
+                    gesture.front = layer(gesture.sourceSnapshot,window.scrollY,true);
+                    gesture.shade = gesture.back.querySelector('.edge-back-shade');
+                    gesture.front.style.transform = 'translate3d(0,0,0)';
+                    gesture.back.style.transform = `translate3d(${-gesture.width*.22}px,0,0)`;
+                    gesture.shade.style.opacity = '.22';
+                }
+                gesture.sourceScroll = window.scrollY;
+                overlay.style.display = 'block';
+                // Reserve only the edge strip; entry swipes elsewhere are untouched.
+                event.stopImmediatePropagation();
+            }, {capture:true,passive:true});
+
+            document.addEventListener('touchmove', event => {
+                const g = gesture;
+                if (!g || g.settling) return;
+                if (event.touches.length !== 1) { settle(false); return; }
+                const touch = event.touches[0];
+                const dx = touch.clientX - g.startX;
+                const dy = touch.clientY - g.startY;
+                if (!g.dragging) {
+                    if (Math.max(Math.abs(dx),Math.abs(dy)) < 8) return;
+                    if (dx <= 0 || Math.abs(dy) >= dx * .8 || !event.cancelable) { cleanup(); return; }
+                    g.dragging = true;
+                    overlay.style.display = 'block';
+                }
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                const now = performance.now();
+                g.velocity = (touch.clientX - g.lastX) / Math.max(1,now-g.lastTime);
+                g.lastX = touch.clientX;
+                g.lastTime = now;
+                g.distance = Math.min(g.width,Math.max(0,dx));
+                if (!frame) frame = requestAnimationFrame(paint);
+            }, {capture:true,passive:false});
+
+            document.addEventListener('touchend', event => {
+                const g = gesture;
+                if (!g || g.settling) return;
+                if (!g.dragging) { cleanup(); return; }
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                const touch = event.changedTouches?.[0];
+                if (touch) g.distance = Math.min(g.width,Math.max(0,touch.clientX-g.startX));
+                const quick = performance.now()-g.lastTime < 90 && g.velocity > .5;
+                settle(g.distance >= g.width*.32 || (g.distance >= 50 && quick));
+            }, {capture:true,passive:false});
+            document.addEventListener('touchcancel', () => { if (gesture && !gesture.settling) settle(false); }, {capture:true,passive:true});
+            document.addEventListener('click', event => {
+                if (event.isTrusted && performance.now() < suppressClickUntil) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            }, true);
+            const observer = new MutationObserver(mutations => {
+                const view = activeView();
+                if (mutations.some(m => m.target === document.documentElement || view?.contains(m.target))) invalidatePrepared();
+            });
+            observer.observe(document.body, {subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class','value','checked','selected']});
+            observer.observe(document.documentElement, {attributes:true,attributeFilter:['data-theme','style']});
+            document.addEventListener('input',invalidatePrepared,true);
+            document.addEventListener('change',invalidatePrepared,true);
+            document.addEventListener('focusout',schedulePreparation,true);
+            window.addEventListener('resize',() => { discardPrepared(); cleanup(); });
+            window.addEventListener('pagehide',() => { discardPrepared(); cleanup(); cancelPreparation(); });
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) { discardPrepared(); cleanup(); }
+                else schedulePreparation();
+            });
+            schedulePreparation();
+        })();
+    </script>
+
 <script>
-// Server integration for the TEST storage only; credentials are never in a backup.
+        let testServiceWorkerPromise = null;
+
+        function withPushTimeout(promise, ms, message) {
+            return new Promise((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error(message)), ms);
+                Promise.resolve(promise).then(value => {
+                    clearTimeout(timer);
+                    resolve(value);
+                }, error => {
+                    clearTimeout(timer);
+                    reject(error);
+                });
+            });
+        }
+
+        async function ensureTestServiceWorker() {
+            if (!window.isSecureContext || !/^https?:$/.test(location.protocol)) {
+                throw new Error("Bitte die App über ihre HTTPS-Adresse öffnen.");
+            }
+            if (!("serviceWorker" in navigator)) throw new Error("Service Worker wird von diesem Browser nicht unterstützt.");
+            if (!testServiceWorkerPromise) {
+                testServiceWorkerPromise = (async () => {
+                    await withPushTimeout(
+                        navigator.serviceWorker.register("./service-worker.js", { scope: "./", updateViaCache: "none" }),
+                        10000, "Service Worker konnte nicht rechtzeitig geladen werden. Verbindung und service-worker.js prüfen."
+                    );
+                    const ready = await withPushTimeout(navigator.serviceWorker.ready, 10000,
+                        "Service Worker wird nicht aktiv. Bitte die App neu öffnen und die Zusatzdateien prüfen.");
+                    const scope = new URL("./", location.href).href;
+                    if (ready.scope !== scope || !ready.active) throw new Error("Der erwartete Service Worker ist noch nicht aktiv. Bitte die App neu öffnen.");
+                    return ready;
+                })().catch(error => {
+                    testServiceWorkerPromise = null;
+                    throw error;
+                });
+            }
+            return testServiceWorkerPromise;
+        }
+
+
+function openServerSettings() {show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();}
+async function renderPushTestStatus() {
+  const node=document.getElementById('serverNotificationStatus');if(!node)return;
+  if(!('Notification' in window)){node.textContent='Für Benachrichtigungen die App über ihr Home-Bildschirm-Icon öffnen.';return;}
+  node.textContent=Notification.permission==='granted'?'Mitteilungen sind erlaubt.':Notification.permission==='denied'?'Mitteilungen sind blockiert. Bitte in den Geräteeinstellungen erlauben.':'Mitteilungen sind noch nicht aktiviert.';
+}
+
+// Main app integration; credentials are never in a data backup.
 var testServerConfig = (() => { try {return JSON.parse(localStorage.getItem('kostenApp_test_server'))||{};} catch {return {};} })();
 // Legacy saved credentials belong to the existing primary account.
 var testServerBoundUser = (() => {try {return localStorage.getItem('kostenApp_test_user')||testServerConfig.userId||(testServerConfig.token?'person1':null);} catch {return testServerConfig.token?'person1':null;}})();
@@ -10992,10 +11308,15 @@ function classifyPushPayment(payment) {
   if(matches.length>1||unknown.length) return {review:'Mögliche Fixkosten/Versicherung: Anbieter, Betrag und Fälligkeit bitte prüfen.'};
   return {normal:true};
 }
+function importedPaymentDestination(payment) {
+  const merchant=normalizedProvider(payment.merchant).replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const bakery=/(?:^|[^a-z])(?:baeckerei|backerei|baecker|backer|backstube|bakery)(?=$|[^a-z])/.test(merchant);
+  return bakery ? {area:'Freizeit',category:'Essen / Trinken'} : {area:'Haushalt',category:['Einkauf','Tanken','Drogerie','Sonstiges'].includes(payment.category)?payment.category:'Einkauf'};
+}
 function appendImportedPayment(payment) {
-  const month=Number(payment.date.slice(5,7));daten.Haushalt[month]??=[];
-  daten.Haushalt[month].push({id:generateId(),text:String(payment.merchant||'Apple Pay').slice(0,200),betrag:payment.amountCents/100,datum:payment.date,
-    kategorie:['Einkauf','Tanken','Drogerie','Sonstiges'].includes(payment.category)?payment.category:'Einkauf',_serverPaymentId:payment.id});
+  const target=importedPaymentDestination(payment),month=Number(payment.date.slice(5,7));
+  daten[target.area]??={};daten[target.area][month]??=[];
+  daten[target.area][month].push({id:generateId(),text:String(payment.merchant||'Apple Pay').slice(0,200),betrag:payment.amountCents/100,datum:payment.date,kategorie:target.category,_serverPaymentId:payment.id});
 }
 function renderServerPaymentReview() {
   const host=document.getElementById('serverPaymentReview');if(!host)return;
@@ -11019,16 +11340,16 @@ function resolveServerPaymentReview(id,book) {
   try {
     if(book) appendImportedPayment(payment);
     daten.Einstellungen.serverPendingReview=pending.filter(p=>p.id!==id);
-    localStorage.setItem('kostenApp_test',JSON.stringify(daten));
+    localStorage.setItem('kostenApp_test',JSON.stringify(daten));zuletztGespeicherteDaten=JSON.stringify(daten);
   } catch(error) {daten=before;showPaymentImportedNotice(false);serverStatus('Entscheidung konnte nicht gespeichert werden. Bitte erneut versuchen.');return;}
   if(book) showPaymentImportedNotice();
-  renderServerPaymentReview();renderHomeUebersicht();renderRecentAusgaben('haushalt');scheduleTestServerSync();
+  renderServerPaymentReview();renderHomeUebersicht();renderRecentAusgaben('haushalt');renderRecentAusgaben('freizeit');scheduleTestServerSync();
 }
 
 function importTestServerPayments(payments) {
   if(!Array.isArray(payments)||payments.length>100) throw new Error('Ungültige Zahlungsliste.');
   const ids=new Set(daten.Einstellungen?.serverImportIds||[]);
-  Object.values(daten.Haushalt||{}).forEach(list=>Array.isArray(list)&&list.forEach(e=>{if(e._serverPaymentId)ids.add(e._serverPaymentId);}));
+  for(const area of ['Haushalt','Freizeit']) Object.values(daten[area]||{}).forEach(list=>Array.isArray(list)&&list.forEach(e=>{if(e._serverPaymentId)ids.add(e._serverPaymentId);}));
   const before=structuredClone(daten);let count=0;
   try {
     for(const payment of payments) {
@@ -11047,7 +11368,7 @@ function importTestServerPayments(payments) {
     }
     daten.Einstellungen??={};daten.Einstellungen.serverImportIds=[...ids];
     // Save before acknowledgment: after a crash/retry the IDs prevent duplication.
-    localStorage.setItem('kostenApp_test',JSON.stringify(daten));
+    localStorage.setItem('kostenApp_test',JSON.stringify(daten));zuletztGespeicherteDaten=JSON.stringify(daten);
   } catch(error) {daten=before;showPaymentImportedNotice(false);throw error;}
   if(count>0) showPaymentImportedNotice();
   renderServerPaymentReview();
@@ -11085,7 +11406,7 @@ async function activateTestServerPush() {
   if(testServerBusy) {serverStatus('Bitte den laufenden Vorgang kurz abwarten.');return;}
   testServerBusy=true;
   try {
-    if(!('Notification' in window)) throw new Error('Bitte die Test-App über das Home-Bildschirm-Icon öffnen.');
+    if(!('Notification' in window)) throw new Error('Bitte die App über das Home-Bildschirm-Icon öffnen.');
     // Request permission directly in the tap, before a network request.
     const permission=Notification.permission==='default'?await Notification.requestPermission():Notification.permission;
     if(permission!=='granted') throw new Error('Mitteilungen sind nicht erlaubt.');
@@ -11105,18 +11426,6 @@ async function activateTestServerPush() {
   } catch(error) {serverStatus(error.message);}
   finally {testServerBusy=false;if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
 }
-async function sendTestServerPush() {
-  if(testServerBusy) {serverStatus('Bitte den laufenden Vorgang kurz abwarten.');return;}
-  testServerBusy=true;
-  try {
-    await saveTestServerSettings();const registration=await ensureTestServiceWorker(),sub=await registration.pushManager.getSubscription();
-    if(!sub) throw new Error('Zuerst „Server-Push aktivieren“ antippen.');
-    await testServerRequest('/api/subscribe',sub.toJSON());
-    await testServerRequest('/api/push-test',{endpoint:sub.endpoint});
-    serverStatus('Push-Dienst hat die Testnachricht angenommen. Die Anzeige übernimmt dein iPhone.');
-  } catch(error) {serverStatus(error.message);}
-  finally {testServerBusy=false;if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
-}
 function toggleTestServerCode() {const node=document.getElementById('testServerToken'),button=document.getElementById('testServerReveal');if(!node)return;node.type=node.type==='password'?'text':'password';if(button)button.textContent=node.type==='text'?'Code verbergen':'Code anzeigen';}
 async function restoreTestServerBackup() {
   if(testServerBusy) {serverStatus('Bitte den laufenden Vorgang kurz abwarten.');return;}
@@ -11125,7 +11434,7 @@ async function restoreTestServerBackup() {
     await saveTestServerSettings();
     const saved=await testServerRequest('/api/backup');if(!saved.data) throw new Error('Für deinen Zugang gibt es noch kein Serverbackup.');
     if(!saved.data.Haushalt||typeof saved.data.Haushalt!=='object'||!saved.data.Einstellungen||typeof saved.data.Einstellungen!=='object') throw new Error('Das Serverbackup ist nicht gültig.');
-    if(!confirm('Deine lokalen Testdaten durch dein Serverbackup ersetzen? Vorher bei Bedarf deine lokalen Daten in den Backup-Einstellungen exportieren.')) return;
+    if(!confirm('Deine lokalen Daten durch dein Serverbackup ersetzen? Vorher bei Bedarf deine lokalen Daten in den Backup-Einstellungen exportieren.')) return;
     localStorage.setItem('kostenApp_test',JSON.stringify(saved.data));
     localStorage.removeItem('kostenApp_test_backup_check');location.reload();
   } catch(error) {serverStatus(error.message);}
@@ -11134,6 +11443,7 @@ async function restoreTestServerBackup() {
 window.addEventListener('online',()=>syncTestServer(false));
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') syncTestServer(false);});
 window.addEventListener('load',()=>{renderTestServerSettings();if(testServerConfig.token) syncTestServer(false);});
+
 </script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
 </body>

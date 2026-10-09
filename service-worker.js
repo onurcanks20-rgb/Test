@@ -1,4 +1,4 @@
-const WORKER_VERSION = "bank-push-test-v5";
+const WORKER_VERSION = "test-main-parity-v6";
 const APP_SCOPE = new URL(self.registration.scope);
 const CACHE_PREFIX = `kostentracker-test:${encodeURIComponent(APP_SCOPE.pathname)}:`;
 const CACHE_NAME = `${CACHE_PREFIX}${WORKER_VERSION}`;
@@ -27,7 +27,7 @@ function isAppPageUrl(value) {
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    // The app is required; an unavailable icon must not block notification tests.
+    // The app is required; an unavailable icon must not block notification delivery.
     await cache.add(APP_URL);
     await Promise.all(STATIC_ASSETS.filter(url => url !== APP_URL).map(url =>
       cache.add(url).catch(() => console.warn("Optionale App-Datei konnte nicht gecacht werden:", url))
@@ -98,46 +98,18 @@ self.addEventListener("fetch", event => {
   event.respondWith((async () => await caches.match(event.request, { cacheName: CACHE_NAME }) || await network)());
 });
 
-// Keep the short test alive until it has handed the notification to the system.
-self.addEventListener("message", event => {
-  if (event.data?.type !== "SCHEDULE_TEST_NOTIFICATION") return;
-  const port = event.ports?.[0];
-  const reply = message => { try { port?.postMessage(message); } catch (_) {} };
-  if (!event.source?.url || !isAppPageUrl(event.source.url)) {
-    reply({ ok: false, error: "Der Testauftrag stammt nicht aus dieser App." });
-    return;
-  }
-  event.waitUntil((async () => {
-    try {
-      const delayMs = Math.min(10000, Math.max(0, Number(event.data.delayMs) || 0));
-      reply({ ok: true, status: "scheduled", delayMs, version: WORKER_VERSION });
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-      await self.registration.showNotification(String(event.data.title || "Kostentracker Test"), {
-        body: String(event.data.body || "Kurzer Benachrichtigungstest"),
-        icon: new URL("icon-192.png", APP_SCOPE).href,
-        badge: new URL("icon-192.png", APP_SCOPE).href,
-        tag: String(event.data.tag || "kostentracker-delayed-test"),
-        data: { url: APP_URL }
-      });
-      reply({ ok: true, status: "shown" });
-    } catch (error) {
-      reply({ ok: false, error: error?.message || String(error) });
-    } finally { port?.close(); }
-  })());
-});
-
-// Entry point for the future server's Web Push messages.
+// Receive Web Push messages from the server.
 self.addEventListener("push", event => {
   let payload = {};
   try { payload = event.data ? event.data.json() : {}; }
   catch (_) { payload = { body: event.data ? event.data.text() : "" }; }
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) payload = {};
   const data = payload.data && typeof payload.data === "object" && !Array.isArray(payload.data) ? payload.data : {};
-  event.waitUntil(self.registration.showNotification(String(payload.title || "Kostentracker Test"), {
+  event.waitUntil(self.registration.showNotification(String(payload.title || "Kostentracker"), {
     body: String(payload.body || "Neue Benachrichtigung"),
     icon: payload.icon || new URL("icon-192.png", APP_SCOPE).href,
     badge: payload.badge || new URL("icon-192.png", APP_SCOPE).href,
-    tag: String(payload.tag || "kostentracker-test-push"),
+    tag: String(payload.tag || "kostentracker-push"),
     data: { ...data, url: notificationTarget(payload.url || data.url) }
   }));
 });
