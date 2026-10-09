@@ -20,7 +20,7 @@ Kostentracker.module({
             const overlay = document.createElement('div');
             overlay.setAttribute('aria-hidden', 'true');
             overlay.inert = true;
-            overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;overflow:hidden;pointer-events:none;display:none;';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;overflow:hidden;pointer-events:none;display:none;opacity:0;will-change:opacity;';
             const shadow = overlay.attachShadow({mode:'closed'});
             const style = document.createElement('style');
             // Same-origin external stylesheets are loaded before this classic script executes.
@@ -33,7 +33,7 @@ Kostentracker.module({
                 :host { font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",sans-serif; }
                 .edge-back-layer { position:absolute; inset:0; overflow:hidden; background:var(--bg); will-change:transform; contain:paint; }
                 .edge-page-content * { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; animation:none !important; transition:none !important; }
-                .edge-back-front { box-shadow:-8px 0 24px rgba(0,0,0,.18); }
+                .edge-back-front { border-left:1px solid rgba(0,0,0,.08); box-sizing:border-box; }
                 .edge-page-content { position:absolute; left:0; width:100%; margin:0; box-sizing:border-box; }
                 .edge-back-shade { position:absolute; inset:0; background:#000; pointer-events:none; will-change:opacity; }
                 `;
@@ -42,6 +42,7 @@ Kostentracker.module({
             let gesture = null;
             let frame = 0;
             let cleanupTimer = 0;
+            let handoffFrame = 0;
             let suppressClickUntil = 0;
             let warmed = null;
             let prepareFrame = 0;
@@ -68,10 +69,13 @@ Kostentracker.module({
 
             function cleanup() {
                 cancelAnimationFrame(frame);
+                cancelAnimationFrame(handoffFrame);
+                handoffFrame = 0;
                 clearTimeout(cleanupTimer);
                 frame = 0;
                 if (gesture?.front) gesture.front.remove();
                 if (gesture?.back) gesture.back.remove();
+                overlay.style.opacity = '0';
                 overlay.style.display = 'none';
                 gesture = null;
                 schedulePreparation();
@@ -81,6 +85,7 @@ Kostentracker.module({
                 warmed?.front.remove();
                 warmed?.back.remove();
                 warmed = null;
+                if (!gesture) { overlay.style.opacity = '0'; overlay.style.display = 'none'; }
             }
 
             function syncPreviewTheme() {
@@ -110,6 +115,9 @@ Kostentracker.module({
                 front.style.transform = 'translate3d(0,0,0)';
                 back.style.transform = `translate3d(${-window.innerWidth*.22}px,0,0)`;
                 warmed.shade.style.opacity = '.22';
+                // Keep prepared layers attached and compositable before the first touch.
+                overlay.style.display = 'block';
+                overlay.style.opacity = '0';
             }
 
             function cancelPreparation() {
@@ -188,20 +196,38 @@ Kostentracker.module({
                 cancelAnimationFrame(frame);
                 paint();
                 g.settling = true;
-                const duration = reducedMotion?.matches ? 0 : (commit ? 380 : 300);
+                const remaining = Math.abs((commit ? g.width : 0) - g.distance);
+                const recent = performance.now() - g.lastTime < 90;
+                const releaseVelocity = recent ? Math.max(0, commit ? g.velocity : -g.velocity) : 0;
+                const duration = reducedMotion?.matches ? 0 : Math.round(Math.max(260, Math.min(440,
+                    280 + 150 * remaining / g.width - Math.min(90, releaseVelocity * 55))));
+                // Match the initial animation slope to the release instead of restarting
+                // with a fixed easing speed. Both pages share the exact same curve.
+                const slope = remaining > 1 ? Math.min(3, releaseVelocity * duration / remaining) : 0;
+                const easing = `cubic-bezier(.25,${(slope * .25).toFixed(3)},.25,1)`;
                 // Resolve the current finger position before starting the release animation.
                 g.front.getBoundingClientRect();
-                g.front.style.transition = `transform ${duration}ms cubic-bezier(.25,.6,.25,1)`;
+                g.front.style.transition = `transform ${duration}ms ${easing}`;
                 g.back.style.transition = g.front.style.transition;
-                g.shade.style.transition = `opacity ${duration}ms ease-out`;
+                g.shade.style.transition = `opacity ${duration}ms ${easing}`;
                 g.front.style.transform = `translate3d(${commit ? g.width : 0}px,0,0)`;
                 g.back.style.transform = `translate3d(${commit ? 0 : -g.width*.22}px,0,0)`;
                 g.shade.style.opacity = commit ? '0' : '.22';
                 suppressClickUntil = performance.now() + duration + 180;
                 const complete = () => {
-                    if (gesture !== g) return;
-                    if (commit && !g.navigating) navigate();
-                    cleanup();
+                    if (gesture !== g || g.completed) return;
+                    g.completed = true;
+                    clearTimeout(cleanupTimer);
+                    if (commit && !g.navigating) {
+                        navigate();
+                        // Keep the destination preview over the live view until one
+                        // rendered frame has passed. Avoid a flash at the handoff.
+                        handoffFrame = requestAnimationFrame(() => {
+                            handoffFrame = requestAnimationFrame(() => {
+                                if (gesture === g) cleanup();
+                            });
+                        });
+                    } else cleanup();
                 };
                 const navigate = () => {
                     if (gesture !== g || g.navigating) return;
@@ -256,6 +282,7 @@ Kostentracker.module({
                 }
                 gesture.sourceScroll = window.scrollY;
                 overlay.style.display = 'block';
+                overlay.style.opacity = '1';
                 // Reserve only the edge strip; entry swipes elsewhere are untouched.
                 event.stopImmediatePropagation();
             }, {capture:true,passive:true});
@@ -268,7 +295,7 @@ Kostentracker.module({
                 const dx = touch.clientX - g.startX;
                 const dy = touch.clientY - g.startY;
                 if (!g.dragging) {
-                    if (Math.max(Math.abs(dx),Math.abs(dy)) < 8) return;
+                    if (Math.max(Math.abs(dx),Math.abs(dy)) < 5) return;
                     if (dx <= 0 || Math.abs(dy) >= dx * .8 || !event.cancelable) { cleanup(); return; }
                     g.dragging = true;
                     overlay.style.display = 'block';
@@ -276,7 +303,11 @@ Kostentracker.module({
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 const now = performance.now();
-                g.velocity = (touch.clientX - g.lastX) / Math.max(1,now-g.lastTime);
+                const dt = Math.max(1, now - g.lastTime);
+                const sampleVelocity = (touch.clientX - g.lastX) / dt;
+                // Time-based filtering behaves consistently at 60 and 120 Hz.
+                const weight = 1 - Math.exp(-dt / 24);
+                g.velocity += (sampleVelocity - g.velocity) * weight;
                 g.lastX = touch.clientX;
                 g.lastTime = now;
                 g.distance = Math.min(g.width,Math.max(0,dx));
