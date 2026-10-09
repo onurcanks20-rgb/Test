@@ -1,24 +1,43 @@
+Kostentracker.module({
+  "id": "js/core/speicherung-backup.js",
+  "dependencies": [
+    "clearUndoDelete",
+    "renderHomeUebersicht",
+    "scheduleTestServerSync"
+  ],
+  "session": [
+    "STANDARD_DATEN"
+  ],
+  "read": [
+    "*"
+  ],
+  "write": [
+    "*"
+  ],
+  "replace": true
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/core/speicherung-backup.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function ladeDaten() {
             try {
-                return JSON.parse(localStorage.getItem("kostenApp_test")) || structuredClone(STANDARD_DATEN);
+                return JSON.parse(context.storage.getItem(context.storage.key)) || context.clone(context.session.STANDARD_DATEN);
             } catch (error) {
                 console.error("Gespeicherte Daten konnten nicht gelesen werden:", error);
-                return structuredClone(STANDARD_DATEN);
+                return context.clone(context.session.STANDARD_DATEN);
             }
         }
 
         function speichernOhneHomeRender(showError = true) {
             try {
-                const serialized = JSON.stringify(daten);
-                localStorage.setItem("kostenApp_test", serialized);
-                zuletztGespeicherteDaten = serialized;
-                if (typeof scheduleTestServerSync === "function") scheduleTestServerSync();
+                const serialized = JSON.stringify(context.repository.view);
+                context.storage.setItem(context.storage.key, serialized);
+                context.storage.lastSaved = serialized;
+                if (typeof dependencies.scheduleTestServerSync === "function") dependencies.scheduleTestServerSync();
                 return true;
             } catch (error) {
-                daten = JSON.parse(zuletztGespeicherteDaten);
+                context.repository.view = JSON.parse(context.storage.lastSaved);
                 console.error("Speichern fehlgeschlagen:", error);
                 if (showError) alert("Speichern im Browser ist fehlgeschlagen. Deine Eingabe bleibt stehen. Bitte versuche es erneut. Falls es weiterhin nicht funktioniert, sichere deine Daten als Backup und prüfe den verfügbaren Browserspeicher.");
                 return false;
@@ -27,7 +46,7 @@
 
         function speichern() {
             if (!speichernOhneHomeRender()) return false;
-            renderHomeUebersicht();
+            dependencies.renderHomeUebersicht();
             return true;
         }
 
@@ -35,7 +54,7 @@
             if (!confirm("Alle Einträge in der gesamten App löschen?\n\nAuch Einnahmen, Fixkosten, Versicherungen, geplante Ausgaben, Spar-/Investitionseinträge und Reiseeinträge werden aus allen Zeiträumen entfernt. Länder, Kategorien, Budgets und Einstellungen bleiben erhalten.\n\nDies kann nur mit einem zuvor gespeicherten Backup rückgängig gemacht werden.")) return;
             const status = document.getElementById("deleteAllEntriesStatus");
             try {
-                const cleared = structuredClone(daten);
+                const cleared = context.clone(context.repository.view);
                 // Keep category/country structure and settings; clear entries only.
                 for (const area of ["Haushalt", "Freizeit"]) {
                     for (const key of Object.keys(cleared[area] || {})) {
@@ -52,10 +71,10 @@
                     if (Array.isArray(cleared["Laufende Kosten"][key])) cleared["Laufende Kosten"][key] = [];
                 }
                 // Commit before replacing the in-memory data, so storage failure loses nothing.
-                localStorage.setItem("kostenApp_test", JSON.stringify(cleared));
-                daten = cleared;
-                zuletztGespeicherteDaten = JSON.stringify(cleared);
-                clearUndoDelete();
+                context.storage.setItem(context.storage.key, JSON.stringify(cleared));
+                context.repository.view = cleared;
+                context.storage.lastSaved = JSON.stringify(cleared);
+                dependencies.clearUndoDelete();
             } catch (error) {
                 if (status) status.textContent = "Die Einträge konnten nicht gelöscht werden. Deine Daten bleiben erhalten.";
                 return;
@@ -79,7 +98,7 @@
                 app: "Kostentracker",
                 version: 1,
                 erstelltAm: new Date().toISOString(),
-                daten
+                daten: context.repository.view
             };
 
             const json = JSON.stringify(payload, null, 2);
@@ -141,10 +160,10 @@
                 }
 
                 const neueDaten = parsed.daten ?? parsed;
-                localStorage.setItem("kostenApp_test", JSON.stringify(neueDaten));
-                daten = neueDaten;
-                zuletztGespeicherteDaten = JSON.stringify(neueDaten);
-                clearUndoDelete();
+                context.storage.setItem(context.storage.key, JSON.stringify(neueDaten));
+                context.repository.view = neueDaten;
+                context.storage.lastSaved = JSON.stringify(neueDaten);
+                dependencies.clearUndoDelete();
                 setBackupStatus("Backup wurde wiederhergestellt. Die App wird neu geladen …");
                 setTimeout(() => location.reload(), 400);
             } catch (error) {
@@ -155,3 +174,18 @@
                 if (input) input.value = "";
             }
         }
+
+        function addItem(liste, item) {
+
+            if (!Array.isArray(liste)) {
+                console.error("❌ KEIN ARRAY:", liste);
+                return;
+            }
+
+            liste.push(item);
+            return speichern();
+        }
+
+
+return { ladeDaten, speichernOhneHomeRender, speichern, deleteAllAppEntries, backupDateiname, setBackupStatus, exportBackup, istGueltigesBackup, importBackup, addItem };
+});

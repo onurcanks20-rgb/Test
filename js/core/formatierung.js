@@ -1,5 +1,16 @@
+Kostentracker.module({
+  "id": "js/core/formatierung.js",
+  "dependencies": [
+    "aktuellerTag"
+  ],
+  "session": [],
+  "read": [],
+  "write": [],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/core/formatierung.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function daysBetween(a,b){return Math.round((b-a)/86400000);}
 
@@ -17,7 +28,7 @@
 
         function tagAusDatum(datum) {
             const tag = parseInt(String(datum || "").split("-")[2], 10);
-            if (isNaN(tag)) return aktuellerTag();
+            if (isNaN(tag)) return dependencies.aktuellerTag();
             return Math.min(Math.max(tag, 1), 31);
         }
 
@@ -161,3 +172,63 @@
             el.onkeydown = null; // 🔥 ALTEN CLEANEN
             el.addEventListener(event, handler);
         }
+
+function formatText(text) {
+            if (!text) return "";
+            return String(text).trim();
+        }
+
+function formatDateGroupLabel(value) {
+            const d = value instanceof Date ? new Date(value) : parseISODate(value);
+            if (!d || isNaN(d)) return "Ohne Datum";
+            const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+            const heute = heuteISO();
+            const gesternDate = addDays(startOfToday(), -1);
+            const gestern = `${gesternDate.getFullYear()}-${String(gesternDate.getMonth()+1).padStart(2,"0")}-${String(gesternDate.getDate()).padStart(2,"0")}`;
+            if (iso === heute) return "Heute";
+            if (iso === gestern) return "Gestern";
+            return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.`;
+        }
+
+function appendDateGroupHeader(container, value, options = {}) {
+            if (!container) return;
+            const el = document.createElement("div");
+            const hasTotal = Number.isFinite(Number(options.total));
+            el.className = `date-group-title${options.first ? " first" : ""}${options.inset ? " inset" : ""}${hasTotal ? " has-total" : ""}`;
+            const left = document.createElement("span");
+            left.textContent = options.label || formatDateGroupLabel(value);
+            if (options.note) {
+                const small = document.createElement("small");
+                small.textContent = options.note;
+                left.appendChild(small);
+            }
+            el.appendChild(left);
+            if (hasTotal) {
+                const total = document.createElement("span");
+                total.className = "date-group-total";
+                total.textContent = formatBetragText(Number(options.total));
+                el.appendChild(total);
+            }
+            container.appendChild(el);
+        }
+
+function datumAlsLokalenTag(datum) {
+            const m = String(datum || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (!m) return null;
+            const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+            d.setHours(0,0,0,0);
+            return d;
+        }
+
+function istInLetztenTagen(datum, tage = 7) {
+            const d = datumAlsLokalenTag(datum);
+            if (!d) return false;
+            const heute = new Date();
+            heute.setHours(0,0,0,0);
+            const start = new Date(heute);
+            start.setDate(start.getDate() - (tage - 1));
+            return d >= start && d <= heute;
+        }
+
+return { daysBetween, getAktuellerMonat, heuteISO, tagAusDatum, datumAusTagAktuellerMonat, parseISODate, startOfToday, addDays, isoAusDate, formatKurzDatum, generateId, getSearchTerm, matchesSearch, datumZeitwert, createItem, escapeHtml, formatDatum, getMonatName, parseBetrag, formatInputBetrag, formatBetragText, formatBetrag, bindOnce, formatText, formatDateGroupLabel, appendDateGroupHeader, datumAlsLokalenTag, istInLetztenTagen };
+});
