@@ -1,26 +1,42 @@
+Kostentracker.module({
+  "id": "js/kategorien/alltag-gemeinsam.js",
+  "dependencies": [
+    "appendDateGroupHeader",
+    "createItem",
+    "datumAlsLokalenTag",
+    "datumZeitwert",
+    "escapeHtml",
+    "formatBetrag",
+    "formatInputBetrag",
+    "getSearchTerm",
+    "istEintragAusgeblendet",
+    "istInLetztenTagen",
+    "matchesSearch",
+    "montagDerWoche",
+    "setupFreizeitEditEnterFlow",
+    "setupHaushaltEditEnterFlow",
+    "startOfToday"
+  ],
+  "session": [
+    "state"
+  ],
+  "read": [
+    "Freizeit",
+    "Haushalt"
+  ],
+  "write": [],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/kategorien/alltag-gemeinsam.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
-        function datumAlsLokalenTag(datum) {
-            const m = String(datum || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
-            if (!m) return null;
-            const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-            d.setHours(0,0,0,0);
-            return d;
-        }
+        
 
-        function istInLetztenTagen(datum, tage = 7) {
-            const d = datumAlsLokalenTag(datum);
-            if (!d) return false;
-            const heute = new Date();
-            heute.setHours(0,0,0,0);
-            const start = new Date(heute);
-            start.setDate(start.getDate() - (tage - 1));
-            return d >= start && d <= heute;
-        }
+        
 
         function alleAusgabenAusBereich(typ) {
-            const quelle = typ === "freizeit" ? daten.Freizeit : daten.Haushalt;
+            const quelle = typ === "freizeit" ? context.repository.view.Freizeit : context.repository.view.Haushalt;
             const liste = [];
             Object.values(quelle || {}).forEach(arr => {
                 if (Array.isArray(arr)) arr.forEach(e => { if (e) liste.push(e); });
@@ -34,15 +50,15 @@
             const breakdownEl = document.getElementById(istFreizeit ? "freizeitWeekBreakdown" : "haushaltWeekBreakdown");
             if (!totalEl || !breakdownEl) return;
 
-            const heute = startOfToday();
-            const montag = montagDerWoche(heute);
+            const heute = dependencies.startOfToday();
+            const montag = dependencies.montagDerWoche(heute);
             const liste = alleAusgabenAusBereich(typ).filter(e => {
-                const d = datumAlsLokalenTag(e.datum);
+                const d = dependencies.datumAlsLokalenTag(e.datum);
                 return d && d >= montag && d <= heute;
             });
 
             const gesamt = liste.reduce((sum, e) => sum + (Number(e.betrag) || 0), 0);
-            totalEl.innerHTML = formatBetrag(gesamt);
+            totalEl.innerHTML = dependencies.formatBetrag(gesamt);
 
             if (!liste.length) {
                 breakdownEl.textContent = "Noch keine Ausgaben diese Woche.";
@@ -56,7 +72,7 @@
             });
             const teile = Object.entries(gruppen)
                 .sort((a,b) => b[1] - a[1])
-                .map(([kat, betrag]) => `${kat}: ${formatBetrag(betrag)}`);
+                .map(([kat, betrag]) => `${kat}: ${dependencies.formatBetrag(betrag)}`);
             breakdownEl.innerHTML = teile.join(" · ");
         }
 
@@ -72,19 +88,19 @@
             const container = document.getElementById(istFreizeit ? "freizeitListe" : "haushaltListe");
             if (!container) return;
             container.innerHTML = "";
-            const suche = getSearchTerm(istFreizeit ? "freizeitSuche" : "haushaltSuche");
+            const suche = dependencies.getSearchTerm(istFreizeit ? "freizeitSuche" : "haushaltSuche");
             const liste = alleAusgabenAusBereich(typ)
-                .filter(e => istInLetztenTagen(e.datum, 7))
-                .filter(e => !istEintragAusgeblendet(typ, e.id))
-                .filter(e => matchesSearch(suche, e.text, e.name, e.kategorie, e.datum, e.betrag))
-                .sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
+                .filter(e => dependencies.istInLetztenTagen(e.datum, 7))
+                .filter(e => !dependencies.istEintragAusgeblendet(typ, e.id))
+                .filter(e => dependencies.matchesSearch(suche, e.text, e.name, e.kategorie, e.datum, e.betrag))
+                .sort((a,b) => dependencies.datumZeitwert(b.datum) - dependencies.datumZeitwert(a.datum));
 
             if (!liste.length) {
                 container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${istFreizeit ? '🎉' : '🛒'}</div><div class="empty-state-title">Keine Ausgaben in den letzten 7 Tagen</div><div class="empty-state-text">${istFreizeit ? 'Deine neuen Freizeit-Ausgaben erscheinen hier.' : 'Deine neuen Haushalts-Ausgaben erscheinen hier.'}</div></div>`;
                 return;
             }
 
-            const offenMap = istFreizeit ? state.offeneFreizeitEintraege : state.offeneHaushaltEintraege;
+            const offenMap = istFreizeit ? context.session.state.offeneFreizeitEintraege : context.session.state.offeneHaushaltEintraege;
             const tagesSummen = {};
             liste.forEach(e => {
                 const key = e.datum || "ohne-datum";
@@ -95,22 +111,22 @@
             liste.forEach(e => {
                 const tagKey = e.datum || "ohne-datum";
                 if (tagKey !== letzterTag) {
-                    appendDateGroupHeader(container, e.datum, { first: letzterTag === null, total: tagesSummen[tagKey] || 0 });
+                    dependencies.appendDateGroupHeader(container, e.datum, { first: letzterTag === null, total: tagesSummen[tagKey] || 0 });
                     letzterTag = tagKey;
                 }
-                const isEdit = istFreizeit ? String(state.editFreizeitId) === String(e.id) : String(state.editHaushaltId) === String(e.id);
+                const isEdit = istFreizeit ? String(context.session.state.editFreizeitId) === String(e.id) : String(context.session.state.editHaushaltId) === String(e.id);
                 let html;
                 if (isEdit) {
                     html = istFreizeit ? `
                         <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                            <input id="editFreizeitBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
-                            <input id="editFreizeitText-${e.id}" value="${escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                            <input id="editFreizeitBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                            <input id="editFreizeitText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                             <input id="editFreizeitDatum-${e.id}" type="date" value="${e.datum || ''}">
                             <div style="display:flex; gap:10px;"><button onclick="saveEditFreizeit('${e.id}')">💾 Speichern</button><button onclick="cancelEditFreizeit()">❌ Abbrechen</button></div>
                         </div>` : `
                         <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                            <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
-                            <input id="editText-${e.id}" value="${escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                            <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                            <input id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                             <input id="editDatum-${e.id}" type="date" value="${e.datum || ''}">
                             <div style="display:flex; gap:10px;"><button onclick="saveEditHaushalt('${e.id}')">💾 Speichern</button><button onclick="cancelEditHaushalt()">❌ Abbrechen</button></div>
                         </div>`;
@@ -118,10 +134,10 @@
                     const zusatz = alltagZusatztext(e);
                     html = `<div class="compact-alltag-content">
                         <div class="compact-alltag-main">
-                            <span class="compact-alltag-title">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
-                            ${zusatz ? `<span class="compact-alltag-sub">${escapeHtml(zusatz)}</span>` : ''}
+                            <span class="compact-alltag-title">${dependencies.escapeHtml(e.kategorie || 'Sonstiges')}</span>
+                            ${zusatz ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(zusatz)}</span>` : ''}
                         </div>
-                        <strong class="compact-alltag-amount">${formatBetrag(e.betrag)}</strong>
+                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                             <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
                             <button class="edit" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button>
@@ -129,17 +145,20 @@
                         </div>
                     </div>`;
                 }
-                const item = createItem(html);
+                const item = dependencies.createItem(html);
                 if (!isEdit) item.classList.add("compact-alltag-card");
                 item.style.background = "#3a3a3c";
                 container.appendChild(item);
-                if (isEdit) setTimeout(() => istFreizeit ? setupFreizeitEditEnterFlow(e.id) : setupHaushaltEditEnterFlow(e.id), 0);
+                if (isEdit) setTimeout(() => istFreizeit ? dependencies.setupFreizeitEditEnterFlow(e.id) : dependencies.setupHaushaltEditEnterFlow(e.id), 0);
             });
         }
 
         function toggleAlltagsDetails(typ, id) {
-            const map = typ === 'freizeit' ? state.offeneFreizeitEintraege : state.offeneHaushaltEintraege;
+            const map = typ === 'freizeit' ? context.session.state.offeneFreizeitEintraege : context.session.state.offeneHaushaltEintraege;
             const key = String(id);
             map[key] = !map[key];
             renderRecentAusgaben(typ);
         }
+
+return { alleAusgabenAusBereich, renderBereichWocheninfo, alltagZusatztext, renderRecentAusgaben, toggleAlltagsDetails };
+});

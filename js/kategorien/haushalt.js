@@ -1,10 +1,41 @@
+Kostentracker.module({
+  "id": "js/kategorien/haushalt.js",
+  "dependencies": [
+    "applyLetzteAlltagsKategorie",
+    "beginUndoDelete",
+    "closeStartQuickAdd",
+    "finishUndoDelete",
+    "formatText",
+    "generateId",
+    "heuteISO",
+    "merkeLetzteKategorie",
+    "parseBetrag",
+    "parseISODate",
+    "readReminderControl",
+    "renderBereichWocheninfo",
+    "renderHomeUebersicht",
+    "renderRecentAusgaben",
+    "speichern"
+  ],
+  "session": [
+    "state"
+  ],
+  "read": [
+    "Haushalt"
+  ],
+  "write": [
+    "Haushalt"
+  ],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/kategorien/haushalt.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function addHaushalt() {
 
-            let text = formatText(document.getElementById("hausText").value);
-            let betrag = parseBetrag(document.getElementById("hausBetrag").value);
+            let text = dependencies.formatText(document.getElementById("hausText").value);
+            let betrag = dependencies.parseBetrag(document.getElementById("hausBetrag").value);
             let datum = document.getElementById("hausDatum").value;
             let kategorie = document.getElementById("hausKategorie")?.value || "Sonstiges";
 
@@ -13,70 +44,70 @@
 
             let monat = new Date(datum).getMonth() + 1;
 
-            if (!daten.Haushalt[monat]) {
-                daten.Haushalt[monat] = [];
+            if (!context.repository.view.Haushalt[monat]) {
+                context.repository.view.Haushalt[monat] = [];
             }
 
-            daten.Haushalt[monat].push({
-                id: generateId(),
+            context.repository.view.Haushalt[monat].push({
+                id: dependencies.generateId(),
                 text,
                 betrag,
                 datum,
                 kategorie,
-                ...readReminderControl("add:haushalt")
+                ...dependencies.readReminderControl("add:haushalt")
             });
-            merkeLetzteKategorie("haushalt", kategorie);
+            dependencies.merkeLetzteKategorie("haushalt", kategorie);
 
-            if (speichern() === false) return;
+            if (dependencies.speichern() === false) return;
 
             // reset
             document.getElementById("hausText").value = "";
             document.getElementById("hausBetrag").value = "";
-            document.getElementById("hausDatum").value = heuteISO();
-            applyLetzteAlltagsKategorie("haushalt");
+            document.getElementById("hausDatum").value = dependencies.heuteISO();
+            dependencies.applyLetzteAlltagsKategorie("haushalt");
             document.getElementById("hausAddPanel")?.classList.add("hidden");
 
             renderHaushalt();
-            renderHomeUebersicht();
-            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
+            dependencies.renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) dependencies.closeStartQuickAdd();
         }
 
         function renderHaushalt() {
-            const hatEintraege = Object.values(daten.Haushalt || {}).some(liste => Array.isArray(liste) && liste.length > 0);
+            const hatEintraege = Object.values(context.repository.view.Haushalt || {}).some(liste => Array.isArray(liste) && liste.length > 0);
             document.getElementById("haushaltDeleteAllBtn")?.classList.toggle("hidden", !hatEintraege);
-            renderBereichWocheninfo("haushalt");
-            renderRecentAusgaben("haushalt");
+            dependencies.renderBereichWocheninfo("haushalt");
+            dependencies.renderRecentAusgaben("haushalt");
         }
 
         function deleteAlleHaushalt() {
 
             if (!confirm("Alle Haushalt-Einträge wirklich löschen?")) return;
-            beginUndoDelete("Alle Haushalt-Einträge gelöscht");
+            dependencies.beginUndoDelete("Alle Haushalt-Einträge gelöscht");
 
-            if (!daten.Haushalt) {
-                daten.Haushalt = {};
+            if (!context.repository.view.Haushalt) {
+                context.repository.view.Haushalt = {};
             }
 
-            for (let monat in daten.Haushalt) {
-                if (Array.isArray(daten.Haushalt[monat])) {
-                    daten.Haushalt[monat] = [];
+            for (let monat in context.repository.view.Haushalt) {
+                if (Array.isArray(context.repository.view.Haushalt[monat])) {
+                    context.repository.view.Haushalt[monat] = [];
                 }
             }
 
-            if (speichern() === false) return;
+            if (dependencies.speichern() === false) return;
             renderHaushalt();
-            finishUndoDelete("Alle Haushalt-Einträge gelöscht");
+            dependencies.finishUndoDelete("Alle Haushalt-Einträge gelöscht");
         }
 
         function gruppiereHaushalt() {
 
             let gruppiert = {};
 
-            if (!daten.Haushalt) return gruppiert;
+            if (!context.repository.view.Haushalt) return gruppiert;
 
-            for (let monat in daten.Haushalt) {
+            for (let monat in context.repository.view.Haushalt) {
 
-                let liste = daten.Haushalt[monat];
+                let liste = context.repository.view.Haushalt[monat];
 
                 if (!Array.isArray(liste)) continue;
 
@@ -107,24 +138,24 @@
 
         function toggleHaushaltJahr(jahr) {
 
-            if (!state.offeneHaushaltJahre) {
-                state.offeneHaushaltJahre = {};
+            if (!context.session.state.offeneHaushaltJahre) {
+                context.session.state.offeneHaushaltJahre = {};
             }
 
-            state.offeneHaushaltJahre[jahr] = !state.offeneHaushaltJahre[jahr];
+            context.session.state.offeneHaushaltJahre[jahr] = !context.session.state.offeneHaushaltJahre[jahr];
 
             renderHaushalt();
         }
 
         function toggleHaushaltMonat(jahr, monat) {
 
-            if (!state.offeneHaushaltMonate) {
-                state.offeneHaushaltMonate = {};
+            if (!context.session.state.offeneHaushaltMonate) {
+                context.session.state.offeneHaushaltMonate = {};
             }
 
             let key = jahr + "-" + monat;
 
-            state.offeneHaushaltMonate[key] = !state.offeneHaushaltMonate[key];
+            context.session.state.offeneHaushaltMonate[key] = !context.session.state.offeneHaushaltMonate[key];
 
             renderHaushalt();
         }
@@ -148,7 +179,7 @@
 
             let originalMonat = new Date(eintrag.datum).getMonth() + 1;
 
-            let originalListe = daten.Haushalt[originalMonat];
+            let originalListe = context.repository.view.Haushalt[originalMonat];
             if (!Array.isArray(originalListe)) return;
 
             let originalIndex = originalListe.findIndex(e => e.id === eintrag.id);
@@ -156,8 +187,8 @@
 
             let updated = {
                 id: eintrag.id,
-                text: formatText(neuerName),
-                betrag: parseBetrag(neuerBetrag),
+                text: dependencies.formatText(neuerName),
+                betrag: dependencies.parseBetrag(neuerBetrag),
                 datum: neuesDatum
             };
 
@@ -171,27 +202,27 @@
 
                 originalListe.splice(originalIndex, 1);
 
-                if (!daten.Haushalt[neuerMonat]) {
-                    daten.Haushalt[neuerMonat] = [];
+                if (!context.repository.view.Haushalt[neuerMonat]) {
+                    context.repository.view.Haushalt[neuerMonat] = [];
                 }
 
-                daten.Haushalt[neuerMonat].push(updated);
+                context.repository.view.Haushalt[neuerMonat].push(updated);
             }
 
-            if (speichern() === false) return;
+            if (dependencies.speichern() === false) return;
             renderHaushalt();
         }
 
         function deleteHaushalt(id) {
 
             if (!confirm("Eintrag löschen?")) return;
-            beginUndoDelete("Haushalt-Eintrag gelöscht");
+            dependencies.beginUndoDelete("Haushalt-Eintrag gelöscht");
 
-            if (!daten.Haushalt) return;
+            if (!context.repository.view.Haushalt) return;
 
-            for (let monat in daten.Haushalt) {
+            for (let monat in context.repository.view.Haushalt) {
 
-                let liste = daten.Haushalt[monat];
+                let liste = context.repository.view.Haushalt[monat];
 
                 if (!Array.isArray(liste)) continue;
 
@@ -203,13 +234,13 @@
                 }
             }
 
-            if (speichern() === false) return;
+            if (dependencies.speichern() === false) return;
             renderHaushalt();
-            finishUndoDelete("Haushalt-Eintrag gelöscht");
+            dependencies.finishUndoDelete("Haushalt-Eintrag gelöscht");
         }
 
         function startEditHaushalt(id) {
-            state.editHaushaltId = id;
+            context.session.state.editHaushaltId = id;
             renderHaushalt();
         }
 
@@ -222,7 +253,7 @@
             if (!textEl || !betragEl || !datumEl) return;
 
             let text = textEl.value;
-            let betrag = parseBetrag(betragEl.value);
+            let betrag = dependencies.parseBetrag(betragEl.value);
             let datum = datumEl.value;
 
             if (!text || isNaN(betrag) || !datum) return;
@@ -230,23 +261,23 @@
             let neuerMonat = new Date(datum).getMonth() + 1;
 
             let existingKategorie = "Sonstiges";
-            for (let monat in daten.Haushalt) {
-                const found = Array.isArray(daten.Haushalt[monat]) ? daten.Haushalt[monat].find(e => String(e.id) === String(id)) : null;
+            for (let monat in context.repository.view.Haushalt) {
+                const found = Array.isArray(context.repository.view.Haushalt[monat]) ? context.repository.view.Haushalt[monat].find(e => String(e.id) === String(id)) : null;
                 if (found) { existingKategorie = found.kategorie || "Sonstiges"; break; }
             }
 
             let updated = {
                 id,
-                text: formatText(text),
+                text: dependencies.formatText(text),
                 betrag,
                 datum,
                 kategorie: existingKategorie,
-                ...readReminderControl(`edit:haushalt:${id}`)
+                ...dependencies.readReminderControl(`edit:haushalt:${id}`)
             };
 
-            for (let monat in daten.Haushalt) {
+            for (let monat in context.repository.view.Haushalt) {
 
-                let liste = daten.Haushalt[monat];
+                let liste = context.repository.view.Haushalt[monat];
 
                 if (!Array.isArray(liste)) continue;
 
@@ -256,22 +287,50 @@
 
                     liste.splice(index, 1);
 
-                    if (!daten.Haushalt[neuerMonat]) {
-                        daten.Haushalt[neuerMonat] = [];
+                    if (!context.repository.view.Haushalt[neuerMonat]) {
+                        context.repository.view.Haushalt[neuerMonat] = [];
                     }
 
-                    daten.Haushalt[neuerMonat].push(updated);
+                    context.repository.view.Haushalt[neuerMonat].push(updated);
 
                     break;
                 }
             }
 
-            if (speichern() === false) return;
-            state.editHaushaltId = null;
+            if (dependencies.speichern() === false) return;
+            context.session.state.editHaushaltId = null;
             renderHaushalt();
         }
 
         function cancelEditHaushalt() {
-            state.editHaushaltId = null;
+            context.session.state.editHaushaltId = null;
             renderHaushalt();
         }
+
+function bookHaushaltPlannedOccurrence(entry, datum, occurrenceKey, wiederholung) {
+    const month = dependencies.parseISODate(datum).getMonth() + 1;
+    context.repository.view.Haushalt[month] ??= [];
+    const exists = context.repository.view.Haushalt[month].some(x => String(x.geplantOccurrenceKey || "") === occurrenceKey || (wiederholung === "einmalig" && String(x.geplantId || "") === String(entry.id)));
+    if (!exists) context.repository.view.Haushalt[month].push({id:dependencies.generateId(), geplantId:entry.id, geplantOccurrenceKey:occurrenceKey, ausGeplant:true,
+        text:entry.text || entry.kategorie || "Geplante Ausgabe", betrag:dependencies.parseBetrag(entry.betrag)||0, datum, kategorie:entry.kategorie||"Sonstiges"});
+    return true;
+}
+function appendHaushaltExternalExpense(entry, month) { context.repository.view.Haushalt ??= {}; context.repository.view.Haushalt[month] ??= []; context.repository.view.Haushalt[month].push(entry); }
+
+function haushaltImZeitraum(von, bis) {
+            const liste = [];
+            if (!context.repository.view.Haushalt) return liste;
+            Object.values(context.repository.view.Haushalt).forEach(monatsListe => {
+                if (!Array.isArray(monatsListe)) return;
+                monatsListe.forEach(e => {
+                    const d = dependencies.parseISODate(e.datum);
+                    const betrag = dependencies.parseBetrag(e.betrag);
+                    if (!d || isNaN(betrag)) return;
+                    if (d >= von && d <= bis) liste.push({ ...e, betrag, datumObj: d });
+                });
+            });
+            return liste;
+        }
+
+return { addHaushalt, renderHaushalt, deleteAlleHaushalt, gruppiereHaushalt, toggleHaushaltJahr, toggleHaushaltMonat, editHaushalt, deleteHaushalt, startEditHaushalt, saveEditHaushalt, cancelEditHaushalt, bookHaushaltPlannedOccurrence, appendHaushaltExternalExpense, haushaltImZeitraum };
+});

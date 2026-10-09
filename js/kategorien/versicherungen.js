@@ -1,13 +1,54 @@
+Kostentracker.module({
+  "id": "js/kategorien/versicherungen.js",
+  "dependencies": [
+    "addItem",
+    "appendDateGroupHeader",
+    "beginUndoDelete",
+    "berechneGesamtFixkosten",
+    "closeStartQuickAdd",
+    "datumMitSicheremTag",
+    "escapeHtml",
+    "finishUndoDelete",
+    "formatBetrag",
+    "formatDatum",
+    "formatInputBetrag",
+    "formatText",
+    "generateId",
+    "getAktuellerMonat",
+    "getMonatName",
+    "getSearchTerm",
+    "heuteISO",
+    "istEintragAusgeblendet",
+    "matchesSearch",
+    "parseBetrag",
+    "parseISODate",
+    "readReminderControl",
+    "renderHomeUebersicht",
+    "setupVersicherungEditEnterFlow",
+    "speichern"
+  ],
+  "session": [
+    "state"
+  ],
+  "read": [
+    "Versicherungen"
+  ],
+  "write": [
+    "Versicherungen"
+  ],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/kategorien/versicherungen.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function addVersicherung() {
 
-            let name = formatText(document.getElementById("versName").value);
-            let betrag = parseBetrag(document.getElementById("versBetrag").value);
+            let name = dependencies.formatText(document.getElementById("versName").value);
+            let betrag = dependencies.parseBetrag(document.getElementById("versBetrag").value);
             let datum = document.getElementById("versDatum").value;
 
-            let anbieter = formatText(document.getElementById("versAnbieter").value);
+            let anbieter = dependencies.formatText(document.getElementById("versAnbieter").value);
             let versicherungsnummer = document.getElementById("versNummer").value;
             let intervall = document.getElementById("versIntervall").value;
             let monat = parseInt(document.getElementById("versMonat").value);
@@ -15,14 +56,14 @@
             if (!name || isNaN(betrag)) return;
 
             // 🛡️ Sicherheit
-            if (!Array.isArray(daten.Versicherungen)) {
-                daten.Versicherungen = [];
+            if (!Array.isArray(context.repository.view.Versicherungen)) {
+                context.repository.view.Versicherungen = [];
             }
 
             if (isNaN(monat)) monat = 1;
 
-            if (addItem(daten.Versicherungen, {
-                id: generateId(),
+            if (dependencies.addItem(context.repository.view.Versicherungen, {
+                id: dependencies.generateId(),
                 name,
                 betrag,
                 datum,
@@ -30,25 +71,25 @@
                 versicherungsnummer,
                 intervall,
                 monat,
-                ...readReminderControl("add:versicherungen")
+                ...dependencies.readReminderControl("add:versicherungen")
             }) === false) return;
 
 
             // Reset
             document.getElementById("versName").value = "";
             document.getElementById("versBetrag").value = "";
-            document.getElementById("versDatum").value = heuteISO();
+            document.getElementById("versDatum").value = dependencies.heuteISO();
 
             document.getElementById("versAnbieter").value = "";
             document.getElementById("versNummer").value = "";
 
             document.getElementById("versIntervall").value = "monatlich";
-            document.getElementById("versMonat").value = String(getAktuellerMonat());
+            document.getElementById("versMonat").value = String(dependencies.getAktuellerMonat());
             document.getElementById("versAddPanel")?.classList.add("hidden");
 
             renderVersicherungen();
-            renderHomeUebersicht();
-            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
+            dependencies.renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) dependencies.closeStartQuickAdd();
         }
 
         function renderVersicherungen() {
@@ -62,30 +103,30 @@
             div.innerHTML = "";
             footer.innerHTML = "";
 
-            if (!Array.isArray(daten.Versicherungen)) {
-                daten.Versicherungen = [];
+            if (!Array.isArray(context.repository.view.Versicherungen)) {
+                context.repository.view.Versicherungen = [];
             }
-            document.getElementById("versicherungenDeleteAllBtn")?.classList.toggle("hidden", daten.Versicherungen.length === 0);
+            document.getElementById("versicherungenDeleteAllBtn")?.classList.toggle("hidden", context.repository.view.Versicherungen.length === 0);
 
-            if (!state.offeneVersicherungen) {
-                state.offeneVersicherungen = {};
+            if (!context.session.state.offeneVersicherungen) {
+                context.session.state.offeneVersicherungen = {};
             }
 
-            if (daten.Versicherungen.length === 0) {
+            if (context.repository.view.Versicherungen.length === 0) {
                 div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🛡️</div><div class="empty-state-title">Noch keine Versicherungen</div><div class="empty-state-text">Neue Versicherungen und ihre Zahlungsintervalle werden hier gesammelt.</div></div>`;
             }
 
-            const suche = getSearchTerm("versicherungenSuche");
-            const versicherungenSortiert = [...daten.Versicherungen]
-                .filter(v => !istEintragAusgeblendet("versicherungen", v.id))
-                .filter(v => matchesSearch(suche, v.name, v.anbieter, v.versicherungsnummer, v.intervall, v.datum, v.betrag))
+            const suche = dependencies.getSearchTerm("versicherungenSuche");
+            const versicherungenSortiert = [...context.repository.view.Versicherungen]
+                .filter(v => !dependencies.istEintragAusgeblendet("versicherungen", v.id))
+                .filter(v => dependencies.matchesSearch(suche, v.name, v.anbieter, v.versicherungsnummer, v.intervall, v.datum, v.betrag))
                 .sort((a,b) => {
                     const da = naechsteZahlungDatum(a);
                     const db = naechsteZahlungDatum(b);
                     return (da?.getTime() || Number.MAX_SAFE_INTEGER) - (db?.getTime() || Number.MAX_SAFE_INTEGER);
                 });
 
-            if (!versicherungenSortiert.length && daten.Versicherungen.length > 0 && !suche) {
+            if (!versicherungenSortiert.length && context.repository.view.Versicherungen.length > 0 && !suche) {
                 div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👁️‍🗨️</div><div class="empty-state-title">Alle Versicherungen sind ausgeblendet</div><div class="empty-state-text">Unter Einstellungen → Gesten → Ausgeblendete verwalten kannst du sie wieder einblenden.</div></div>`;
             }
 
@@ -95,12 +136,12 @@
                 const naechsteDatum = naechsteZahlungDatum(v);
                 const gruppenKey = naechsteDatum ? naechsteDatum.toISOString().slice(0,10) : (v.datum || "ohne-datum");
                 if (gruppenKey !== letzteVersicherungsGruppe) {
-                    appendDateGroupHeader(div, naechsteDatum || v.datum, { first: letzteVersicherungsGruppe === null, note: "Nächste Zahlung" });
+                    dependencies.appendDateGroupHeader(div, naechsteDatum || v.datum, { first: letzteVersicherungsGruppe === null, note: "Nächste Zahlung" });
                     letzteVersicherungsGruppe = gruppenKey;
                 }
                 const naechste = naechsteZahlung(v);
-                const isEdit = String(state.editVersicherungId) === String(v.id);
-                const istOffen = !!state.offeneVersicherungen[String(v.id)];
+                const isEdit = String(context.session.state.editVersicherungId) === String(v.id);
+                const istOffen = !!context.session.state.offeneVersicherungen[String(v.id)];
 
                 const item = document.createElement("div");
                 item.className = "item";
@@ -112,10 +153,10 @@
 
                     <div class="compact-alltag-content">
                         <div class="compact-alltag-main" onclick="toggleVersicherungDetails('${v.id}')" style="cursor:pointer;">
-                            <span class="compact-alltag-title">${escapeHtml(v.name || "Versicherung")}</span>
-                            ${v.anbieter ? `<span class="compact-alltag-sub">${escapeHtml(v.anbieter)}</span>` : ''}
+                            <span class="compact-alltag-title">${dependencies.escapeHtml(v.name || "Versicherung")}</span>
+                            ${v.anbieter ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(v.anbieter)}</span>` : ''}
                         </div>
-                        <strong class="compact-alltag-amount">${formatBetrag(v.betrag)}</strong>
+                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(v.betrag)}</strong>
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                             <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben">↪️</button>
                             <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')">✏️</button>
@@ -139,27 +180,27 @@
                             </div>
                             <div style="display:flex; justify-content:space-between; gap:10px;">
                                 <span style="opacity:0.7;">Anbieter</span>
-                                <span style="font-weight:600; text-align:right;">${escapeHtml(v.anbieter || "-")}</span>
+                                <span style="font-weight:600; text-align:right;">${dependencies.escapeHtml(v.anbieter || "-")}</span>
                             </div>
 
                             <div style="display:flex; justify-content:space-between; gap:10px;">
                                 <span style="opacity:0.7;">Kunden-/Versicherungsnummer</span>
-                                <span style="font-weight:600; text-align:right;">${escapeHtml(v.versicherungsnummer || "-")}</span>
+                                <span style="font-weight:600; text-align:right;">${dependencies.escapeHtml(v.versicherungsnummer || "-")}</span>
                             </div>
 
                             <div style="display:flex; justify-content:space-between; gap:10px;">
                                 <span style="opacity:0.7;">Intervall</span>
-                                <span style="font-weight:600;">${escapeHtml(v.intervall || "-")}</span>
+                                <span style="font-weight:600;">${dependencies.escapeHtml(v.intervall || "-")}</span>
                             </div>
 
                             <div style="display:flex; justify-content:space-between; gap:10px;">
                                 <span style="opacity:0.7;">Startdatum</span>
-                                <span style="font-weight:600;">${v.datum ? formatDatum(v.datum) : "-"}</span>
+                                <span style="font-weight:600;">${v.datum ? dependencies.formatDatum(v.datum) : "-"}</span>
                             </div>
 
                             <div style="display:flex; justify-content:space-between; gap:10px;">
                                 <span style="opacity:0.7;">Startmonat</span>
-                                <span style="font-weight:600;">${getMonatName(getStartMonatVersicherung(v))}</span>
+                                <span style="font-weight:600;">${dependencies.getMonatName(getStartMonatVersicherung(v))}</span>
                             </div>
                         </div>
                     ` : ""}
@@ -173,12 +214,12 @@
                     item.innerHTML = `
                 <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
 
-                    <input id="editName-${v.id}" value="${escapeHtml(v.name || "")}" autocapitalize="words">
-                    <input id="editBetrag-${v.id}" type="text" inputmode="decimal" value="${formatInputBetrag(v.betrag)}">
+                    <input id="editName-${v.id}" value="${dependencies.escapeHtml(v.name || "")}" autocapitalize="words">
+                    <input id="editBetrag-${v.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(v.betrag)}">
                     <input id="editDatum-${v.id}" type="date" value="${v.datum || ""}">
 
-                    <input id="editAnbieter-${v.id}" value="${escapeHtml(v.anbieter || "")}" autocapitalize="words">
-                    <input id="editNummer-${v.id}" value="${escapeHtml(v.versicherungsnummer || "")}" autocapitalize="words">
+                    <input id="editAnbieter-${v.id}" value="${dependencies.escapeHtml(v.anbieter || "")}" autocapitalize="words">
+                    <input id="editNummer-${v.id}" value="${dependencies.escapeHtml(v.versicherungsnummer || "")}" autocapitalize="words">
 
                     <select id="editIntervall-${v.id}">
                         <option value="monatlich" ${v.intervall === "monatlich" ? "selected" : ""}>monatlich</option>
@@ -210,7 +251,7 @@
                 </div>
             `;
 
-                    setTimeout(() => setupVersicherungEditEnterFlow(v.id), 0);
+                    setTimeout(() => dependencies.setupVersicherungEditEnterFlow(v.id), 0);
                 }
 
                 div.appendChild(item);
@@ -218,17 +259,17 @@
 
 
             if (total) {
-                total.innerHTML = "Fixkosten pro aktuellem Gehaltsmonat: " + formatBetrag(berechneGesamtFixkosten());
+                total.innerHTML = "Fixkosten pro aktuellem Gehaltsmonat: " + dependencies.formatBetrag(dependencies.berechneGesamtFixkosten());
             }
         }
 
         function toggleVersicherungDetails(id) {
-            if (!state.offeneVersicherungen) {
-                state.offeneVersicherungen = {};
+            if (!context.session.state.offeneVersicherungen) {
+                context.session.state.offeneVersicherungen = {};
             }
 
             const key = String(id);
-            state.offeneVersicherungen[key] = !state.offeneVersicherungen[key];
+            context.session.state.offeneVersicherungen[key] = !context.session.state.offeneVersicherungen[key];
 
             renderVersicherungen();
         }
@@ -237,7 +278,7 @@
             if (!v.datum) return null;
             const heute = new Date();
             heute.setHours(0,0,0,0);
-            const start = parseISODate(v.datum) || new Date(v.datum);
+            const start = dependencies.parseISODate(v.datum) || new Date(v.datum);
             if (!start || isNaN(start)) return null;
             const tag = start.getDate();
             let datum = new Date(start);
@@ -257,28 +298,28 @@
         function naechsteZahlung(v) {
             const datum = naechsteZahlungDatum(v);
             if (!datum) return "-";
-            return formatDatum(datum.toISOString().split("T")[0]);
+            return dependencies.formatDatum(datum.toISOString().split("T")[0]);
         }
 
         function deleteVersicherung(id) {
 
             if (!confirm("Versicherung löschen?")) return;
-            beginUndoDelete("Versicherung gelöscht");
+            dependencies.beginUndoDelete("Versicherung gelöscht");
 
-            if (!Array.isArray(daten.Versicherungen)) {
-                daten.Versicherungen = [];
+            if (!Array.isArray(context.repository.view.Versicherungen)) {
+                context.repository.view.Versicherungen = [];
                 return;
             }
 
-            let index = daten.Versicherungen.findIndex(v => String(v.id) === String(id));
+            let index = context.repository.view.Versicherungen.findIndex(v => String(v.id) === String(id));
 
             if (index !== -1) {
-                daten.Versicherungen.splice(index, 1);
+                context.repository.view.Versicherungen.splice(index, 1);
             }
 
-            if (speichern() === false) return;
+            if (dependencies.speichern() === false) return;
             renderVersicherungen();
-            finishUndoDelete("Versicherung gelöscht");
+            dependencies.finishUndoDelete("Versicherung gelöscht");
         }
 
         function toggleVersicherung(id) {
@@ -329,12 +370,12 @@
             return false;
         }
 
-        function versicherungenDiesenMonat(monatAktuell = getAktuellerMonat()) {
+        function versicherungenDiesenMonat(monatAktuell = dependencies.getAktuellerMonat()) {
 
-            if (!Array.isArray(daten.Versicherungen)) return [];
+            if (!Array.isArray(context.repository.view.Versicherungen)) return [];
 
-            return daten.Versicherungen.filter(v => {
-                let betrag = parseBetrag(v.betrag);
+            return context.repository.view.Versicherungen.filter(v => {
+                let betrag = dependencies.parseBetrag(v.betrag);
                 if (isNaN(betrag)) return false;
 
                 return istVersicherungFaelligInMonat(v, monatAktuell);
@@ -344,35 +385,35 @@
         function deleteAlleVersicherungen() {
 
             if (!confirm("Alle Versicherungen wirklich löschen?")) return;
-            beginUndoDelete("Alle Versicherungen gelöscht");
+            dependencies.beginUndoDelete("Alle Versicherungen gelöscht");
 
-            if (!Array.isArray(daten.Versicherungen)) {
-                daten.Versicherungen = [];
+            if (!Array.isArray(context.repository.view.Versicherungen)) {
+                context.repository.view.Versicherungen = [];
             } else {
-                daten.Versicherungen.length = 0;
+                context.repository.view.Versicherungen.length = 0;
             }
 
-            if (speichern() === false) return;
+            if (dependencies.speichern() === false) return;
             renderVersicherungen();
-            finishUndoDelete("Alle Versicherungen gelöscht");
+            dependencies.finishUndoDelete("Alle Versicherungen gelöscht");
         }
 
         function startEditVersicherung(id) {
 
-            state.editHaushaltId = null; // optional reset
-            state.editVersicherungId = id;
+            context.session.state.editHaushaltId = null; // optional reset
+            context.session.state.editVersicherungId = id;
 
             renderVersicherungen();
         }
 
         function cancelEditVersicherung() {
-            state.editVersicherungId = null;
+            context.session.state.editVersicherungId = null;
             renderVersicherungen();
         }
 
         function saveEditVersicherung(id) {
 
-            let v = daten.Versicherungen.find(e => String(e.id) === String(id));
+            let v = context.repository.view.Versicherungen.find(e => String(e.id) === String(id));
             if (!v) return;
 
             let datumEl = document.getElementById("editDatum-" + id);
@@ -387,7 +428,7 @@
 
             let datum = datumEl.value;
             let name = nameEl.value;
-            let betrag = parseBetrag(betragEl.value);
+            let betrag = dependencies.parseBetrag(betragEl.value);
             let anbieter = anbieterEl.value;
             let nummer = nummerEl.value;
             let intervall = intervallEl.value;
@@ -396,18 +437,69 @@
             if (!name || isNaN(betrag) || !datum || isNaN(monat)) return;
 
             v.datum = datum;
-            v.name = formatText(name);
+            v.name = dependencies.formatText(name);
             v.betrag = betrag;
-            v.anbieter = formatText(anbieter || "");
+            v.anbieter = dependencies.formatText(anbieter || "");
             v.versicherungsnummer = nummer || "";
             v.intervall = intervall;
             v.monat = monat;
-            Object.assign(v, readReminderControl(`edit:versicherungen:${id}`));
+            Object.assign(v, dependencies.readReminderControl(`edit:versicherungen:${id}`));
 
-            if (speichern() === false) return;
+            if (dependencies.speichern() === false) return;
 
-            state.editVersicherungId = null;
+            context.session.state.editVersicherungId = null;
             renderVersicherungen();
-            renderHomeUebersicht();
-            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
+            dependencies.renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) dependencies.closeStartQuickAdd();
         }
+
+function intervallInMonaten(intervall) {
+            if (intervall === "vierteljährlich") return 3;
+            if (intervall === "halbjährlich") return 6;
+            if (intervall === "jährlich") return 12;
+            return 1;
+        }
+
+function versicherungsZahlungenImZeitraum(von, bis) {
+            if (!Array.isArray(context.repository.view.Versicherungen)) return [];
+
+            const faellig = [];
+
+            context.repository.view.Versicherungen.forEach(v => {
+                const betrag = dependencies.parseBetrag(v.betrag);
+                if (isNaN(betrag)) return;
+
+                let start = dependencies.parseISODate(v.datum);
+
+                if (!start) {
+                    const monat = getStartMonatVersicherung(v);
+                    start = dependencies.datumMitSicheremTag(von.getFullYear(), monat - 1, 1);
+                }
+
+                const tag = start.getDate();
+                const intervallMonate = intervallInMonaten(v.intervall);
+                let datum = new Date(start);
+
+                while (datum < von) {
+                    datum = dependencies.datumMitSicheremTag(datum.getFullYear(), datum.getMonth() + intervallMonate, tag);
+                }
+
+                while (datum <= bis) {
+                    faellig.push({
+                        typ: "versicherung",
+                        typLabel: "Versicherung",
+                        sourceId: v.id,
+                        name: v.name || "Versicherung",
+                        betrag,
+                        datum: new Date(datum)
+                    });
+
+                    datum = dependencies.datumMitSicheremTag(datum.getFullYear(), datum.getMonth() + intervallMonate, tag);
+                }
+            });
+
+            return faellig;
+        }
+
+return { addVersicherung, renderVersicherungen, toggleVersicherungDetails, naechsteZahlungDatum, naechsteZahlung, deleteVersicherung, toggleVersicherung, getStartMonatVersicherung, istVersicherungFaelligInMonat, versicherungenDiesenMonat, deleteAlleVersicherungen, startEditVersicherung, cancelEditVersicherung, saveEditVersicherung, intervallInMonaten, versicherungsZahlungenImZeitraum };
+});

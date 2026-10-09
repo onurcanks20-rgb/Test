@@ -1,5 +1,48 @@
+Kostentracker.module({
+  "id": "js/kategorien/fixkosten.js",
+  "dependencies": [
+    "addItem",
+    "appendDateGroupHeader",
+    "beginUndoDelete",
+    "berechneMonatGesamt",
+    "closeStartQuickAdd",
+    "createItem",
+    "datumAusTagAktuellerMonat",
+    "datumMitSicheremTag",
+    "escapeHtml",
+    "finishUndoDelete",
+    "formatBetrag",
+    "formatDatum",
+    "formatInputBetrag",
+    "formatText",
+    "generateId",
+    "getGehaltszeitraum",
+    "getSearchTerm",
+    "heuteISO",
+    "istEintragAusgeblendet",
+    "matchesSearch",
+    "parseBetrag",
+    "parseISODate",
+    "readReminderControl",
+    "renderHomeUebersicht",
+    "setupKostenEditEnterFlow",
+    "speichern",
+    "tagAusDatum"
+  ],
+  "session": [
+    "state"
+  ],
+  "read": [
+    "Laufende Kosten"
+  ],
+  "write": [
+    "Laufende Kosten"
+  ],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/kategorien/fixkosten.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function renderLaufendeKosten() {
 
@@ -9,35 +52,35 @@
 
             div.innerHTML = "";
 
-            daten["Laufende Kosten"] ??= { fix: [] };
-            daten["Laufende Kosten"].fix ??= [];
-            document.getElementById("fixkostenDeleteAllBtn")?.classList.toggle("hidden", daten["Laufende Kosten"].fix.length === 0);
+            context.repository.view["Laufende Kosten"] ??= { fix: [] };
+            context.repository.view["Laufende Kosten"].fix ??= [];
+            document.getElementById("fixkostenDeleteAllBtn")?.classList.toggle("hidden", context.repository.view["Laufende Kosten"].fix.length === 0);
 
-            if (daten["Laufende Kosten"].fix.length === 0) {
+            if (context.repository.view["Laufende Kosten"].fix.length === 0) {
                 div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📌</div><div class="empty-state-title">Noch keine Fixkosten</div><div class="empty-state-text">Regelmäßige monatliche Kosten erscheinen hier, sobald du sie anlegst.</div></div>`;
             }
 
             let summe = 0;
 
-            const suche = getSearchTerm("fixkostenSuche");
-            const gehaltszeitraum = getGehaltszeitraum();
+            const suche = dependencies.getSearchTerm("fixkostenSuche");
+            const gehaltszeitraum = dependencies.getGehaltszeitraum();
 
             // Fixkosten werden in der Reihenfolge ihres Abbuchungstermins innerhalb
             // des aktuellen Gehaltszeitraums sortiert. Beispiel bei Gehalt am 28.:
             // 28. -> 01. -> 04. -> 14. -> 27.
             const terminImGehaltszeitraum = (k) => {
-                const basisDatum = k.datum || datumAusTagAktuellerMonat(k.tag);
-                const tag = tagAusDatum(basisDatum);
-                const startDatum = parseISODate(basisDatum);
+                const basisDatum = k.datum || dependencies.datumAusTagAktuellerMonat(k.tag);
+                const tag = dependencies.tagAusDatum(basisDatum);
+                const startDatum = dependencies.parseISODate(basisDatum);
 
-                let termin = datumMitSicheremTag(
+                let termin = dependencies.datumMitSicheremTag(
                     gehaltszeitraum.start.getFullYear(),
                     gehaltszeitraum.start.getMonth(),
                     tag
                 );
 
                 if (termin < gehaltszeitraum.start) {
-                    termin = datumMitSicheremTag(termin.getFullYear(), termin.getMonth() + 1, tag);
+                    termin = dependencies.datumMitSicheremTag(termin.getFullYear(), termin.getMonth() + 1, tag);
                 }
 
                 // Bei neuen Fixkosten darf die Sortierung keinen Termin vor der
@@ -49,13 +92,13 @@
                 return termin;
             };
 
-            summe = [...daten["Laufende Kosten"].fix]
-                .filter(k => matchesSearch(suche, k.text, k.name, k.info, k.haendler, k.datum, k.tag, k.betrag))
-                .reduce((acc, k) => acc + (parseBetrag(k.betrag) || 0), 0);
+            summe = [...context.repository.view["Laufende Kosten"].fix]
+                .filter(k => dependencies.matchesSearch(suche, k.text, k.name, k.info, k.haendler, k.datum, k.tag, k.betrag))
+                .reduce((acc, k) => acc + (dependencies.parseBetrag(k.betrag) || 0), 0);
 
-            const sortierteFixkosten = [...daten["Laufende Kosten"].fix]
-                .filter(k => !istEintragAusgeblendet("fixkosten", k.id))
-                .filter(k => matchesSearch(suche, k.text, k.name, k.info, k.haendler, k.datum, k.tag, k.betrag))
+            const sortierteFixkosten = [...context.repository.view["Laufende Kosten"].fix]
+                .filter(k => !dependencies.istEintragAusgeblendet("fixkosten", k.id))
+                .filter(k => dependencies.matchesSearch(suche, k.text, k.name, k.info, k.haendler, k.datum, k.tag, k.betrag))
                 .sort((a, b) => {
                     const terminA = terminImGehaltszeitraum(a);
                     const terminB = terminImGehaltszeitraum(b);
@@ -64,38 +107,38 @@
                     return String(a.datum || '').localeCompare(String(b.datum || ''));
                 });
 
-            if (!sortierteFixkosten.length && daten["Laufende Kosten"].fix.length > 0 && !suche) {
+            if (!sortierteFixkosten.length && context.repository.view["Laufende Kosten"].fix.length > 0 && !suche) {
                 div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👁️‍🗨️</div><div class="empty-state-title">Alle Fixkosten sind ausgeblendet</div><div class="empty-state-text">Unter Einstellungen → Gesten → Ausgeblendete verwalten kannst du sie wieder einblenden.</div></div>`;
             }
 
             let letzteFixkostenGruppe = null;
             sortierteFixkosten.forEach(k => {
 
-                const datum = k.datum || datumAusTagAktuellerMonat(k.tag);
+                const datum = k.datum || dependencies.datumAusTagAktuellerMonat(k.tag);
                 const gruppenTermin = terminImGehaltszeitraum(k);
                 const gruppenKey = gruppenTermin ? gruppenTermin.toISOString().slice(0,10) : datum;
                 if (gruppenKey !== letzteFixkostenGruppe) {
-                    appendDateGroupHeader(div, gruppenTermin || datum, { first: letzteFixkostenGruppe === null, note: "Abbuchung" });
+                    dependencies.appendDateGroupHeader(div, gruppenTermin || datum, { first: letzteFixkostenGruppe === null, note: "Abbuchung" });
                     letzteFixkostenGruppe = gruppenKey;
                 }
-                const tag = tagAusDatum(datum);
+                const tag = dependencies.tagAusDatum(datum);
 
                 // Für alte gespeicherte Einträge: Tag und Datum im Speicherobjekt ergänzen.
                 k.datum = datum;
                 k.tag = tag;
                 k.info = k.info || "";
 
-                const isEdit = String(state.editKostenId) === String(k.id);
+                const isEdit = String(context.session.state.editKostenId) === String(k.id);
                 let item;
 
                 if (isEdit) {
-                    item = createItem(`
+                    item = dependencies.createItem(`
                     <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                        <input id="editKostenText-${k.id}" value="${escapeHtml(k.text || k.name || "")}" placeholder="Beschreibung" autocapitalize="words">
-                        <input id="editKostenBetrag-${k.id}" type="text" inputmode="decimal" value="${formatInputBetrag(k.betrag)}" placeholder="Betrag">
-                        <input id="editKostenInfo-${k.id}" value="${escapeHtml(k.info || "")}" placeholder="Info (z. B. Kundennummer, Vertragsnummer)" autocapitalize="words">
+                        <input id="editKostenText-${k.id}" value="${dependencies.escapeHtml(k.text || k.name || "")}" placeholder="Beschreibung" autocapitalize="words">
+                        <input id="editKostenBetrag-${k.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(k.betrag)}" placeholder="Betrag">
+                        <input id="editKostenInfo-${k.id}" value="${dependencies.escapeHtml(k.info || "")}" placeholder="Info (z. B. Kundennummer, Vertragsnummer)" autocapitalize="words">
                         <label for="editKostenHaendler-${k.id}" style="opacity:0.7; font-size:13px; margin-top:4px;">Anbieter (optional)</label>
-                        <input id="editKostenHaendler-${k.id}" value="${escapeHtml(k.haendler || "")}" placeholder="z. B. Telekom oder Netflix" autocapitalize="off">
+                        <input id="editKostenHaendler-${k.id}" value="${dependencies.escapeHtml(k.haendler || "")}" placeholder="z. B. Telekom oder Netflix" autocapitalize="off">
                         <div class="info-text">Mehrere Namen mit einem Semikolon trennen.</div>
                         <label for="editKostenZuordnungTage-${k.id}" style="opacity:0.7; font-size:13px; margin-top:4px;">Zeitfenster zur Fälligkeit (± Tage)</label>
                         <input id="editKostenZuordnungTage-${k.id}" type="number" inputmode="numeric" min="0" max="31" step="1" value="${normalizeFixkostenZuordnungTage(k.zuordnungTage)}">
@@ -110,19 +153,19 @@
                     </div>
                 `);
 
-                    setTimeout(() => setupKostenEditEnterFlow(k.id), 0);
+                    setTimeout(() => dependencies.setupKostenEditEnterFlow(k.id), 0);
                 } else {
 
-                    const istOffen = !!state.offeneFixkosten[String(k.id)];
-                    item = createItem(`
+                    const istOffen = !!context.session.state.offeneFixkosten[String(k.id)];
+                    item = dependencies.createItem(`
                     <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div class="compact-alltag-content">
                             <div class="compact-alltag-main" onclick="toggleFixkostenDetails('${k.id}')" style="cursor:pointer;">
-                                <span class="compact-alltag-title">${escapeHtml(k.text || k.name || "-")}</span>
-                                ${k.haendler ? `<span class="compact-alltag-sub">${escapeHtml(k.haendler)}</span>` : ''}
+                                <span class="compact-alltag-title">${dependencies.escapeHtml(k.text || k.name || "-")}</span>
+                                ${k.haendler ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(k.haendler)}</span>` : ''}
                                 <span class="compact-alltag-sub">Monatlich am ${String(tag).padStart(2, "0")}.</span>
                             </div>
-                            <strong class="compact-alltag-amount">${formatBetrag(k.betrag)}</strong>
+                            <strong class="compact-alltag-amount">${dependencies.formatBetrag(k.betrag)}</strong>
                             <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                                 <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben">↪️</button>
                                 <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')">✏️</button>
@@ -132,9 +175,9 @@
                         ${istOffen ? `
                             <div onclick="toggleFixkostenDetails('${k.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
                                 <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Wiederholung</span><span style="font-weight:600;text-align:right;">Monatlich am ${tag}.</span></div>
-                                <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Startdatum</span><span style="font-weight:600;text-align:right;">${formatDatum(datum)}</span></div>
-                                ${k.info ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Info</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${escapeHtml(k.info)}</span></div>` : ''}
-                                ${k.haendler ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Anbieter</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${escapeHtml(k.haendler)}</span></div>
+                                <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Startdatum</span><span style="font-weight:600;text-align:right;">${dependencies.formatDatum(datum)}</span></div>
+                                ${k.info ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Info</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${dependencies.escapeHtml(k.info)}</span></div>` : ''}
+                                ${k.haendler ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Anbieter</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${dependencies.escapeHtml(k.haendler)}</span></div>
                                 <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Zeitfenster zur Fälligkeit</span><span style="font-weight:600;text-align:right;">±${normalizeFixkostenZuordnungTage(k.zuordnungTage)} Tage</span></div>` : ''}
                             </div>
                         ` : ''}
@@ -147,14 +190,14 @@
             });
 
             if (total) {
-                total.innerHTML = "Gesamt: " + formatBetrag(summe);
+                total.innerHTML = "Gesamt: " + dependencies.formatBetrag(summe);
             }
         }
 
         function toggleFixkostenDetails(id) {
-            state.offeneFixkosten ??= {};
+            context.session.state.offeneFixkosten ??= {};
             const key = String(id);
-            state.offeneFixkosten[key] = !state.offeneFixkosten[key];
+            context.session.state.offeneFixkosten[key] = !context.session.state.offeneFixkosten[key];
             renderLaufendeKosten();
         }
 
@@ -166,28 +209,28 @@
 
         function addKosten() {
 
-            let text = formatText(document.getElementById("costText").value);
-            let betrag = parseBetrag(document.getElementById("costBetrag").value);
+            let text = dependencies.formatText(document.getElementById("costText").value);
+            let betrag = dependencies.parseBetrag(document.getElementById("costBetrag").value);
             let info = document.getElementById("costInfo")?.value.trim() || "";
             let datum = document.getElementById("costDatum").value;
             const haendler = (document.getElementById("costHaendler")?.value || "").trim();
             const zuordnungTage = normalizeFixkostenZuordnungTage(document.getElementById("costZuordnungTage")?.value);
 
             if (!text || isNaN(betrag)) return;
-            if (!datum) datum = heuteISO();
+            if (!datum) datum = dependencies.heuteISO();
 
-            const tag = tagAusDatum(datum);
+            const tag = dependencies.tagAusDatum(datum);
 
             // 🛡️ Struktur absichern
-            if (!daten["Laufende Kosten"]) {
-                daten["Laufende Kosten"] = { fix: [] };
+            if (!context.repository.view["Laufende Kosten"]) {
+                context.repository.view["Laufende Kosten"] = { fix: [] };
             }
-            if (!Array.isArray(daten["Laufende Kosten"].fix)) {
-                daten["Laufende Kosten"].fix = [];
+            if (!Array.isArray(context.repository.view["Laufende Kosten"].fix)) {
+                context.repository.view["Laufende Kosten"].fix = [];
             }
 
-            if (addItem(daten["Laufende Kosten"].fix, {
-                id: generateId(),
+            if (dependencies.addItem(context.repository.view["Laufende Kosten"].fix, {
+                id: dependencies.generateId(),
                 text,
                 betrag,
                 info,
@@ -195,7 +238,7 @@
                 zuordnungTage,
                 datum,
                 tag,
-                ...readReminderControl("add:fixkosten")
+                ...dependencies.readReminderControl("add:fixkosten")
             }) === false) return;
 
 
@@ -207,48 +250,48 @@
             if (haendlerInput) haendlerInput.value = "";
             const tageInput = document.getElementById("costZuordnungTage");
             if (tageInput) tageInput.value = "5";
-            document.getElementById("costDatum").value = heuteISO();
+            document.getElementById("costDatum").value = dependencies.heuteISO();
             document.getElementById("kostenAddPanel")?.classList.add("hidden");
 
             renderLaufendeKosten();
-            renderHomeUebersicht();
-            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
+            dependencies.renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) dependencies.closeStartQuickAdd();
         }
 
         function deleteLaufendeKosten(id) {
 
             if (!confirm("Wirklich löschen?")) return;
-            beginUndoDelete("Fixkosten-Eintrag gelöscht");
+            dependencies.beginUndoDelete("Fixkosten-Eintrag gelöscht");
 
-            if (!daten["Laufende Kosten"] || !Array.isArray(daten["Laufende Kosten"].fix)) return;
+            if (!context.repository.view["Laufende Kosten"] || !Array.isArray(context.repository.view["Laufende Kosten"].fix)) return;
 
-            let liste = daten["Laufende Kosten"].fix;
+            let liste = context.repository.view["Laufende Kosten"].fix;
             let index = liste.findIndex(e => String(e.id) === String(id));
 
             if (index !== -1) {
                 liste.splice(index, 1);
             }
 
-            if (speichern() === false) return;
+            if (dependencies.speichern() === false) return;
             renderLaufendeKosten();
-            renderHomeUebersicht();
-            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
-            finishUndoDelete("Fixkosten-Eintrag gelöscht");
+            dependencies.renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) dependencies.closeStartQuickAdd();
+            dependencies.finishUndoDelete("Fixkosten-Eintrag gelöscht");
         }
 
         function startEditKosten(id) {
-            state.editKostenId = id;
+            context.session.state.editKostenId = id;
             renderLaufendeKosten();
         }
 
         function cancelEditKosten() {
-            state.editKostenId = null;
+            context.session.state.editKostenId = null;
             renderLaufendeKosten();
         }
 
         function saveEditKosten(id) {
 
-            let item = daten["Laufende Kosten"].fix.find(e => String(e.id) === String(id));
+            let item = context.repository.view["Laufende Kosten"].fix.find(e => String(e.id) === String(id));
             if (!item) return;
 
             const textEl = document.getElementById("editKostenText-" + id);
@@ -259,13 +302,13 @@
             if (!textEl || !betragEl || !datumEl) return;
 
             let text = textEl.value;
-            let betrag = parseBetrag(betragEl.value);
+            let betrag = dependencies.parseBetrag(betragEl.value);
             let info = infoEl?.value.trim() || "";
-            let datum = datumEl.value || heuteISO();
+            let datum = datumEl.value || dependencies.heuteISO();
 
             if (!text || isNaN(betrag)) return;
 
-            item.text = formatText(text);
+            item.text = dependencies.formatText(text);
             item.betrag = betrag;
             item.info = info;
             const haendlerEl = document.getElementById("editKostenHaendler-" + id);
@@ -273,14 +316,14 @@
             item.haendler = (haendlerEl ? haendlerEl.value : item.haendler || "").trim();
             item.zuordnungTage = normalizeFixkostenZuordnungTage(tageEl ? tageEl.value : item.zuordnungTage);
             item.datum = datum;
-            item.tag = tagAusDatum(datum);
-            Object.assign(item, readReminderControl(`edit:fixkosten:${id}`));
+            item.tag = dependencies.tagAusDatum(datum);
+            Object.assign(item, dependencies.readReminderControl(`edit:fixkosten:${id}`));
 
-            if (speichern() === false) return;
-            state.editKostenId = null;
+            if (dependencies.speichern() === false) return;
+            context.session.state.editKostenId = null;
             renderLaufendeKosten();
-            renderHomeUebersicht();
-            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
+            dependencies.renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) dependencies.closeStartQuickAdd();
         }
 
         function editLaufendeKosten(id) {
@@ -290,19 +333,91 @@
         function deleteAlleLaufendeKosten() {
 
             if (!confirm("Alle Fixkosten wirklich löschen?")) return;
-            beginUndoDelete("Alle Fixkosten gelöscht");
+            dependencies.beginUndoDelete("Alle Fixkosten gelöscht");
 
             // 🛡️ Struktur absichern
-            if (!daten["Laufende Kosten"]) {
-                daten["Laufende Kosten"] = { fix: [] };
+            if (!context.repository.view["Laufende Kosten"]) {
+                context.repository.view["Laufende Kosten"] = { fix: [] };
             } else {
-                daten["Laufende Kosten"].fix = [];
+                context.repository.view["Laufende Kosten"].fix = [];
             }
 
-            if (speichern() === false) return;
-            state.editKostenId = null;
+            if (dependencies.speichern() === false) return;
+            context.session.state.editKostenId = null;
             renderLaufendeKosten();
-            renderHomeUebersicht();
-            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
-            finishUndoDelete("Alle Fixkosten gelöscht");
+            dependencies.renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) dependencies.closeStartQuickAdd();
+            dependencies.finishUndoDelete("Alle Fixkosten gelöscht");
         }
+
+function laufendeKostenImZeitraum(von, bis) {
+            context.repository.view["Laufende Kosten"] ??= { fix: [] };
+            context.repository.view["Laufende Kosten"].fix ??= [];
+
+            const faellig = [];
+
+            context.repository.view["Laufende Kosten"].fix.forEach(k => {
+                const betrag = dependencies.parseBetrag(k.betrag);
+                if (isNaN(betrag)) return;
+
+                const startDatum = dependencies.parseISODate(k.datum || dependencies.datumAusTagAktuellerMonat(k.tag));
+                if (!startDatum) return;
+
+                const tag = dependencies.tagAusDatum(k.datum || dependencies.datumAusTagAktuellerMonat(k.tag));
+
+                // Wichtig:
+                // Das eingegebene Datum ist der erste mögliche Abbuchungstermin.
+                // Beispiel: 28.05. darf NICHT schon als 28.04. im Gehaltsmonat 26.04.-25.05. auftauchen.
+                let datum = dependencies.datumMitSicheremTag(von.getFullYear(), von.getMonth(), tag);
+
+                while (datum < von || datum < startDatum) {
+                    datum = dependencies.datumMitSicheremTag(datum.getFullYear(), datum.getMonth() + 1, tag);
+                }
+
+                while (datum <= bis) {
+                    faellig.push({
+                        typ: "laufend",
+                        typLabel: "Fixkosten",
+                        sourceId: k.id,
+                        name: k.text || k.name || "Fixkosten",
+                        betrag,
+                        datum: new Date(datum)
+                    });
+
+                    datum = dependencies.datumMitSicheremTag(datum.getFullYear(), datum.getMonth() + 1, tag);
+                }
+            });
+
+            return faellig;
+        }
+
+function kostenLaufend() {
+
+            context.repository.view["Laufende Kosten"] ??= { fix: [] };
+            context.repository.view["Laufende Kosten"].fix ??= [];
+
+            return context.repository.view["Laufende Kosten"].fix.reduce((sum, e) => {
+                let betrag = dependencies.parseBetrag(e.betrag);
+                return sum + (isNaN(betrag) ? 0 : betrag);
+            }, 0);
+        }
+
+function berechneGesamtFixkosten() {
+            return dependencies.berechneMonatGesamt();
+        }
+
+function berechneLaufendeKosten(monatTag = new Date().getDate()) {
+
+            return context.repository.view["Laufende Kosten"].fix.reduce((sum, e) => {
+                return sum + e.betrag;
+            }, 0);
+        }
+
+function faelligeKostenHeute() {
+            let tag = new Date().getDate();
+
+            return context.repository.view["Laufende Kosten"].fix.filter(e => dependencies.tagAusDatum(e.datum || dependencies.datumAusTagAktuellerMonat(e.tag)) === tag);
+        }
+
+return { renderLaufendeKosten, toggleFixkostenDetails, normalizeFixkostenZuordnungTage, addKosten, deleteLaufendeKosten, startEditKosten, cancelEditKosten, saveEditKosten, editLaufendeKosten, deleteAlleLaufendeKosten, laufendeKostenImZeitraum, kostenLaufend, berechneGesamtFixkosten, berechneLaufendeKosten, faelligeKostenHeute };
+});

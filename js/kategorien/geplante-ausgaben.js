@@ -1,5 +1,43 @@
+Kostentracker.module({
+  "id": "js/kategorien/geplante-ausgaben.js",
+  "dependencies": [
+    "beginUndoDelete",
+    "bookFreizeitPlannedOccurrence",
+    "bookHaushaltPlannedOccurrence",
+    "bookReisePlannedOccurrence",
+    "escapeHtml",
+    "finishUndoDelete",
+    "formatBetrag",
+    "formatDateGroupLabel",
+    "formatDatum",
+    "formatInputBetrag",
+    "formatText",
+    "generateId",
+    "getGehaltszeitraum",
+    "heuteISO",
+    "parseBetrag",
+    "parseISODate",
+    "readReminderControl",
+    "renderHomeUebersicht",
+    "renderUebersicht",
+    "speichern",
+    "speichernOhneHomeRender"
+  ],
+  "session": [
+    "state"
+  ],
+  "read": [
+    "Reisen",
+    "Geplante Ausgaben"
+  ],
+  "write": [
+    "Geplante Ausgaben"
+  ],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/kategorien/geplante-ausgaben.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function updateGeplantBereichUI(setzeStandardBudget = false) {
             const bereich = document.getElementById("geplantBereich")?.value || "haushalt";
@@ -11,9 +49,9 @@
             if (reiseWrap) reiseWrap.classList.toggle("hidden", bereich !== "reisen");
             if (bereich === "reisen" && reiseSelect) {
                 const vorher = reiseSelect.value;
-                const laender = Object.keys(daten.Reisen || {}).sort((a,b) => a.localeCompare(b, "de"));
+                const laender = Object.keys(context.repository.view.Reisen || {}).sort((a,b) => a.localeCompare(b, "de"));
                 reiseSelect.innerHTML = laender.length
-                    ? laender.map(land => `<option value="${escapeHtml(land)}">${escapeHtml(land)}</option>`).join("")
+                    ? laender.map(land => `<option value="${dependencies.escapeHtml(land)}">${dependencies.escapeHtml(land)}</option>`).join("")
                     : `<option value="">Keine Reise vorhanden</option>`;
                 if (laender.includes(vorher)) reiseSelect.value = vorher;
             }
@@ -38,7 +76,7 @@
                 kategorien = ["Essen / Trinken", "Aktivität", "Geschenke", "Sonstiges"];
             } else if (bereich === "reisen") {
                 const land = document.getElementById("geplantReise")?.value || "";
-                const reise = daten.Reisen?.[land] || {};
+                const reise = context.repository.view.Reisen?.[land] || {};
                 kategorien = Object.keys(reise).filter(k => Array.isArray(reise[k]));
                 if (!kategorien.length) kategorien = ["Essen", "Trinken", "Transport", "Unterkunft", "Aktivität", "Einkauf", "Sonstiges"];
                 kategorien.sort((a,b) => a.localeCompare(b, "de"));
@@ -46,7 +84,7 @@
                 kategorien = ["Einkauf", "Tanken", "Drogerie", "Sonstiges"];
             }
             const vorher = select.value;
-            select.innerHTML = kategorien.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
+            select.innerHTML = kategorien.map(k => `<option value="${dependencies.escapeHtml(k)}">${dependencies.escapeHtml(k)}</option>`).join("");
             if (kategorien.includes(vorher)) select.value = vorher;
         }
 
@@ -55,8 +93,8 @@
         }
 
         function geplantNaechstesDatum(datum, wiederholung, ankerDatum = datum) {
-            const d = parseISODate(datum);
-            const anker = parseISODate(ankerDatum) || d;
+            const d = dependencies.parseISODate(datum);
+            const anker = dependencies.parseISODate(ankerDatum) || d;
             if (!d || !anker) return "";
             const ankerTag = anker.getDate();
             if (wiederholung === "monatlich") {
@@ -76,14 +114,14 @@
 
         function geplanteAusgabenImZeitraum(von, bis) {
             const out = [];
-            (daten["Geplante Ausgaben"] || []).forEach(e => {
+            (context.repository.view["Geplante Ausgaben"] || []).forEach(e => {
                 let datum = e.datum || "";
                 const wiederholung = ["monatlich", "jaehrlich"].includes(e.wiederholung) ? e.wiederholung : "einmalig";
                 let guard = 0;
                 while (datum && guard++ < 240) {
-                    const d = parseISODate(datum);
+                    const d = dependencies.parseISODate(datum);
                     if (!d || d > bis) break;
-                    if (d >= von) out.push({ ...e, datum, betrag: parseBetrag(e.betrag) || 0 });
+                    if (d >= von) out.push({ ...e, datum, betrag: dependencies.parseBetrag(e.betrag) || 0 });
                     if (wiederholung === "einmalig") break;
                     const next = geplantNaechstesDatum(datum, wiederholung, e.wiederholungStart || e.datum);
                     if (!next || next === datum) break;
@@ -98,8 +136,8 @@
         }
 
         function addGeplanteAusgabe() {
-            const text = formatText(document.getElementById("geplantText")?.value);
-            const betrag = parseBetrag(document.getElementById("geplantBetrag")?.value);
+            const text = dependencies.formatText(document.getElementById("geplantText")?.value);
+            const betrag = dependencies.parseBetrag(document.getElementById("geplantBetrag")?.value);
             const datum = document.getElementById("geplantDatum")?.value || "";
             const wiederholungRaw = document.getElementById("geplantWiederholung")?.value || "einmalig";
             const wiederholung = ["monatlich", "jaehrlich"].includes(wiederholungRaw) ? wiederholungRaw : "einmalig";
@@ -109,17 +147,17 @@
             const kategorie = document.getElementById("geplantKategorie")?.value || "Sonstiges";
             const budgetWirksam = document.getElementById("geplantBudgetWirksam")?.value !== "nein";
             if (!text || !datum || isNaN(betrag) || betrag <= 0) return;
-            if (bereich === "reisen" && (!land || !daten.Reisen?.[land])) {
+            if (bereich === "reisen" && (!land || !context.repository.view.Reisen?.[land])) {
                 alert("Bitte wähle zuerst eine vorhandene Reise aus.");
                 return;
             }
 
-            daten["Geplante Ausgaben"] ??= [];
-            daten["Geplante Ausgaben"].push({ id: generateId(), text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl("add:geplant") });
-            if (speichern() === false) return;
+            context.repository.view["Geplante Ausgaben"] ??= [];
+            context.repository.view["Geplante Ausgaben"].push({ id: dependencies.generateId(), text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...dependencies.readReminderControl("add:geplant") });
+            if (dependencies.speichern() === false) return;
             document.getElementById("geplantText").value = "";
             document.getElementById("geplantBetrag").value = "";
-            document.getElementById("geplantDatum").value = heuteISO();
+            document.getElementById("geplantDatum").value = dependencies.heuteISO();
             if (document.getElementById("geplantWiederholung")) document.getElementById("geplantWiederholung").value = "einmalig";
             if (document.getElementById("geplantBereich")) document.getElementById("geplantBereich").value = "haushalt";
             if (document.getElementById("geplantBudgetWirksam")) document.getElementById("geplantBudgetWirksam").value = "ja";
@@ -127,50 +165,50 @@
             document.getElementById("geplantAddPanel")?.classList.add("hidden");
             verarbeiteFaelligeGeplanteAusgaben();
             renderGeplanteAusgaben();
-            renderUebersicht();
+            dependencies.renderUebersicht();
         }
 
         function deleteGeplanteAusgabe(id) {
-            const liste = daten["Geplante Ausgaben"] || [];
+            const liste = context.repository.view["Geplante Ausgaben"] || [];
             const idx = liste.findIndex(e => String(e.id) === String(id));
             if (idx < 0) return;
-            beginUndoDelete("Geplante Ausgabe gelöscht");
+            dependencies.beginUndoDelete("Geplante Ausgabe gelöscht");
             liste.splice(idx, 1);
-            if (speichern() === false) return;
+            if (dependencies.speichern() === false) return;
             renderGeplanteAusgaben();
-            renderUebersicht();
-            finishUndoDelete("Geplante Ausgabe gelöscht");
+            dependencies.renderUebersicht();
+            dependencies.finishUndoDelete("Geplante Ausgabe gelöscht");
         }
 
         function deleteAlleGeplanteAusgaben() {
-            const liste = daten["Geplante Ausgaben"] || [];
+            const liste = context.repository.view["Geplante Ausgaben"] || [];
             if (!liste.length) return;
             if (!confirm("Alle geplanten Ausgaben wirklich löschen?")) return;
-            beginUndoDelete("Alle geplanten Ausgaben gelöscht");
-            daten["Geplante Ausgaben"] = [];
-            if (speichern() === false) return;
-            state.editGeplanteAusgabeId = null;
+            dependencies.beginUndoDelete("Alle geplanten Ausgaben gelöscht");
+            context.repository.view["Geplante Ausgaben"] = [];
+            if (dependencies.speichern() === false) return;
+            context.session.state.editGeplanteAusgabeId = null;
             renderGeplanteAusgaben();
-            renderUebersicht();
-            renderHomeUebersicht();
-            finishUndoDelete("Alle geplanten Ausgaben gelöscht");
+            dependencies.renderUebersicht();
+            dependencies.renderHomeUebersicht();
+            dependencies.finishUndoDelete("Alle geplanten Ausgaben gelöscht");
         }
 
         function startEditGeplanteAusgabe(id) {
-            state.editGeplanteAusgabeId = id;
+            context.session.state.editGeplanteAusgabeId = id;
             renderGeplanteAusgaben();
             setTimeout(() => document.getElementById(`editGeplantText-${id}`)?.focus(), 40);
         }
 
         function cancelEditGeplanteAusgabe() {
-            state.editGeplanteAusgabeId = null;
+            context.session.state.editGeplanteAusgabeId = null;
             renderGeplanteAusgaben();
         }
 
         function editGeplantKategorienFuer(bereich, land = "") {
             if (bereich === "freizeit") return ["Essen / Trinken", "Aktivität", "Geschenke", "Sonstiges"];
             if (bereich === "reisen") {
-                const reise = daten.Reisen?.[land] || {};
+                const reise = context.repository.view.Reisen?.[land] || {};
                 const kategorien = Object.keys(reise).filter(k => Array.isArray(reise[k]));
                 return (kategorien.length ? kategorien : ["Essen", "Trinken", "Transport", "Unterkunft", "Aktivität", "Einkauf", "Sonstiges"]).sort((a,b)=>a.localeCompare(b,"de"));
             }
@@ -185,8 +223,8 @@
             if (reiseWrap) reiseWrap.classList.toggle("hidden", bereich !== "reisen");
             if (bereich === "reisen" && reiseSelect) {
                 const vorher = reiseSelect.value;
-                const laender = Object.keys(daten.Reisen || {}).sort((a,b)=>a.localeCompare(b,"de"));
-                reiseSelect.innerHTML = laender.length ? laender.map(land => `<option value="${escapeHtml(land)}">${escapeHtml(land)}</option>`).join("") : `<option value="">Keine Reise vorhanden</option>`;
+                const laender = Object.keys(context.repository.view.Reisen || {}).sort((a,b)=>a.localeCompare(b,"de"));
+                reiseSelect.innerHTML = laender.length ? laender.map(land => `<option value="${dependencies.escapeHtml(land)}">${dependencies.escapeHtml(land)}</option>`).join("") : `<option value="">Keine Reise vorhanden</option>`;
                 if (laender.includes(vorher)) reiseSelect.value = vorher;
             }
             if (setzeStandardBudget && budgetSelect) budgetSelect.value = bereich === "reisen" ? "nein" : "ja";
@@ -200,15 +238,15 @@
             if (!select) return;
             const vorher = select.value;
             const kategorien = editGeplantKategorienFuer(bereich, land);
-            select.innerHTML = kategorien.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
+            select.innerHTML = kategorien.map(k => `<option value="${dependencies.escapeHtml(k)}">${dependencies.escapeHtml(k)}</option>`).join("");
             if (kategorien.includes(vorher)) select.value = vorher;
         }
 
         function saveEditGeplanteAusgabe(id) {
-            const e = (daten["Geplante Ausgaben"] || []).find(x => String(x.id) === String(id));
+            const e = (context.repository.view["Geplante Ausgaben"] || []).find(x => String(x.id) === String(id));
             if (!e) return;
-            const text = formatText(document.getElementById(`editGeplantText-${id}`)?.value);
-            const betrag = parseBetrag(document.getElementById(`editGeplantBetrag-${id}`)?.value);
+            const text = dependencies.formatText(document.getElementById(`editGeplantText-${id}`)?.value);
+            const betrag = dependencies.parseBetrag(document.getElementById(`editGeplantBetrag-${id}`)?.value);
             const datum = document.getElementById(`editGeplantDatum-${id}`)?.value || "";
             const wiederholungRaw = document.getElementById(`editGeplantWiederholung-${id}`)?.value || "einmalig";
             const wiederholung = ["monatlich", "jaehrlich"].includes(wiederholungRaw) ? wiederholungRaw : "einmalig";
@@ -217,65 +255,42 @@
             const land = bereich === "reisen" ? (document.getElementById(`editGeplantReise-${id}`)?.value || "") : "";
             const kategorie = document.getElementById(`editGeplantKategorie-${id}`)?.value || "Sonstiges";
             const budgetWirksam = document.getElementById(`editGeplantBudget-${id}`)?.value !== "nein";
-            if (!text || isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
-            if (bereich === "reisen" && (!land || !daten.Reisen?.[land])) { alert("Bitte wähle eine vorhandene Reise aus."); return; }
-            Object.assign(e, { text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl(`edit:geplant:${id}`) });
-            if (speichern() === false) return;
-            state.editGeplanteAusgabeId = null;
+            if (!text || isNaN(betrag) || betrag <= 0 || !dependencies.parseISODate(datum)) return;
+            if (bereich === "reisen" && (!land || !context.repository.view.Reisen?.[land])) { alert("Bitte wähle eine vorhandene Reise aus."); return; }
+            Object.assign(e, { text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...dependencies.readReminderControl(`edit:geplant:${id}`) });
+            if (dependencies.speichern() === false) return;
+            context.session.state.editGeplanteAusgabeId = null;
             verarbeiteFaelligeGeplanteAusgaben();
             renderGeplanteAusgaben();
-            renderUebersicht();
+            dependencies.renderUebersicht();
         }
 
         function editGeplanteAusgabe(id) { startEditGeplanteAusgabe(id); }
 
         function verarbeiteFaelligeGeplanteAusgaben() {
-            daten["Geplante Ausgaben"] ??= [];
-            const heute = heuteISO();
+            context.repository.view["Geplante Ausgaben"] ??= [];
+            const heute = dependencies.heuteISO();
             const offen = [];
             let geaendert = false;
 
-            daten["Geplante Ausgaben"].forEach(e => {
+            context.repository.view["Geplante Ausgaben"].forEach(e => {
                 let datum = e?.datum || "";
                 const wiederholung = ["monatlich", "jaehrlich"].includes(e?.wiederholung) ? e.wiederholung : "einmalig";
                 if (!datum) { offen.push(e); return; }
 
                 let guard = 0;
                 while (datum && datum < heute && guard++ < 240) {
-                    const d = parseISODate(datum);
+                    const d = dependencies.parseISODate(datum);
                     if (!d) break;
                     const bereich = ["haushalt", "freizeit", "reisen"].includes(e.bereich) ? e.bereich : "haushalt";
                     const occurrenceKey = `${e.id}:${datum}`;
                     let konnteBuchen = true;
 
-                    if (bereich === "reisen") {
-                        const land = e.land || "";
-                        const reise = daten.Reisen?.[land];
-                        if (!reise) { konnteBuchen = false; }
-                        else {
-                            const kategorie = e.kategorie || "Sonstiges";
-                            reise[kategorie] ??= [];
-                            const exists = reise[kategorie].some(x => String(x.geplantOccurrenceKey || "") === occurrenceKey || (wiederholung === "einmalig" && String(x.geplantId || "") === String(e.id)));
-                            if (!exists) {
-                                reise[kategorie].push({
-                                    id: generateId(), geplantId: e.id, geplantOccurrenceKey: occurrenceKey, ausGeplant: true,
-                                    text: e.text || kategorie || "Geplante Ausgabe", betrag: parseBetrag(e.betrag) || 0, datum
-                                });
-                            }
-                        }
-                    } else {
-                        const store = bereich === "freizeit" ? daten.Freizeit : daten.Haushalt;
-                        const monat = d.getMonth() + 1;
-                        store[monat] ??= [];
-                        const exists = store[monat].some(x => String(x.geplantOccurrenceKey || "") === occurrenceKey || (wiederholung === "einmalig" && String(x.geplantId || "") === String(e.id)));
-                        if (!exists) {
-                            store[monat].push({
-                                id: generateId(), geplantId: e.id, geplantOccurrenceKey: occurrenceKey, ausGeplant: true,
-                                text: e.text || e.kategorie || "Geplante Ausgabe", betrag: parseBetrag(e.betrag) || 0,
-                                datum, kategorie: e.kategorie || "Sonstiges"
-                            });
-                        }
-                    }
+                    konnteBuchen = bereich === "reisen"
+                        ? dependencies.bookReisePlannedOccurrence(e, datum, occurrenceKey, wiederholung)
+                        : bereich === "freizeit"
+                            ? dependencies.bookFreizeitPlannedOccurrence(e, datum, occurrenceKey, wiederholung)
+                            : dependencies.bookHaushaltPlannedOccurrence(e, datum, occurrenceKey, wiederholung);
 
                     if (!konnteBuchen) break;
                     geaendert = true;
@@ -292,8 +307,8 @@
             });
 
             if (geaendert) {
-                daten["Geplante Ausgaben"] = offen;
-                if (!speichernOhneHomeRender(false)) return false;
+                context.repository.view["Geplante Ausgaben"] = offen;
+                if (!dependencies.speichernOhneHomeRender(false)) return false;
             }
             return geaendert;
         }
@@ -302,10 +317,10 @@
             const listeEl = document.getElementById("geplantListe");
             const sumEl = document.getElementById("geplantZusammenfassung");
             if (!listeEl) return;
-            const z = getGehaltszeitraum();
-            const reserviert = geplanteReservierungenImZeitraum(z.start, z.ende).reduce((sum,e)=>sum+(parseBetrag(e.betrag)||0),0);
-            if (sumEl) sumEl.innerHTML = `<div class="bereich-week-info-top"><span class="bereich-week-info-label">Reserviert in dieser Gehaltsperiode</span><span class="bereich-week-info-amount">${formatBetrag(reserviert)}</span></div><div class="bereich-week-info-breakdown">Nur Einträge mit „Vom Frei verfügbar abziehen: Ja“ werden reserviert.</div>`;
-            const items = [...(daten["Geplante Ausgaben"] || [])].sort((a,b) => String(a.datum).localeCompare(String(b.datum)));
+            const z = dependencies.getGehaltszeitraum();
+            const reserviert = geplanteReservierungenImZeitraum(z.start, z.ende).reduce((sum,e)=>sum+(dependencies.parseBetrag(e.betrag)||0),0);
+            if (sumEl) sumEl.innerHTML = `<div class="bereich-week-info-top"><span class="bereich-week-info-label">Reserviert in dieser Gehaltsperiode</span><span class="bereich-week-info-amount">${dependencies.formatBetrag(reserviert)}</span></div><div class="bereich-week-info-breakdown">Nur Einträge mit „Vom Frei verfügbar abziehen: Ja“ werden reserviert.</div>`;
+            const items = [...(context.repository.view["Geplante Ausgaben"] || [])].sort((a,b) => String(a.datum).localeCompare(String(b.datum)));
             document.getElementById("geplantDeleteAllBtn")?.classList.toggle("hidden", !items.length);
             if (!items.length) {
                 listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🗓️</div><div class="empty-state-title">Keine geplanten Ausgaben</div><div class="empty-state-text">Plane größere oder kommende Ausgaben vorab. Am Folgetag werden sie automatisch in den gewählten Bereich übernommen.</div></div>`;
@@ -316,21 +331,21 @@
                 let gruppenHeader = "";
                 const gruppenKey = e.datum || "ohne-datum";
                 if (gruppenKey !== letzteGeplantGruppe) {
-                    gruppenHeader = `<div class="date-group-title${letzteGeplantGruppe === null ? " first" : ""}">${formatDateGroupLabel(e.datum)}<small>Geplant</small></div>`;
+                    gruppenHeader = `<div class="date-group-title${letzteGeplantGruppe === null ? " first" : ""}">${dependencies.formatDateGroupLabel(e.datum)}<small>Geplant</small></div>`;
                     letzteGeplantGruppe = gruppenKey;
                 }
-                const isEdit = String(state.editGeplanteAusgabeId) === String(e.id);
+                const isEdit = String(context.session.state.editGeplanteAusgabeId) === String(e.id);
                 if (isEdit) {
                     const bereich = ["haushalt","freizeit","reisen"].includes(e.bereich) ? e.bereich : "haushalt";
-                    const laender = Object.keys(daten.Reisen || {}).sort((a,b)=>a.localeCompare(b,"de"));
+                    const laender = Object.keys(context.repository.view.Reisen || {}).sort((a,b)=>a.localeCompare(b,"de"));
                     const land = bereich === "reisen" && laender.includes(e.land) ? e.land : (laender[0] || "");
                     const kategorien = editGeplantKategorienFuer(bereich, land);
                     const kategorie = kategorien.includes(e.kategorie) ? e.kategorie : (kategorien[0] || "Sonstiges");
                     return gruppenHeader + `
                         <div class="item" style="align-items:stretch;">
                             <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
-                                <input id="editGeplantText-${e.id}" value="${escapeHtml(e.text || '')}" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
-                                <input id="editGeplantBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                                <input id="editGeplantText-${e.id}" value="${dependencies.escapeHtml(e.text || '')}" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
+                                <input id="editGeplantBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
                                 <input id="editGeplantDatum-${e.id}" type="date" value="${e.datum || ''}">
                                 <select id="editGeplantWiederholung-${e.id}">
                                     <option value="einmalig" ${(e.wiederholung || "einmalig") === "einmalig" ? "selected" : ""}>Einmalig</option>
@@ -344,11 +359,11 @@
                                 </select>
                                 <div id="editGeplantReiseWrap-${e.id}" class="${bereich === "reisen" ? "" : "hidden"}">
                                     <select id="editGeplantReise-${e.id}" onchange="updateEditGeplantKategorieSelect('${e.id}')">
-                                        ${laender.length ? laender.map(l => `<option value="${escapeHtml(l)}" ${l === land ? "selected" : ""}>${escapeHtml(l)}</option>`).join("") : `<option value="">Keine Reise vorhanden</option>`}
+                                        ${laender.length ? laender.map(l => `<option value="${dependencies.escapeHtml(l)}" ${l === land ? "selected" : ""}>${dependencies.escapeHtml(l)}</option>`).join("") : `<option value="">Keine Reise vorhanden</option>`}
                                     </select>
                                 </div>
                                 <select id="editGeplantKategorie-${e.id}">
-                                    ${kategorien.map(k => `<option value="${escapeHtml(k)}" ${k === kategorie ? "selected" : ""}>${escapeHtml(k)}</option>`).join("")}
+                                    ${kategorien.map(k => `<option value="${dependencies.escapeHtml(k)}" ${k === kategorie ? "selected" : ""}>${dependencies.escapeHtml(k)}</option>`).join("")}
                                 </select>
                                 <select id="editGeplantBudget-${e.id}">
                                     <option value="ja" ${e.budgetWirksam !== false ? "selected" : ""}>Ja, vom Frei verfügbar abziehen</option>
@@ -361,14 +376,14 @@
                             </div>
                         </div>`;
                 }
-                const ziel = e.bereich === "reisen" ? `✈️ ${escapeHtml(e.land || "Reise")} · ${escapeHtml(e.kategorie || "Sonstiges")}` : `${e.bereich === "freizeit" ? "🎉 Freizeit" : "🛒 Haushalt"} · ${escapeHtml(e.kategorie || "Sonstiges")}`;
+                const ziel = e.bereich === "reisen" ? `✈️ ${dependencies.escapeHtml(e.land || "Reise")} · ${dependencies.escapeHtml(e.kategorie || "Sonstiges")}` : `${e.bereich === "freizeit" ? "🎉 Freizeit" : "🛒 Haushalt"} · ${dependencies.escapeHtml(e.kategorie || "Sonstiges")}`;
                 return gruppenHeader + `
                     <div class="item" style="align-items:center;">
                         <div style="min-width:0;flex:1;">
-                            <div style="font-weight:750;">${escapeHtml(e.text || "Geplante Ausgabe")}</div>
-                            <div class="info-text" style="margin-top:4px;">${formatDatum(e.datum)} · ${ziel}</div>
+                            <div style="font-weight:750;">${dependencies.escapeHtml(e.text || "Geplante Ausgabe")}</div>
+                            <div class="info-text" style="margin-top:4px;">${dependencies.formatDatum(e.datum)} · ${ziel}</div>
                             <div class="info-text" style="margin-top:3px;">${e.wiederholung === "monatlich" ? "🔁 Monatlich" : e.wiederholung === "jaehrlich" ? "🔁 Jährlich" : "1× Einmalig"} · ${e.budgetWirksam !== false ? "💶 Im Frei verfügbar reserviert" : "📝 Nur vorgemerkt"}</div>
-                            <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)}</div>
+                            <div style="font-weight:800;margin-top:5px;">${dependencies.formatBetrag(e.betrag)}</div>
                         </div>
                         <div class="actions" style="display:flex;gap:5px;">
                             <button class="edit" onclick="event.stopPropagation();startEditGeplanteAusgabe('${String(e.id)}')">✏️</button>
@@ -377,3 +392,6 @@
                     </div>`;
             }).join("");
         }
+
+return { updateGeplantBereichUI, updateGeplantKategorieSelect, geplantDatumZuISO, geplantNaechstesDatum, geplanteAusgabenImZeitraum, geplanteReservierungenImZeitraum, addGeplanteAusgabe, deleteGeplanteAusgabe, deleteAlleGeplanteAusgaben, startEditGeplanteAusgabe, cancelEditGeplanteAusgabe, editGeplantKategorienFuer, updateEditGeplantBereichUI, updateEditGeplantKategorieSelect, saveEditGeplanteAusgabe, editGeplanteAusgabe, verarbeiteFaelligeGeplanteAusgaben, renderGeplanteAusgaben };
+});
