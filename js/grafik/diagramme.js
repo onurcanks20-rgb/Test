@@ -1,8 +1,43 @@
+Kostentracker.module({
+  "id": "js/grafik/diagramme.js",
+  "dependencies": [
+    "addDays",
+    "berechneterGehaltstag",
+    "einnahmenZahlungenImZeitraum",
+    "escapeHtml",
+    "formatBetrag",
+    "formatDatum",
+    "freizeitImZeitraum",
+    "geplanteAusgabenImZeitraum",
+    "getGehaltstag",
+    "haushaltImZeitraum",
+    "isoAusDate",
+    "laufendeKostenImZeitraum",
+    "parseBetrag",
+    "parseISODate",
+    "startOfToday",
+    "versicherungsZahlungenImZeitraum"
+  ],
+  "session": [
+    "GRAFIK_COLORS",
+    "GRAFIK_LABELS",
+    "grafikCompareMode",
+    "grafikCompareSelection",
+    "grafikRangeType"
+  ],
+  "read": [
+    "Reisen",
+    "Sparen & Investieren"
+  ],
+  "write": [],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/grafik/diagramme.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function grafikSetRange(type, button){
-            grafikRangeType = type;
+            context.session.grafikRangeType = type;
             ["grafikRangeMonth","grafikRangeSalary","grafikRangeCustom"].forEach(id=>document.getElementById(id)?.classList.remove("selected"));
             button?.classList.add("selected");
             document.getElementById("grafikRangeMonthBox")?.classList.toggle("hidden",type!=="month");
@@ -12,36 +47,36 @@
         }
 
         function grafikSalaryPeriodForDate(ref){
-            const tag=getGehaltstag();
-            const gehaltDieser=berechneterGehaltstag(ref.getFullYear(),ref.getMonth(),tag);
+            const tag=dependencies.getGehaltstag();
+            const gehaltDieser=dependencies.berechneterGehaltstag(ref.getFullYear(),ref.getMonth(),tag);
             let start,next;
-            if(ref>=gehaltDieser){ start=gehaltDieser; next=berechneterGehaltstag(ref.getFullYear(),ref.getMonth()+1,tag); }
-            else { start=berechneterGehaltstag(ref.getFullYear(),ref.getMonth()-1,tag); next=gehaltDieser; }
-            return {start:new Date(start), ende:addDays(next,-1), naechstesGehalt:new Date(next)};
+            if(ref>=gehaltDieser){ start=gehaltDieser; next=dependencies.berechneterGehaltstag(ref.getFullYear(),ref.getMonth()+1,tag); }
+            else { start=dependencies.berechneterGehaltstag(ref.getFullYear(),ref.getMonth()-1,tag); next=gehaltDieser; }
+            return {start:new Date(start), ende:dependencies.addDays(next,-1), naechstesGehalt:new Date(next)};
         }
 
         function grafikPopulateSalaryPeriods(){
             const select=document.getElementById("grafikSalaryPeriod"); if(!select)return;
             const previous=select.value;
-            const current=grafikSalaryPeriodForDate(startOfToday());
+            const current=grafikSalaryPeriodForDate(dependencies.startOfToday());
             const rows=[];
             let cursor=new Date(current.start);
             for(let i=0;i<18;i++){
                 const z=grafikSalaryPeriodForDate(cursor);
                 rows.push(z);
-                cursor=addDays(z.start,-1);
+                cursor=dependencies.addDays(z.start,-1);
             }
-            select.innerHTML=rows.map((z,i)=>`<option value="${isoAusDate(z.start)}|${isoAusDate(z.ende)}">${i===0?"Aktuell · ":""}${formatDatum(isoAusDate(z.start))} – ${formatDatum(isoAusDate(z.ende))}</option>`).join("");
+            select.innerHTML=rows.map((z,i)=>`<option value="${dependencies.isoAusDate(z.start)}|${dependencies.isoAusDate(z.ende)}">${i===0?"Aktuell · ":""}${dependencies.formatDatum(dependencies.isoAusDate(z.start))} – ${dependencies.formatDatum(dependencies.isoAusDate(z.ende))}</option>`).join("");
             if([...select.options].some(o=>o.value===previous))select.value=previous;
         }
 
         function initGrafik(){
             const month=document.getElementById("grafikMonth");
             const von=document.getElementById("grafikVon"), bis=document.getElementById("grafikBis");
-            const today=startOfToday();
+            const today=dependencies.startOfToday();
             if(month&&!month.value)month.value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}`;
-            if(von&&!von.value)von.value=isoAusDate(new Date(today.getFullYear(),today.getMonth(),1));
-            if(bis&&!bis.value)bis.value=isoAusDate(today);
+            if(von&&!von.value)von.value=dependencies.isoAusDate(new Date(today.getFullYear(),today.getMonth(),1));
+            if(bis&&!bis.value)bis.value=dependencies.isoAusDate(today);
             grafikPopulateSalaryPeriods();
             grafikCategoryChanged(false);
             grafikInitCompareDates();
@@ -49,30 +84,30 @@
         }
 
         function grafikGetRange(){
-            if(grafikRangeType==="salary"){
+            if(context.session.grafikRangeType==="salary"){
                 const raw=document.getElementById("grafikSalaryPeriod")?.value||""; const [a,b]=raw.split("|");
-                const start=parseISODate(a), ende=parseISODate(b); if(start&&ende)return {start,ende,label:`${formatDatum(a)} – ${formatDatum(b)}`};
+                const start=dependencies.parseISODate(a), ende=dependencies.parseISODate(b); if(start&&ende)return {start,ende,label:`${dependencies.formatDatum(a)} – ${dependencies.formatDatum(b)}`};
             }
-            if(grafikRangeType==="custom"){
-                let start=parseISODate(document.getElementById("grafikVon")?.value), ende=parseISODate(document.getElementById("grafikBis")?.value);
+            if(context.session.grafikRangeType==="custom"){
+                let start=dependencies.parseISODate(document.getElementById("grafikVon")?.value), ende=dependencies.parseISODate(document.getElementById("grafikBis")?.value);
                 if(start&&ende&&start>ende)[start,ende]=[ende,start];
-                if(start&&ende)return {start,ende,label:`${formatDatum(isoAusDate(start))} – ${formatDatum(isoAusDate(ende))}`};
+                if(start&&ende)return {start,ende,label:`${dependencies.formatDatum(dependencies.isoAusDate(start))} – ${dependencies.formatDatum(dependencies.isoAusDate(ende))}`};
             }
             const raw=document.getElementById("grafikMonth")?.value||""; const m=raw.match(/^(\d{4})-(\d{2})$/);
-            const now=startOfToday(), y=m?+m[1]:now.getFullYear(), mi=m?+m[2]-1:now.getMonth();
+            const now=dependencies.startOfToday(), y=m?+m[1]:now.getFullYear(), mi=m?+m[2]-1:now.getMonth();
             const start=new Date(y,mi,1), ende=new Date(y,mi+1,0);
             return {start,ende,label:start.toLocaleDateString("de-DE",{month:"long",year:"numeric"})};
         }
 
         function grafikDays(a,b){ return Math.max(1,Math.round((b-a)/86400000)+1); }
 
-        function grafikEntry(name,value,sub="",date=null){return {name,value:parseBetrag(value)||0,sub,date};}
+        function grafikEntry(name,value,sub="",date=null){return {name,value:dependencies.parseBetrag(value)||0,sub,date};}
 
         function grafikTravelEntries(von,bis){
             const out=[];
-            Object.entries(daten.Reisen||{}).forEach(([land,r])=>Object.entries(r||{}).forEach(([kat,list])=>{
+            Object.entries(context.repository.view.Reisen||{}).forEach(([land,r])=>Object.entries(r||{}).forEach(([kat,list])=>{
                 if(!Array.isArray(list))return;
-                list.forEach(e=>{const d=parseISODate(e.datum); if(d&&d>=von&&d<=bis)out.push(grafikEntry(land,e.betrag,kat,d));});
+                list.forEach(e=>{const d=dependencies.parseISODate(e.datum); if(d&&d>=von&&d<=bis)out.push(grafikEntry(land,e.betrag,kat,d));});
             }));
             return out;
         }
@@ -88,17 +123,17 @@
 
             while(ref<=bis){
                 const z=grafikSalaryPeriodForDate(ref);
-                const key=isoAusDate(z.start);
+                const key=dependencies.isoAusDate(z.start);
                 if(seen.has(key)){
-                    ref=addDays(ref,1);
+                    ref=dependencies.addDays(ref,1);
                     continue;
                 }
                 seen.add(key);
 
                 // Nur Perioden zaehlen, deren Startdatum im ausgewaehlten Zeitraum liegt.
                 if(z.start>=von && z.start<=bis){
-                    (daten["Sparen & Investieren"]||[]).forEach(e=>{
-                        const valid=parseISODate(e.datum);
+                    (context.repository.view["Sparen & Investieren"]||[]).forEach(e=>{
+                        const valid=dependencies.parseISODate(e.datum);
                         // Wie in der Budgetlogik gilt ein Eintrag fuer die Periode,
                         // sobald "Gueltig ab" spaetestens innerhalb dieser Periode liegt.
                         if(valid && valid<=z.ende){
@@ -106,32 +141,32 @@
                         }
                     });
                 }
-                ref=addDays(z.ende,1);
+                ref=dependencies.addDays(z.ende,1);
             }
             return out;
         }
 
         function grafikEntries(category,von,bis){
-            if(category==="haushalt")return haushaltImZeitraum(von,bis).map(e=>grafikEntry(e.kategorie||"Sonstiges",e.betrag,e.kategorie||"Sonstiges",e.datumObj));
-            if(category==="freizeit")return freizeitImZeitraum(von,bis).map(e=>grafikEntry(e.kategorie||"Sonstiges",e.betrag,e.kategorie||"Sonstiges",e.datumObj));
-            if(category==="fixkosten")return laufendeKostenImZeitraum(von,bis).map(e=>grafikEntry(e.name||"Fixkosten",e.betrag,e.name||"Fixkosten",e.datum));
-            if(category==="versicherungen")return versicherungsZahlungenImZeitraum(von,bis).map(e=>grafikEntry(e.name||"Versicherung",e.betrag,e.name||"Versicherung",e.datum));
-            if(category==="einnahmen")return einnahmenZahlungenImZeitraum(von,bis).map(e=>grafikEntry(e.text||"Einnahme",e.betrag,e.text||"Einnahme",e.datumObj));
+            if(category==="haushalt")return dependencies.haushaltImZeitraum(von,bis).map(e=>grafikEntry(e.kategorie||"Sonstiges",e.betrag,e.kategorie||"Sonstiges",e.datumObj));
+            if(category==="freizeit")return dependencies.freizeitImZeitraum(von,bis).map(e=>grafikEntry(e.kategorie||"Sonstiges",e.betrag,e.kategorie||"Sonstiges",e.datumObj));
+            if(category==="fixkosten")return dependencies.laufendeKostenImZeitraum(von,bis).map(e=>grafikEntry(e.name||"Fixkosten",e.betrag,e.name||"Fixkosten",e.datum));
+            if(category==="versicherungen")return dependencies.versicherungsZahlungenImZeitraum(von,bis).map(e=>grafikEntry(e.name||"Versicherung",e.betrag,e.name||"Versicherung",e.datum));
+            if(category==="einnahmen")return dependencies.einnahmenZahlungenImZeitraum(von,bis).map(e=>grafikEntry(e.text||"Einnahme",e.betrag,e.text||"Einnahme",e.datumObj));
             if(category==="reisen")return grafikTravelEntries(von,bis);
-            if(category==="geplant")return geplanteAusgabenImZeitraum(von,bis).map(e=>grafikEntry(e.bereich==="reisen"?(e.land||"Reise"):(e.bereich==="freizeit"?"Freizeit":"Haushalt"),e.betrag,e.kategorie||"Sonstiges",parseISODate(e.datum)));
+            if(category==="geplant")return dependencies.geplanteAusgabenImZeitraum(von,bis).map(e=>grafikEntry(e.bereich==="reisen"?(e.land||"Reise"):(e.bereich==="freizeit"?"Freizeit":"Haushalt"),e.betrag,e.kategorie||"Sonstiges",dependencies.parseISODate(e.datum)));
             if(category==="sparen")return grafikSavingsEntries(von,bis);
             return [];
         }
 
         function grafikCategoryTotals(von,bis){
-            return ["haushalt","freizeit","fixkosten","versicherungen","einnahmen","reisen","geplant","sparen"].map(k=>({key:k,name:GRAFIK_LABELS[k],value:grafikEntries(k,von,bis).reduce((s,e)=>s+e.value,0)})).filter(x=>x.value>0);
+            return ["haushalt","freizeit","fixkosten","versicherungen","einnahmen","reisen","geplant","sparen"].map(k=>({key:k,name:context.session.GRAFIK_LABELS[k],value:grafikEntries(k,von,bis).reduce((s,e)=>s+e.value,0)})).filter(x=>x.value>0);
         }
 
         function grafikSubcategories(category){
             if(category==="haushalt")return ["Einkauf","Tanken","Drogerie","Sonstiges"];
             if(category==="freizeit")return ["Essen / Trinken","Aktivität","Geschenke","Sonstiges"];
             if(category==="reisen"){
-                const set=new Set(); Object.values(daten.Reisen||{}).forEach(r=>Object.keys(r||{}).forEach(k=>Array.isArray(r[k])&&set.add(k)));
+                const set=new Set(); Object.values(context.repository.view.Reisen||{}).forEach(r=>Object.keys(r||{}).forEach(k=>Array.isArray(r[k])&&set.add(k)));
                 return [...set].sort((a,b)=>a.localeCompare(b,"de"));
             }
             if(category==="geplant")return ["Einkauf","Tanken","Drogerie","Essen / Trinken","Geschenke","Essen","Trinken","Aktivität","Transport","Unterkunft","Sonstiges"];
@@ -142,18 +177,18 @@
         function grafikInitCompareDates(){
             const range=grafikGetRange();
             const aVon=document.getElementById("grafikCompareAVon"), aBis=document.getElementById("grafikCompareABis"), bVon=document.getElementById("grafikCompareBVon"), bBis=document.getElementById("grafikCompareBBis");
-            if(aVon&&!aVon.value)aVon.value=isoAusDate(range.start);
-            if(aBis&&!aBis.value)aBis.value=isoAusDate(range.ende);
+            if(aVon&&!aVon.value)aVon.value=dependencies.isoAusDate(range.start);
+            if(aBis&&!aBis.value)aBis.value=dependencies.isoAusDate(range.ende);
             const days=grafikDays(range.start,range.ende);
-            if(bVon&&!bVon.value)bVon.value=isoAusDate(addDays(range.start,-days));
-            if(bBis&&!bBis.value)bBis.value=isoAusDate(addDays(range.start,-1));
+            if(bVon&&!bVon.value)bVon.value=dependencies.isoAusDate(dependencies.addDays(range.start,-days));
+            if(bBis&&!bBis.value)bBis.value=dependencies.isoAusDate(dependencies.addDays(range.start,-1));
         }
 
         function grafikReadCompareRange(prefix){
-            let start=parseISODate(document.getElementById(`grafikCompare${prefix}Von`)?.value), ende=parseISODate(document.getElementById(`grafikCompare${prefix}Bis`)?.value);
+            let start=dependencies.parseISODate(document.getElementById(`grafikCompare${prefix}Von`)?.value), ende=dependencies.parseISODate(document.getElementById(`grafikCompare${prefix}Bis`)?.value);
             if(start&&ende&&start>ende)[start,ende]=[ende,start];
             if(!start||!ende)return null;
-            return {start,ende,label:`${formatDatum(isoAusDate(start))} – ${formatDatum(isoAusDate(ende))}`};
+            return {start,ende,label:`${dependencies.formatDatum(dependencies.isoAusDate(start))} – ${dependencies.formatDatum(dependencies.isoAusDate(ende))}`};
         }
 
         function grafikSwapComparePeriods(){
@@ -171,29 +206,29 @@
         }
 
         function grafikToggleCompare(){
-            grafikCompareMode=!grafikCompareMode;
+            context.session.grafikCompareMode=!context.session.grafikCompareMode;
             const btn=document.getElementById("grafikCompareToggle");
-            btn?.classList.toggle("on",grafikCompareMode);
-            if(btn)btn.textContent=grafikCompareMode?"✓ Vergleich beenden":"⇄ Zeiträume vergleichen";
-            document.getElementById("grafikNormalRangeControls")?.classList.toggle("hidden",grafikCompareMode);
-            document.getElementById("grafikComparePeriods")?.classList.toggle("hidden",!grafikCompareMode);
-            document.getElementById("grafikNormalCategoryCard")?.classList.toggle("hidden",grafikCompareMode);
-            document.getElementById("grafikCompareCategoryCard")?.classList.toggle("hidden",!grafikCompareMode);
-            if(grafikCompareMode){grafikInitCompareDates();grafikRenderCompareSelection();}
+            btn?.classList.toggle("on",context.session.grafikCompareMode);
+            if(btn)btn.textContent=context.session.grafikCompareMode?"✓ Vergleich beenden":"⇄ Zeiträume vergleichen";
+            document.getElementById("grafikNormalRangeControls")?.classList.toggle("hidden",context.session.grafikCompareMode);
+            document.getElementById("grafikComparePeriods")?.classList.toggle("hidden",!context.session.grafikCompareMode);
+            document.getElementById("grafikNormalCategoryCard")?.classList.toggle("hidden",context.session.grafikCompareMode);
+            document.getElementById("grafikCompareCategoryCard")?.classList.toggle("hidden",!context.session.grafikCompareMode);
+            if(context.session.grafikCompareMode){grafikInitCompareDates();grafikRenderCompareSelection();}
             renderGrafik();
         }
 
         function grafikCompareGroups(){
-            return ["haushalt","freizeit","fixkosten","versicherungen","einnahmen","reisen","geplant","sparen"].map(category=>({category,label:GRAFIK_LABELS[category],subs:grafikSubcategories(category)}));
+            return ["haushalt","freizeit","fixkosten","versicherungen","einnahmen","reisen","geplant","sparen"].map(category=>({category,label:context.session.GRAFIK_LABELS[category],subs:grafikSubcategories(category)}));
         }
 
         function grafikRenderCompareSelection(){
             const host=document.getElementById("grafikCompareSelection"); if(!host)return;
             host.innerHTML=grafikCompareGroups().map(g=>{
-                const totalKey=`${g.category}|all`, totalChecked=grafikCompareSelection.has(totalKey);
-                const subRows=g.subs.map(sub=>{const key=`${g.category}|${sub}`;return `<label class="grafik-compare-option"><input type="checkbox" ${grafikCompareSelection.has(key)?"checked":""} onchange='grafikCompareChoose(${escapeHtml(JSON.stringify(g.category))},${escapeHtml(JSON.stringify(sub))},this.checked)'><span>${escapeHtml(sub)}</span></label>`;}).join("");
-                const selectedCount=[...grafikCompareSelection].filter(k=>k.startsWith(g.category+"|")).length;
-                return `<div class="grafik-compare-group"><div class="grafik-compare-group-head" onclick='grafikToggleCompareGroup(${escapeHtml(JSON.stringify(g.category))})'><div><div class="grafik-compare-group-title">${escapeHtml(g.label)}</div><div class="grafik-compare-group-count">${selectedCount?selectedCount+" ausgewählt":"nichts ausgewählt"}</div></div><span id="grafikCompareChevron-${g.category}">⌄</span></div><div id="grafikCompareOptions-${g.category}" class="grafik-compare-options hidden"><label class="grafik-compare-option"><input type="checkbox" ${totalChecked?"checked":""} onchange='grafikCompareChoose(${escapeHtml(JSON.stringify(g.category))},"all",this.checked)'><span>Gesamt</span></label>${subRows}</div></div>`;
+                const totalKey=`${g.category}|all`, totalChecked=context.session.grafikCompareSelection.has(totalKey);
+                const subRows=g.subs.map(sub=>{const key=`${g.category}|${sub}`;return `<label class="grafik-compare-option"><input type="checkbox" ${context.session.grafikCompareSelection.has(key)?"checked":""} onchange='grafikCompareChoose(${dependencies.escapeHtml(JSON.stringify(g.category))},${dependencies.escapeHtml(JSON.stringify(sub))},this.checked)'><span>${dependencies.escapeHtml(sub)}</span></label>`;}).join("");
+                const selectedCount=[...context.session.grafikCompareSelection].filter(k=>k.startsWith(g.category+"|")).length;
+                return `<div class="grafik-compare-group"><div class="grafik-compare-group-head" onclick='grafikToggleCompareGroup(${dependencies.escapeHtml(JSON.stringify(g.category))})'><div><div class="grafik-compare-group-title">${dependencies.escapeHtml(g.label)}</div><div class="grafik-compare-group-count">${selectedCount?selectedCount+" ausgewählt":"nichts ausgewählt"}</div></div><span id="grafikCompareChevron-${g.category}">⌄</span></div><div id="grafikCompareOptions-${g.category}" class="grafik-compare-options hidden"><label class="grafik-compare-option"><input type="checkbox" ${totalChecked?"checked":""} onchange='grafikCompareChoose(${dependencies.escapeHtml(JSON.stringify(g.category))},"all",this.checked)'><span>Gesamt</span></label>${subRows}</div></div>`;
             }).join("");
         }
 
@@ -205,10 +240,10 @@
         function grafikCompareChoose(category,sub,checked){
             const key=`${category}|${sub}`;
             if(checked){
-                if(sub==="all"){[...grafikCompareSelection].filter(k=>k.startsWith(category+"|")).forEach(k=>grafikCompareSelection.delete(k));}
-                else grafikCompareSelection.delete(`${category}|all`);
-                grafikCompareSelection.add(key);
-            } else grafikCompareSelection.delete(key);
+                if(sub==="all"){[...context.session.grafikCompareSelection].filter(k=>k.startsWith(category+"|")).forEach(k=>context.session.grafikCompareSelection.delete(k));}
+                else context.session.grafikCompareSelection.delete(`${category}|all`);
+                context.session.grafikCompareSelection.add(key);
+            } else context.session.grafikCompareSelection.delete(key);
             grafikRenderCompareSelection();
             const options=document.getElementById(`grafikCompareOptions-${category}`); if(options)options.classList.remove("hidden");
             const ch=document.getElementById(`grafikCompareChevron-${category}`); if(ch)ch.textContent="⌃";
@@ -217,14 +252,14 @@
 
         function grafikCompareRows(rangeA,rangeB){
             const rows=[];
-            for(const key of grafikCompareSelection){
+            for(const key of context.session.grafikCompareSelection){
                 const [category,...subParts]=key.split("|"), sub=subParts.join("|")||"all";
                 let a=grafikEntries(category,rangeA.start,rangeA.ende), b=grafikEntries(category,rangeB.start,rangeB.ende);
                 if(sub!=="all"){
                     const match=e=>category==="sparen"?((sub==="Sparen"&&e.sub==="sparen")||(sub==="Investieren"&&e.sub==="investieren")):e.sub===sub;
                     a=a.filter(match); b=b.filter(match);
                 }
-                rows.push({label:sub==="all"?GRAFIK_LABELS[category]:`${GRAFIK_LABELS[category]} · ${sub}`,a:a.reduce((sum,e)=>sum+e.value,0),b:b.reduce((sum,e)=>sum+e.value,0)});
+                rows.push({label:sub==="all"?context.session.GRAFIK_LABELS[category]:`${context.session.GRAFIK_LABELS[category]} · ${sub}`,a:a.reduce((sum,e)=>sum+e.value,0),b:b.reduce((sum,e)=>sum+e.value,0)});
             }
             return rows.filter(r=>r.a>0||r.b>0);
         }
@@ -234,16 +269,16 @@
             if(!rows.length){chart.innerHTML=`<div class="grafik-empty">Für diese Auswahl gibt es in beiden Zeiträumen noch keine passenden Daten.</div>`;legend.innerHTML="";return;}
             const W=340,rowH=58,padL=118,padR=10,padT=10,padB=10,H=Math.max(220,padT+rows.length*rowH+padB),innerW=W-padL-padR,max=Math.max(1,...rows.flatMap(r=>[r.a,r.b]));
             let svg=`<svg class="grafik-svg" style="height:${H}px" viewBox="0 0 ${W} ${H}" role="img">`;
-            rows.forEach((r,i)=>{const y=padT+i*rowH,labelY=y+27,aW=(r.a/max)*innerW,bW=(r.b/max)*innerW;svg+=`<text class="grafik-axis-label" x="0" y="${labelY}" text-anchor="start">${grafikEscapeXml(grafikShortLabel(r.label,17))}</text><rect x="${padL}" y="${y+5}" width="${aW}" height="17" rx="5" fill="${GRAFIK_COLORS[0]}"/><rect x="${padL}" y="${y+31}" width="${bW}" height="17" rx="5" fill="${GRAFIK_COLORS[1]}"/>`;});
+            rows.forEach((r,i)=>{const y=padT+i*rowH,labelY=y+27,aW=(r.a/max)*innerW,bW=(r.b/max)*innerW;svg+=`<text class="grafik-axis-label" x="0" y="${labelY}" text-anchor="start">${grafikEscapeXml(grafikShortLabel(r.label,17))}</text><rect x="${padL}" y="${y+5}" width="${aW}" height="17" rx="5" fill="${context.session.GRAFIK_COLORS[0]}"/><rect x="${padL}" y="${y+31}" width="${bW}" height="17" rx="5" fill="${context.session.GRAFIK_COLORS[1]}"/>`;});
             svg+=`</svg>`;chart.innerHTML=svg;
-            legend.innerHTML=`<div class="grafik-compare-legend" style="grid-column:1/-1"><span><i class="grafik-compare-swatch" style="background:${GRAFIK_COLORS[0]}"></i>A · ${escapeHtml(rangeA.label)}</span><span><i class="grafik-compare-swatch" style="background:${GRAFIK_COLORS[1]}"></i>B · ${escapeHtml(rangeB.label)}</span></div>`;
+            legend.innerHTML=`<div class="grafik-compare-legend" style="grid-column:1/-1"><span><i class="grafik-compare-swatch" style="background:${context.session.GRAFIK_COLORS[0]}"></i>A · ${dependencies.escapeHtml(rangeA.label)}</span><span><i class="grafik-compare-swatch" style="background:${context.session.GRAFIK_COLORS[1]}"></i>B · ${dependencies.escapeHtml(rangeB.label)}</span></div>`;
         }
 
         function grafikCategoryChanged(doRender=true){
             const category=document.getElementById("grafikCategory")?.value||"all", wrap=document.getElementById("grafikSubcategoryWrap"), select=document.getElementById("grafikSubcategory");
             const subs=grafikSubcategories(category), showSubs=category!=="all"&&subs.length>0;
             wrap?.classList.toggle("hidden",!showSubs);
-            if(select&&showSubs){const old=select.value;select.innerHTML=`<option value="all">Alle Unterkategorien</option>`+subs.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join("");if([...select.options].some(o=>o.value===old))select.value=old;}
+            if(select&&showSubs){const old=select.value;select.innerHTML=`<option value="all">Alle Unterkategorien</option>`+subs.map(x=>`<option value="${dependencies.escapeHtml(x)}">${dependencies.escapeHtml(x)}</option>`).join("");if([...select.options].some(o=>o.value===old))select.value=old;}
             if(doRender)renderGrafik();
         }
 
@@ -253,9 +288,9 @@
         }
 
         function grafikPrevRange(range){
-            if(grafikRangeType==="month")return {start:new Date(range.start.getFullYear(),range.start.getMonth()-1,1),ende:new Date(range.start.getFullYear(),range.start.getMonth(),0)};
-            if(grafikRangeType==="salary"){const p=grafikSalaryPeriodForDate(addDays(range.start,-1));return {start:p.start,ende:p.ende};}
-            const days=grafikDays(range.start,range.ende);return {start:addDays(range.start,-days),ende:addDays(range.start,-1)};
+            if(context.session.grafikRangeType==="month")return {start:new Date(range.start.getFullYear(),range.start.getMonth()-1,1),ende:new Date(range.start.getFullYear(),range.start.getMonth(),0)};
+            if(context.session.grafikRangeType==="salary"){const p=grafikSalaryPeriodForDate(dependencies.addDays(range.start,-1));return {start:p.start,ende:p.ende};}
+            const days=grafikDays(range.start,range.ende);return {start:dependencies.addDays(range.start,-days),ende:dependencies.addDays(range.start,-1)};
         }
 
         function grafikFilteredEntries(category,range){
@@ -271,9 +306,9 @@
         function grafikRenderDonut(rows,total){
             const chart=document.getElementById("grafikChart"), legend=document.getElementById("grafikLegend"); if(!chart||!legend)return;
             if(!rows.length||total<=0){chart.innerHTML=`<div class="grafik-empty">Für diesen Zeitraum gibt es noch keine passenden Daten.</div>`;legend.innerHTML="";return;}
-            let p=0; const parts=rows.map((r,i)=>{const a=p,b=p+(r.value/total)*100;p=b;return `${GRAFIK_COLORS[i%GRAFIK_COLORS.length]} ${a}% ${b}%`;});
-            chart.innerHTML=`<div class="grafik-donut" style="background:conic-gradient(${parts.join(",")})"><div class="grafik-donut-center"><span>Gesamt</span><strong>${formatBetrag(total)}</strong></div></div>`;
-            legend.innerHTML=rows.map((r,i)=>`<div class="grafik-legend-item"><span class="grafik-dot" style="background:${GRAFIK_COLORS[i%GRAFIK_COLORS.length]}"></span><span class="grafik-legend-name">${escapeHtml(r.name)}</span><span class="grafik-legend-value">${formatBetrag(r.value)}</span></div>`).join("");
+            let p=0; const parts=rows.map((r,i)=>{const a=p,b=p+(r.value/total)*100;p=b;return `${context.session.GRAFIK_COLORS[i%context.session.GRAFIK_COLORS.length]} ${a}% ${b}%`;});
+            chart.innerHTML=`<div class="grafik-donut" style="background:conic-gradient(${parts.join(",")})"><div class="grafik-donut-center"><span>Gesamt</span><strong>${dependencies.formatBetrag(total)}</strong></div></div>`;
+            legend.innerHTML=rows.map((r,i)=>`<div class="grafik-legend-item"><span class="grafik-dot" style="background:${context.session.GRAFIK_COLORS[i%context.session.GRAFIK_COLORS.length]}"></span><span class="grafik-legend-name">${dependencies.escapeHtml(r.name)}</span><span class="grafik-legend-value">${dependencies.formatBetrag(r.value)}</span></div>`).join("");
         }
 
         function grafikMonthlySeries(category,range){
@@ -310,7 +345,7 @@
             if(document.getElementById("grafikView")?.classList.contains("hidden"))return;
             const titleEl=document.getElementById("grafikTitle"), subtitle=document.getElementById("grafikSubtitle"), totalEl=document.getElementById("grafikTotal"), stats=document.getElementById("grafikStats");
 
-            if(grafikCompareMode){
+            if(context.session.grafikCompareMode){
                 const rangeA=grafikReadCompareRange("A"), rangeB=grafikReadCompareRange("B");
                 if(!rangeA||!rangeB){
                     if(titleEl)titleEl.textContent="Zeiträume vergleichen";
@@ -327,9 +362,9 @@
                 grafikRenderCompareBars(rows,rangeA,rangeB);
                 const pctText=pct===null?"–":`${pct>0?"+":""}${pct.toLocaleString("de-DE",{maximumFractionDigits:1})} %`;
                 if(stats)stats.innerHTML=`
-                    <div class="grafik-stat"><div class="grafik-stat-label">Zeitraum A</div><div class="grafik-stat-value">${formatBetrag(totalA)}</div></div>
-                    <div class="grafik-stat"><div class="grafik-stat-label">Zeitraum B</div><div class="grafik-stat-value">${formatBetrag(totalB)}</div></div>
-                    <div class="grafik-stat"><div class="grafik-stat-label">Unterschied</div><div class="grafik-stat-value">${diff>0?"+":""}${formatBetrag(diff)}</div></div>
+                    <div class="grafik-stat"><div class="grafik-stat-label">Zeitraum A</div><div class="grafik-stat-value">${dependencies.formatBetrag(totalA)}</div></div>
+                    <div class="grafik-stat"><div class="grafik-stat-label">Zeitraum B</div><div class="grafik-stat-value">${dependencies.formatBetrag(totalB)}</div></div>
+                    <div class="grafik-stat"><div class="grafik-stat-label">Unterschied</div><div class="grafik-stat-value">${diff>0?"+":""}${dependencies.formatBetrag(diff)}</div></div>
                     <div class="grafik-stat"><div class="grafik-stat-label">Unterschied in %</div><div class="grafik-stat-value">${pctText}</div></div>`;
                 return;
             }
@@ -338,18 +373,21 @@
             let total=0, rows=[];
             if(category==="all"){rows=grafikCategoryTotals(range.start,range.ende);total=rows.reduce((s,x)=>s+x.value,0);}
             else {const entries=grafikFilteredEntries(category,range);total=entries.reduce((s,e)=>s+e.value,0);rows=grafikGroup(entries);}
-            const selectedLabel=category==="all"?"Alle Kategorien":GRAFIK_LABELS[category]+(sub!=="all"?` · ${sub}`:"");
+            const selectedLabel=category==="all"?"Alle Kategorien":context.session.GRAFIK_LABELS[category]+(sub!=="all"?` · ${sub}`:"");
             if(titleEl)titleEl.textContent=category==="einnahmen"?"Einnahmen":category==="all"?"Finanzübersicht":selectedLabel;
             if(subtitle)subtitle.textContent=range.label;
-            if(totalEl)totalEl.innerHTML=formatBetrag(total);
+            if(totalEl)totalEl.innerHTML=dependencies.formatBetrag(total);
 
             const days=grafikDays(range.start,range.ende), months=(range.ende.getFullYear()-range.start.getFullYear())*12+range.ende.getMonth()-range.start.getMonth()+1;
-            if(grafikRangeType==="custom"&&months>=3){const series=grafikMonthlySeries(category,range); if(months>=7)grafikRenderLine(series);else grafikRenderBars(series);}
+            if(context.session.grafikRangeType==="custom"&&months>=3){const series=grafikMonthlySeries(category,range); if(months>=7)grafikRenderLine(series);else grafikRenderBars(series);}
             else grafikRenderDonut(rows,total);
 
             const biggest=rows[0]?.name||"–";
             if(stats)stats.innerHTML=`
-                <div class="grafik-stat"><div class="grafik-stat-label">Gesamt</div><div class="grafik-stat-value">${formatBetrag(total)}</div></div>
-                <div class="grafik-stat"><div class="grafik-stat-label">Ø pro Tag</div><div class="grafik-stat-value">${formatBetrag(total/days)}</div></div>
-                <div class="grafik-stat"><div class="grafik-stat-label">${category==="all"?"Größte Kategorie":"Größter Anteil"}</div><div class="grafik-stat-value">${escapeHtml(biggest)}</div></div>`;
+                <div class="grafik-stat"><div class="grafik-stat-label">Gesamt</div><div class="grafik-stat-value">${dependencies.formatBetrag(total)}</div></div>
+                <div class="grafik-stat"><div class="grafik-stat-label">Ø pro Tag</div><div class="grafik-stat-value">${dependencies.formatBetrag(total/days)}</div></div>
+                <div class="grafik-stat"><div class="grafik-stat-label">${category==="all"?"Größte Kategorie":"Größter Anteil"}</div><div class="grafik-stat-value">${dependencies.escapeHtml(biggest)}</div></div>`;
         }
+
+return { grafikSetRange, grafikSalaryPeriodForDate, grafikPopulateSalaryPeriods, initGrafik, grafikGetRange, grafikDays, grafikEntry, grafikTravelEntries, grafikSavingsEntries, grafikEntries, grafikCategoryTotals, grafikSubcategories, grafikInitCompareDates, grafikReadCompareRange, grafikSwapComparePeriods, grafikToggleCompare, grafikCompareGroups, grafikRenderCompareSelection, grafikToggleCompareGroup, grafikCompareChoose, grafikCompareRows, grafikRenderCompareBars, grafikCategoryChanged, grafikGroup, grafikPrevRange, grafikFilteredEntries, grafikEscapeXml, grafikShortLabel, grafikRenderDonut, grafikMonthlySeries, grafikRenderBars, grafikRenderLine, renderGrafik };
+});
