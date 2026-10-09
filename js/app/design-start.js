@@ -4,7 +4,7 @@
             let mode = "system";
             let saved = null;
             try {
-                saved = JSON.parse(localStorage.getItem("kostenApp_test") || "null");
+                saved = JSON.parse(localStorage.getItem(Kostentracker.storage.key) || "null");
                 const candidate = saved?.Einstellungen?.designModus;
                 if (["dunkel", "hell", "system"].includes(candidate)) mode = candidate;
             } catch (_) {}
