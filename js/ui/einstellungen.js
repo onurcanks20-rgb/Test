@@ -1,9 +1,29 @@
+Kostentracker.module({
+  "id": "js/ui/einstellungen.js",
+  "dependencies": [
+    "setBackupStatus",
+    "show",
+    "speichern"
+  ],
+  "session": [
+    "DEFAULT_ACTION_COLOR",
+    "DEFAULT_ACTION_COLORS"
+  ],
+  "read": [
+    "Einstellungen"
+  ],
+  "write": [
+    "Einstellungen"
+  ],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/ui/einstellungen.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function getDesignMode() {
-            daten.Einstellungen ??= {};
-            return ["dunkel", "hell", "system"].includes(daten.Einstellungen.designModus) ? daten.Einstellungen.designModus : "system";
+            context.repository.view.Einstellungen ??= {};
+            return ["dunkel", "hell", "system"].includes(context.repository.view.Einstellungen.designModus) ? context.repository.view.Einstellungen.designModus : "system";
         }
 
         function resolveDesignTheme(mode = getDesignMode()) {
@@ -26,25 +46,25 @@
 
         function setDesignMode(mode) {
             if (!["dunkel", "hell", "system"].includes(mode)) return;
-            daten.Einstellungen ??= {};
-            daten.Einstellungen.designModus = mode;
-            if (speichern() === false) return;
+            context.repository.view.Einstellungen ??= {};
+            context.repository.view.Einstellungen.designModus = mode;
+            if (dependencies.speichern() === false) return;
             applyDesignTheme();
         }
 
         function normalizeActionColor(value) {
             const color = String(value || "").trim();
-            return /^#[0-9a-fA-F]{6}$/.test(color) ? color.toLowerCase() : DEFAULT_ACTION_COLOR;
+            return /^#[0-9a-fA-F]{6}$/.test(color) ? color.toLowerCase() : context.session.DEFAULT_ACTION_COLOR;
         }
 
         function getActionColors() {
-            daten.Einstellungen ??= {};
-            const src = daten.Einstellungen.aktionsfarben || {};
+            context.repository.view.Einstellungen ??= {};
+            const src = context.repository.view.Einstellungen.aktionsfarben || {};
             return {
-                hinzufuegen: normalizeActionColor(src.hinzufuegen || DEFAULT_ACTION_COLORS.hinzufuegen),
-                bearbeiten: normalizeActionColor(src.bearbeiten || DEFAULT_ACTION_COLORS.bearbeiten),
-                verschieben: normalizeActionColor(src.verschieben || DEFAULT_ACTION_COLORS.verschieben),
-                schalter: normalizeActionColor(src.schalter || DEFAULT_ACTION_COLORS.schalter)
+                hinzufuegen: normalizeActionColor(src.hinzufuegen || context.session.DEFAULT_ACTION_COLORS.hinzufuegen),
+                bearbeiten: normalizeActionColor(src.bearbeiten || context.session.DEFAULT_ACTION_COLORS.bearbeiten),
+                verschieben: normalizeActionColor(src.verschieben || context.session.DEFAULT_ACTION_COLORS.verschieben),
+                schalter: normalizeActionColor(src.schalter || context.session.DEFAULT_ACTION_COLORS.schalter)
             };
         }
 
@@ -91,12 +111,12 @@
         }
 
         function saveActionColorsFromInputs() {
-            daten.Einstellungen ??= {};
+            context.repository.view.Einstellungen ??= {};
             const colors = readActionColorInputs();
-            daten.Einstellungen.aktionsfarben = colors;
-            delete daten.Einstellungen.aktionsfarbenModus;
-            delete daten.Einstellungen.akzentfarbe;
-            if (speichern() === false) return;
+            context.repository.view.Einstellungen.aktionsfarben = colors;
+            delete context.repository.view.Einstellungen.aktionsfarbenModus;
+            delete context.repository.view.Einstellungen.akzentfarbe;
+            if (dependencies.speichern() === false) return;
             applyActionColors(colors);
             renderDesignSettings();
             setActionColorStatus("Gespeichert ✓");
@@ -107,15 +127,15 @@
         function saveActionColor(key, value) { previewActionColor(key, value); }
 
         function resetActionColors() {
-            daten.Einstellungen ??= {};
-            const defaults = { ...DEFAULT_ACTION_COLORS };
-            daten.Einstellungen.aktionsfarben = defaults;
-            delete daten.Einstellungen.aktionsfarbenModus;
-            delete daten.Einstellungen.akzentfarbe;
-            if (speichern() === false) return;
+            context.repository.view.Einstellungen ??= {};
+            const defaults = { ...context.session.DEFAULT_ACTION_COLORS };
+            context.repository.view.Einstellungen.aktionsfarben = defaults;
+            delete context.repository.view.Einstellungen.aktionsfarbenModus;
+            delete context.repository.view.Einstellungen.akzentfarbe;
+            if (dependencies.speichern() === false) return;
             applyActionColors(defaults);
             [
-                ["actionColorCommon", DEFAULT_ACTION_COLOR],
+                ["actionColorCommon", context.session.DEFAULT_ACTION_COLOR],
                 ["actionColorAdd", defaults.hinzufuegen],
                 ["actionColorEdit", defaults.bearbeiten],
                 ["actionColorMove", defaults.verschieben],
@@ -129,7 +149,7 @@
             applyActionColors();
             const colors = getActionColors();
             const values = {
-                actionColorCommon: (colors.hinzufuegen === colors.bearbeiten && colors.hinzufuegen === colors.verschieben && colors.hinzufuegen === colors.schalter) ? colors.hinzufuegen : DEFAULT_ACTION_COLOR,
+                actionColorCommon: (colors.hinzufuegen === colors.bearbeiten && colors.hinzufuegen === colors.verschieben && colors.hinzufuegen === colors.schalter) ? colors.hinzufuegen : context.session.DEFAULT_ACTION_COLOR,
                 actionColorAdd: colors.hinzufuegen,
                 actionColorEdit: colors.bearbeiten,
                 actionColorMove: colors.verschieben,
@@ -156,6 +176,9 @@
         }
 
         function openSettingsBackup() {
-            show("settingsBackupView");
-            setBackupStatus("");
+            dependencies.show("settingsBackupView");
+            dependencies.setBackupStatus("");
         }
+
+return { getDesignMode, resolveDesignTheme, applyDesignTheme, setDesignMode, normalizeActionColor, getActionColors, applyActionColors, setActionColorStatus, readActionColorInputs, previewCommonActionColor, previewActionColor, saveActionColorsFromInputs, saveCommonActionColor, saveActionColor, resetActionColors, renderDesignSettings, renderDesignMenuStatus, openSettingsBackup };
+});

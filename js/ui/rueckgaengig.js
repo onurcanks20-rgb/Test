@@ -1,12 +1,45 @@
+Kostentracker.module({
+  "id": "js/ui/rueckgaengig.js",
+  "dependencies": [
+    "renderAusgabenArchiv",
+    "renderEinnahmen",
+    "renderFreizeit",
+    "renderGeplanteAusgaben",
+    "renderGlobalArchiv",
+    "renderHaushalt",
+    "renderHomeUebersicht",
+    "renderLaender",
+    "renderLaufendeKosten",
+    "renderListe",
+    "renderSparenInvestieren",
+    "renderVersicherungen",
+    "speichern"
+  ],
+  "session": [
+    "aktuellesLand"
+  ],
+  "read": [
+    "*"
+  ],
+  "write": [
+    "*"
+  ],
+  "replace": true
+}, (context, dependencies) => {
+"use strict";
+let undoDeleteState = null, undoDeleteTimer = null, undoBatchDepth = 0;
+function beginUndoBatch(label) { if (!undoBatchDepth) beginUndoDelete(label); undoBatchDepth++; }
+function finishUndoBatch(label) { if (undoBatchDepth) undoBatchDepth--; if (!undoBatchDepth) finishUndoDelete(label); }
 // Kostentracker Test: js/ui/rueckgaengig.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function cloneDatenForUndo() {
-            try { return structuredClone(daten); }
-            catch (_) { return JSON.parse(JSON.stringify(daten)); }
+            try { return context.clone(context.repository.view); }
+            catch (_) { return JSON.parse(JSON.stringify(context.repository.view)); }
         }
 
         function beginUndoDelete(label = "Eintrag gelöscht") {
+            if (undoBatchDepth) return;
             undoDeleteState = { daten: cloneDatenForUndo(), danach: null, label };
         }
 
@@ -88,25 +121,29 @@
 
         function undoDelete() {
             if (!undoDeleteState?.danach) return;
-            daten = mergeUndoData(undoDeleteState.daten, undoDeleteState.danach, daten);
-            if (speichern() === false) return;
+            context.repository.view = mergeUndoData(undoDeleteState.daten, undoDeleteState.danach, context.repository.view);
+            if (dependencies.speichern() === false) return;
             clearUndoDelete();
-            renderHomeUebersicht();
-            renderHaushalt();
-            renderFreizeit();
-            renderLaufendeKosten();
-            renderVersicherungen();
-            renderEinnahmen();
-            renderLaender();
-            if (aktuellesLand && daten.Reisen?.[aktuellesLand]) renderListe();
-            if (!document.getElementById("ausgabenArchivView")?.classList.contains("hidden")) renderAusgabenArchiv();
-            if (!document.getElementById("globalArchivView")?.classList.contains("hidden")) renderGlobalArchiv();
-            if (!document.getElementById("geplanteAusgabenView")?.classList.contains("hidden")) renderGeplanteAusgaben();
-            if (!document.getElementById("sparenInvestierenView")?.classList.contains("hidden")) renderSparenInvestieren();
+            dependencies.renderHomeUebersicht();
+            dependencies.renderHaushalt();
+            dependencies.renderFreizeit();
+            dependencies.renderLaufendeKosten();
+            dependencies.renderVersicherungen();
+            dependencies.renderEinnahmen();
+            dependencies.renderLaender();
+            if (context.session.aktuellesLand && context.repository.view.Reisen?.[context.session.aktuellesLand]) dependencies.renderListe();
+            if (!document.getElementById("ausgabenArchivView")?.classList.contains("hidden")) dependencies.renderAusgabenArchiv();
+            if (!document.getElementById("globalArchivView")?.classList.contains("hidden")) dependencies.renderGlobalArchiv();
+            if (!document.getElementById("geplanteAusgabenView")?.classList.contains("hidden")) dependencies.renderGeplanteAusgaben();
+            if (!document.getElementById("sparenInvestierenView")?.classList.contains("hidden")) dependencies.renderSparenInvestieren();
         }
 
         function finishUndoDelete(label) {
+            if (undoBatchDepth) return;
             if (!undoDeleteState) return;
             undoDeleteState.danach = cloneDatenForUndo();
             showUndoDelete(label);
         }
+
+return { beginUndoBatch, finishUndoBatch, cloneDatenForUndo, beginUndoDelete, showUndoDelete, mergeUndoData, clearUndoDelete, undoDelete, finishUndoDelete };
+});

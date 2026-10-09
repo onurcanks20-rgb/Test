@@ -1,5 +1,31 @@
+Kostentracker.module({
+  "id": "js/ui/formulare.js",
+  "dependencies": [
+    "addEinnahme",
+    "addEintrag",
+    "addFreizeit",
+    "addHaushalt",
+    "addKosten",
+    "addLand",
+    "addVersicherung",
+    "safeId",
+    "saveEditFreizeit",
+    "saveEditHaushalt",
+    "saveEditKategorie",
+    "saveEditKosten",
+    "saveEditLand",
+    "saveEditReise",
+    "saveEditVersicherung",
+    "saveQuickAdd"
+  ],
+  "session": [],
+  "read": [],
+  "write": [],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/ui/formulare.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function enterToNext(current, next) {
             if (!current || !next) return;
@@ -36,12 +62,12 @@
 
         function setupUniversalAddEnterFlow(panelId) {
             const flows = {
-                reisenAddPanel: { ids: ["landInput"], submit: () => addLand() },
-                versAddPanel: { ids: ["versName","versBetrag","versDatum","versAnbieter","versNummer","versIntervall","versMonat"], submit: () => addVersicherung() },
-                hausAddPanel: { ids: ["hausBetrag","hausText","hausDatum"], submit: () => addHaushalt() },
-                freizeitAddPanel: { ids: ["freizeitBetrag","freizeitText","freizeitDatum"], submit: () => addFreizeit() },
-                einnahmenAddPanel: { ids: ["einnahmenText","einnahmenBetrag","einnahmenVon","einnahmenDatum","einnahmenWiederholung"], submit: () => addEinnahme() },
-                kostenAddPanel: { ids: ["costText","costBetrag","costInfo","costHaendler","costZuordnungTage","costDatum"], submit: () => addKosten() }
+                reisenAddPanel: { ids: ["landInput"], submit: () => dependencies.addLand() },
+                versAddPanel: { ids: ["versName","versBetrag","versDatum","versAnbieter","versNummer","versIntervall","versMonat"], submit: () => dependencies.addVersicherung() },
+                hausAddPanel: { ids: ["hausBetrag","hausText","hausDatum"], submit: () => dependencies.addHaushalt() },
+                freizeitAddPanel: { ids: ["freizeitBetrag","freizeitText","freizeitDatum"], submit: () => dependencies.addFreizeit() },
+                einnahmenAddPanel: { ids: ["einnahmenText","einnahmenBetrag","einnahmenVon","einnahmenDatum","einnahmenWiederholung"], submit: () => dependencies.addEinnahme() },
+                kostenAddPanel: { ids: ["costText","costBetrag","costInfo","costHaendler","costZuordnungTage","costDatum"], submit: () => dependencies.addKosten() }
             };
             const flow = flows[panelId];
             if (!flow) return null;
@@ -50,7 +76,7 @@
 
         function setupReisenEnterFlow() {
             const first = setupEnterSequence(["betrag", "text", "datum"], () => {
-                addEintrag();
+                dependencies.addEintrag();
                 setTimeout(() => document.getElementById("betrag")?.focus(), 50);
             });
             if (first) document.getElementById(first)?.focus();
@@ -68,7 +94,7 @@
             text.onkeydown = (e) => {
                 if (e.key === "Enter") {
                     e.preventDefault();
-                    saveQuickAdd();
+                    dependencies.saveQuickAdd();
                     setTimeout(() => betrag.focus(), 10);
                 }
             };
@@ -77,24 +103,24 @@
         }
 
         function setupReiseEditEnterFlow(id) {
-            const first = setupEnterSequence(["editBetrag-" + id, "editText-" + id, "editDatum-" + id], () => saveEditReise(id));
+            const first = setupEnterSequence(["editBetrag-" + id, "editText-" + id, "editDatum-" + id], () => dependencies.saveEditReise(id));
             if (first) document.getElementById(first)?.focus();
         }
 
         function setupLandEnter() {
-            const first = setupEnterSequence(["landInput", "landBudget", "landVon", "landBis"], () => addLand());
+            const first = setupEnterSequence(["landInput", "landBudget", "landVon", "landBis"], () => dependencies.addLand());
             if (first) document.getElementById(first)?.focus();
         }
 
         function setupLandEditEnterFlow(name) {
 
-            const input = document.getElementById("editLand-" + safeId(name));
+            const input = document.getElementById("editLand-" + dependencies.safeId(name));
             if (!input) return;
 
             input.onkeydown = (e) => {
                 if (e.key === "Enter") {
                     e.preventDefault();
-                    saveEditLand(name);
+                    dependencies.saveEditLand(name);
                 }
             };
 
@@ -103,14 +129,14 @@
 
         function setupKategorieEditEnterFlow(name) {
 
-            const input = document.getElementById("editKategorie-" + safeId(name));
+            const input = document.getElementById("editKategorie-" + dependencies.safeId(name));
 
             if (!input) return;
 
             input.onkeydown = (e) => {
                 if (e.key === "Enter") {
                     e.preventDefault();
-                    saveEditKategorie(name);
+                    dependencies.saveEditKategorie(name);
                 }
             };
 
@@ -135,7 +161,7 @@
             nummer.onkeydown = (e) => {
                 if (e.key === "Enter") {
                     e.preventDefault();
-                    addVersicherung();
+                    dependencies.addVersicherung();
                     name.focus();
                 }
             };
@@ -159,7 +185,7 @@
             nummer.onkeydown = (e) => {
                 if (e.key === "Enter") {
                     e.preventDefault();
-                    saveEditVersicherung(id);
+                    dependencies.saveEditVersicherung(id);
                 }
             };
 
@@ -167,22 +193,22 @@
         }
 
         function setupHaushaltEnterFlow() {
-            const first = setupEnterSequence(["hausBetrag", "hausText", "hausDatum"], () => addHaushalt());
+            const first = setupEnterSequence(["hausBetrag", "hausText", "hausDatum"], () => dependencies.addHaushalt());
             if (first) document.getElementById(first)?.focus();
         }
 
         function setupFreizeitEnterFlow() {
-            const first = setupEnterSequence(["freizeitBetrag", "freizeitText", "freizeitDatum"], () => addFreizeit());
+            const first = setupEnterSequence(["freizeitBetrag", "freizeitText", "freizeitDatum"], () => dependencies.addFreizeit());
             if (first) document.getElementById(first)?.focus();
         }
 
         function setupFreizeitEditEnterFlow(id) {
-            const first = setupEnterSequence(["editFreizeitBetrag-" + id, "editFreizeitText-" + id, "editFreizeitDatum-" + id], () => saveEditFreizeit(id));
+            const first = setupEnterSequence(["editFreizeitBetrag-" + id, "editFreizeitText-" + id, "editFreizeitDatum-" + id], () => dependencies.saveEditFreizeit(id));
             if (first) document.getElementById(first)?.focus();
         }
 
         function setupHaushaltEditEnterFlow(id) {
-            const first = setupEnterSequence(["editBetrag-" + id, "editText-" + id, "editDatum-" + id], () => saveEditHaushalt(id));
+            const first = setupEnterSequence(["editBetrag-" + id, "editText-" + id, "editDatum-" + id], () => dependencies.saveEditHaushalt(id));
             if (first) document.getElementById(first)?.focus();
         }
 
@@ -206,7 +232,7 @@
             datum.onkeydown = (e) => {
                 if (e.key === "Enter") {
                     e.preventDefault();
-                    addKosten();
+                    dependencies.addKosten();
                     text.focus();
                 }
             };
@@ -234,9 +260,12 @@
             datum.onkeydown = (e) => {
                 if (e.key === "Enter") {
                     e.preventDefault();
-                    saveEditKosten(id);
+                    dependencies.saveEditKosten(id);
                 }
             };
 
             text.focus();
         }
+
+return { enterToNext, setupEnterSequence, setupUniversalAddEnterFlow, setupReisenEnterFlow, setupQuickAddEnterFlow, setupReiseEditEnterFlow, setupLandEnter, setupLandEditEnterFlow, setupKategorieEditEnterFlow, setupVersicherungEnterFlow, setupVersicherungEditEnterFlow, setupHaushaltEnterFlow, setupFreizeitEnterFlow, setupFreizeitEditEnterFlow, setupHaushaltEditEnterFlow, setupKostenEnterFlow, setupKostenEditEnterFlow };
+});

@@ -1,23 +1,62 @@
+Kostentracker.module({
+  "id": "js/ui/schnelleingabe.js",
+  "dependencies": [
+    "addKategorie",
+    "formatInputBetrag",
+    "generateId",
+    "getAktuellerMonat",
+    "heuteISO",
+    "openReisen",
+    "parseBetrag",
+    "renderHomeUebersicht",
+    "renderListe",
+    "resetAddReminderForPanel",
+    "setupQuickAddEnterFlow",
+    "setupUniversalAddEnterFlow",
+    "speichern",
+    "updateDropdown"
+  ],
+  "session": [
+    "QUICK_ADD_DEFAULT",
+    "QUICK_ADD_OPTIONEN",
+    "aktuellesLand",
+    "quickKategorie",
+    "startQuickAddContext",
+    "state"
+  ],
+  "read": [
+    "Einstellungen",
+    "Reisen",
+    "ReisenMeta"
+  ],
+  "write": [
+    "Einstellungen",
+    "Reisen",
+    "ReisenMeta"
+  ],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/ui/schnelleingabe.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function getQuickAddFavoriten() {
-            daten.Einstellungen ??= {};
-            if (!Array.isArray(daten.Einstellungen.quickAddFavoriten)) daten.Einstellungen.quickAddFavoriten = [...QUICK_ADD_DEFAULT];
-            return daten.Einstellungen.quickAddFavoriten;
+            context.repository.view.Einstellungen ??= {};
+            if (!Array.isArray(context.repository.view.Einstellungen.quickAddFavoriten)) context.repository.view.Einstellungen.quickAddFavoriten = [...context.session.QUICK_ADD_DEFAULT];
+            return context.repository.view.Einstellungen.quickAddFavoriten;
         }
 
         function renderQuickAddMenu() {
             const host = document.getElementById("quickAddChoices");
             if (!host) return;
             host.innerHTML = "";
-            const favoriten = getQuickAddFavoriten().filter(key => QUICK_ADD_OPTIONEN[key]);
+            const favoriten = getQuickAddFavoriten().filter(key => context.session.QUICK_ADD_OPTIONEN[key]);
             if (!favoriten.length) {
                 host.innerHTML = '<div class="quick-add-empty">Keine Favoriten ausgewählt.<br>Du kannst sie unter Einstellungen → Schnelleingabe festlegen.</div>';
                 return;
             }
             favoriten.forEach(key => {
-                const option = QUICK_ADD_OPTIONEN[key];
+                const option = context.session.QUICK_ADD_OPTIONEN[key];
                 const btn = document.createElement("button");
                 btn.className = "add-choice";
                 btn.textContent = option.label;
@@ -38,10 +77,10 @@
 
         function getQuickAmounts() {
             const fallback = [5, 10, 20, 50];
-            const values = daten.Einstellungen?.schnellbetraege;
+            const values = context.repository.view.Einstellungen?.schnellbetraege;
             if (!Array.isArray(values) || values.length !== 4) return fallback;
             return values.map((wert, index) => {
-                const n = parseBetrag(wert);
+                const n = dependencies.parseBetrag(wert);
                 return Number.isFinite(n) && n > 0 ? n : fallback[index];
             });
         }
@@ -49,18 +88,18 @@
         function renderQuickAmountSettings() {
             getQuickAmounts().forEach((wert, index) => {
                 const input = document.getElementById(`quickAmount${index + 1}`);
-                if (input) input.value = formatInputBetrag(wert);
+                if (input) input.value = dependencies.formatInputBetrag(wert);
             });
         }
 
         function saveQuickAmounts() {
-            const values = [1,2,3,4].map(index => parseBetrag(document.getElementById(`quickAmount${index}`)?.value));
+            const values = [1,2,3,4].map(index => dependencies.parseBetrag(document.getElementById(`quickAmount${index}`)?.value));
             if (values.some(v => !Number.isFinite(v) || v <= 0)) {
                 alert("Bitte vier gültige Schnellbeträge größer als 0 eingeben.");
                 return;
             }
-            daten.Einstellungen.schnellbetraege = values;
-            if (speichern() === false) return;
+            context.repository.view.Einstellungen.schnellbetraege = values;
+            if (dependencies.speichern() === false) return;
             renderQuickAmountSettings();
         }
 
@@ -68,10 +107,10 @@
             const host = document.getElementById("quickAddSettingsList");
             if (!host) return;
             const aktiv = getQuickAddFavoriten();
-            const reihenfolge = [...aktiv, ...QUICK_ADD_DEFAULT.filter(key => !aktiv.includes(key))];
+            const reihenfolge = [...aktiv, ...context.session.QUICK_ADD_DEFAULT.filter(key => !aktiv.includes(key))];
             host.innerHTML = "";
             reihenfolge.forEach((key, index) => {
-                const option = QUICK_ADD_OPTIONEN[key];
+                const option = context.session.QUICK_ADD_OPTIONEN[key];
                 if (!option) return;
                 const row = document.createElement("div");
                 row.className = "quick-fav-row";
@@ -109,9 +148,9 @@
             if (aktivieren) {
                 if (!aktuell.includes(key)) aktuell.push(key);
             } else {
-                daten.Einstellungen.quickAddFavoriten = aktuell.filter(x => x !== key);
+                context.repository.view.Einstellungen.quickAddFavoriten = aktuell.filter(x => x !== key);
             }
-            if (speichern() === false) return;
+            if (dependencies.speichern() === false) return;
             renderQuickAddSettings();
         }
 
@@ -121,8 +160,8 @@
             const neu = index + richtung;
             if (index < 0 || neu < 0 || neu >= aktiv.length) return;
             [aktiv[index], aktiv[neu]] = [aktiv[neu], aktiv[index]];
-            daten.Einstellungen.quickAddFavoriten = aktiv;
-            if (speichern() === false) return;
+            context.repository.view.Einstellungen.quickAddFavoriten = aktiv;
+            if (dependencies.speichern() === false) return;
             renderQuickAddSettings();
         }
 
@@ -136,7 +175,7 @@
         }
 
         function prepareStartQuickAdd(panelId) {
-            const today = heuteISO();
+            const today = dependencies.heuteISO();
             const dateIds = {
                 hausAddPanel: "hausDatum",
                 freizeitAddPanel: "freizeitDatum",
@@ -149,7 +188,7 @@
             if (dateEl && !dateEl.value) dateEl.value = today;
             if (panelId === "versAddPanel") {
                 const monat = document.getElementById("versMonat");
-                if (monat) monat.value = String(getAktuellerMonat());
+                if (monat) monat.value = String(dependencies.getAktuellerMonat());
             }
             if (panelId === "hausAddPanel") applyLetzteAlltagsKategorie("haushalt");
             if (panelId === "freizeitAddPanel") applyLetzteAlltagsKategorie("freizeit");
@@ -204,7 +243,7 @@
             const sheet = document.getElementById("startQuickAddSheet");
             if (!panel || !host || !sheet) return;
 
-            startQuickAddContext = {
+            context.session.startQuickAddContext = {
                 panel,
                 parent: panel.parentNode,
                 nextSibling: panel.nextSibling
@@ -216,15 +255,15 @@
             sheet.classList.remove("hidden");
 
             setTimeout(() => {
-                setupUniversalAddEnterFlow(panelId);
+                dependencies.setupUniversalAddEnterFlow(panelId);
                 document.getElementById(focusId)?.focus();
             }, 80);
         }
 
         function closeStartQuickAdd() {
             const sheet = document.getElementById("startQuickAddSheet");
-            if (startQuickAddContext?.panel) {
-                const {panel, parent, nextSibling} = startQuickAddContext;
+            if (context.session.startQuickAddContext?.panel) {
+                const {panel, parent, nextSibling} = context.session.startQuickAddContext;
                 panel.querySelectorAll(".quick-amount-row").forEach(el => el.remove());
                 panel.classList.remove("quick-entry-mode");
                 panel.classList.add("hidden");
@@ -233,7 +272,7 @@
                     else parent.appendChild(panel);
                 }
             }
-            startQuickAddContext = null;
+            context.session.startQuickAddContext = null;
             sheet?.classList.add("hidden");
         }
 
@@ -248,10 +287,10 @@
             const choices = document.getElementById("reiseAuswahlChoices");
             if (!sheet || !choices) return;
 
-            const laender = Object.keys(daten.Reisen || {}).sort((a, b) => a.localeCompare(b, "de"));
-            const heute = heuteISO();
+            const laender = Object.keys(context.repository.view.Reisen || {}).sort((a, b) => a.localeCompare(b, "de"));
+            const heute = dependencies.heuteISO();
             const aktiveReisen = laender.filter(land => {
-                const meta = daten.ReisenMeta?.[land];
+                const meta = context.repository.view.ReisenMeta?.[land];
                 if (!meta?.von || !meta?.bis) return false;
                 return heute >= meta.von && heute <= meta.bis;
             });
@@ -259,8 +298,8 @@
             // Ist heute genau eine Reise aktiv, wird sie bei der Schnelleingabe
             // automatisch gewaehlt und die zusaetzliche Laenderauswahl uebersprungen.
             if (aktiveReisen.length === 1) {
-                aktuellesLand = aktiveReisen[0];
-                updateDropdown();
+                context.session.aktuellesLand = aktiveReisen[0];
+                dependencies.updateDropdown();
                 openStartQuickAdd("reiseAddPanel", "betrag");
                 setTimeout(() => applyLetzteReiseKategorie(true), 30);
                 return;
@@ -279,7 +318,7 @@
                 neu.textContent = "＋ Reise anlegen";
                 neu.addEventListener("click", () => {
                     closeReiseAuswahlSheet();
-                    openReisen();
+                    dependencies.openReisen();
                     toggleCategoryAdd("reisenAddPanel", "landInput");
                 });
                 choices.appendChild(neu);
@@ -290,8 +329,8 @@
                     btn.textContent = "✈️ " + land;
                     btn.addEventListener("click", () => {
                         closeReiseAuswahlSheet();
-                        aktuellesLand = land;
-                        updateDropdown();
+                        context.session.aktuellesLand = land;
+                        dependencies.updateDropdown();
                         openStartQuickAdd("reiseAddPanel", "betrag");
                         setTimeout(() => applyLetzteReiseKategorie(true), 30);
                     });
@@ -319,34 +358,34 @@
             closeCategoryAddPanels();
             if (wirdGeoeffnet) {
                 panel.classList.remove("hidden");
-                resetAddReminderForPanel(panelId);
+                dependencies.resetAddReminderForPanel(panelId);
                 prepareStartQuickAdd(panelId);
                 setTimeout(() => {
-                    const firstId = setupUniversalAddEnterFlow(panelId) || focusId;
+                    const firstId = dependencies.setupUniversalAddEnterFlow(panelId) || focusId;
                     document.getElementById(firstId)?.focus();
                 }, 80);
             }
         }
 
         function toggleFreiDetails() {
-            state.freiDetailsOffen = !state.freiDetailsOffen;
-            renderHomeUebersicht();
+            context.session.state.freiDetailsOffen = !context.session.state.freiDetailsOffen;
+            dependencies.renderHomeUebersicht();
         }
 
         function getLetzteKategorie(bereich, fallback) {
-            const lk = daten.Einstellungen?.letzteKategorien || {};
-            if (bereich === "reisen") return lk.reisen?.[aktuellesLand] || fallback;
+            const lk = context.repository.view.Einstellungen?.letzteKategorien || {};
+            if (bereich === "reisen") return lk.reisen?.[context.session.aktuellesLand] || fallback;
             return lk[bereich] || fallback;
         }
 
         function merkeLetzteKategorie(bereich, kategorie) {
-            daten.Einstellungen ??= {};
-            daten.Einstellungen.letzteKategorien ??= { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} };
+            context.repository.view.Einstellungen ??= {};
+            context.repository.view.Einstellungen.letzteKategorien ??= { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} };
             if (bereich === "reisen") {
-                daten.Einstellungen.letzteKategorien.reisen ??= {};
-                if (aktuellesLand) daten.Einstellungen.letzteKategorien.reisen[aktuellesLand] = kategorie;
+                context.repository.view.Einstellungen.letzteKategorien.reisen ??= {};
+                if (context.session.aktuellesLand) context.repository.view.Einstellungen.letzteKategorien.reisen[context.session.aktuellesLand] = kategorie;
             } else {
-                daten.Einstellungen.letzteKategorien[bereich] = kategorie;
+                context.repository.view.Einstellungen.letzteKategorien[bereich] = kategorie;
             }
         }
 
@@ -407,9 +446,9 @@
 
             div.innerHTML = "";
 
-            if (!aktuellesLand || !daten.Reisen?.[aktuellesLand]) return;
+            if (!context.session.aktuellesLand || !context.repository.view.Reisen?.[context.session.aktuellesLand]) return;
 
-            Object.keys(daten.Reisen[aktuellesLand]).forEach(k => {
+            Object.keys(context.repository.view.Reisen[context.session.aktuellesLand]).forEach(k => {
 
                 let btn = document.createElement("button");
                 btn.className = "quick-chip";
@@ -425,7 +464,7 @@
             addBtn.style.background = "#555";
 
             addBtn.onclick = () => {
-                addKategorie();
+                dependencies.addKategorie();
                 renderQuickAdd(); // ok, aber optional (siehe Hinweis unten)
             };
 
@@ -434,7 +473,7 @@
 
         function quickAdd(k) {
 
-            quickKategorie = k;
+            context.session.quickKategorie = k;
 
             const titel = document.getElementById("quickTitel");
             const box = document.getElementById("quickBox");
@@ -456,7 +495,7 @@
                 box.classList.add("show");
 
                 // optional: nur setzen, wenn nicht schon gesetzt
-                setupQuickAddEnterFlow();
+                dependencies.setupQuickAddEnterFlow();
 
                 betrag?.focus();
 
@@ -475,29 +514,29 @@
 
         function saveQuickAdd() {
 
-            if (!aktuellesLand || !quickKategorie) return;
+            if (!context.session.aktuellesLand || !context.session.quickKategorie) return;
 
-            let betrag = parseBetrag(document.getElementById("quickBetrag")?.value);
+            let betrag = dependencies.parseBetrag(document.getElementById("quickBetrag")?.value);
             let text = document.getElementById("quickText")?.value || "";
             let datum = new Date().toISOString().split('T')[0];
 
             if (isNaN(betrag)) return;
 
-            if (!daten.Reisen[aktuellesLand]) return;
+            if (!context.repository.view.Reisen[context.session.aktuellesLand]) return;
 
-            if (!Array.isArray(daten.Reisen[aktuellesLand][quickKategorie])) {
-                daten.Reisen[aktuellesLand][quickKategorie] = [];
+            if (!Array.isArray(context.repository.view.Reisen[context.session.aktuellesLand][context.session.quickKategorie])) {
+                context.repository.view.Reisen[context.session.aktuellesLand][context.session.quickKategorie] = [];
             }
 
-            daten.Reisen[aktuellesLand][quickKategorie].push({
-                id: generateId(),
+            context.repository.view.Reisen[context.session.aktuellesLand][context.session.quickKategorie].push({
+                id: dependencies.generateId(),
                 betrag,
                 text,
                 datum
             });
-            merkeLetzteKategorie("reisen", quickKategorie);
+            merkeLetzteKategorie("reisen", context.session.quickKategorie);
 
-            if (speichern() === false) return;
+            if (dependencies.speichern() === false) return;
 
             const box = document.getElementById("quickBox");
 
@@ -509,5 +548,8 @@
                 }, 200);
             }
 
-            renderListe();
+            dependencies.renderListe();
         }
+
+return { getQuickAddFavoriten, renderQuickAddMenu, toggleQuickAddSettingsPanel, getQuickAmounts, renderQuickAmountSettings, saveQuickAmounts, renderQuickAddSettings, toggleQuickAddFavorit, moveQuickAddOption, openAddSheet, closeAddSheet, prepareStartQuickAdd, setQuickAmount, prepareQuickEntryLayout, openStartQuickAdd, closeStartQuickAdd, closeReiseAuswahlSheet, openReiseAuswahlFromHome, focusLater, closeCategoryAddPanels, toggleCategoryAdd, toggleFreiDetails, getLetzteKategorie, merkeLetzteKategorie, applyLetzteAlltagsKategorie, focusBetragSchnell, setQuickCategory, setReiseKategorie, applyLetzteReiseKategorie, renderQuickAdd, quickAdd, toggleManual, saveQuickAdd };
+});

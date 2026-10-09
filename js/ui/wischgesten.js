@@ -1,3 +1,20 @@
+Kostentracker.module({
+  "id": "js/ui/wischgesten.js",
+  "dependencies": [
+    "ausblendenEintrag",
+    "beginUndoBatch",
+    "eintragEinblenden",
+    "erneutBuchenEintrag",
+    "finishUndoBatch",
+    "getRightSwipeAction",
+    "istEintragAusgeblendet"
+  ],
+  "session": [],
+  "read": [],
+  "write": [],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 
         (() => {
             const touchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
@@ -275,21 +292,15 @@
                    Die vorhandenen Delete-Handler werden weiterverwendet, ihre einzelnen
                    Confirm-/Undo-Aufrufe werden nur fuer diesen Batch unterdrueckt. */
                 const oldConfirm = window.confirm;
-                const oldBeginUndo = window.beginUndoDelete;
-                const oldFinishUndo = window.finishUndoDelete;
+                dependencies.beginUndoBatch(`${count} Einträge gelöscht`);
                 try {
-                    if (typeof oldBeginUndo === 'function') oldBeginUndo(`${count} Einträge gelöscht`);
                     window.confirm = () => true;
-                    if (typeof oldBeginUndo === 'function') window.beginUndoDelete = () => {};
-                    if (typeof oldFinishUndo === 'function') window.finishUndoDelete = () => {};
                     exitSelectionMode();
                     buttons.forEach(button => button.click());
                 } finally {
                     window.confirm = oldConfirm;
-                    if (typeof oldBeginUndo === 'function') window.beginUndoDelete = oldBeginUndo;
-                    if (typeof oldFinishUndo === 'function') window.finishUndoDelete = oldFinishUndo;
+                    dependencies.finishUndoBatch(`${count} Einträge gelöscht`);
                 }
-                if (typeof oldFinishUndo === 'function') oldFinishUndo(`${count} Einträge gelöscht`);
             }
 
             function clearNativeTextSelection() {
@@ -346,13 +357,13 @@
             }
 
             function rightSwipeConfigFor(shell) {
-                let action = typeof getRightSwipeAction === 'function' ? getRightSwipeAction() : 'aus';
+                let action = typeof dependencies.getRightSwipeAction === 'function' ? dependencies.getRightSwipeAction() : 'aus';
                 if (action === 'aus') return null;
                 const meta = shellEntryMeta(shell);
                 if (!meta) return null;
                 // Ist ein Eintrag bereits ausgeblendet, wird die eingestellte Aktion
                 // „Ausblenden“ automatisch zur passenden Rückgängig-Aktion.
-                if (action === 'ausblenden' && typeof istEintragAusgeblendet === 'function' && istEintragAusgeblendet(meta.type, meta.id)) {
+                if (action === 'ausblenden' && typeof dependencies.istEintragAusgeblendet === 'function' && dependencies.istEintragAusgeblendet(meta.type, meta.id)) {
                     action = 'einblenden';
                 }
                 if (action === 'erneut' && !['haushalt','freizeit','reisen'].includes(meta.type)) return null;
@@ -380,9 +391,9 @@
                 const cfg = rightSwipeConfigFor(shell);
                 if (!cfg) return;
                 const { action, meta } = cfg;
-                if (action === 'erneut') erneutBuchenEintrag(meta.type, meta.id);
-                else if (action === 'ausblenden') ausblendenEintrag(meta.type, meta.id);
-                else if (action === 'einblenden') eintragEinblenden(meta.type, meta.id);
+                if (action === 'erneut') dependencies.erneutBuchenEintrag(meta.type, meta.id);
+                else if (action === 'ausblenden') dependencies.ausblendenEintrag(meta.type, meta.id);
+                else if (action === 'einblenden') dependencies.eintragEinblenden(meta.type, meta.id);
                 else if (action === 'bearbeiten') shell.querySelector(':scope > .item .actions .edit')?.click();
                 else if (action === 'verschieben') shell.querySelector(':scope > .item .actions button[onclick*="moveAusgabe("]')?.click();
             }
@@ -607,7 +618,7 @@
                     const cfg = shouldRun ? rightSwipeConfigFor(shell) : null;
                     const shouldHide = cfg?.action === 'ausblenden';
                     if (shouldHide) {
-                        animateSwipeRemoval(shell, shellWidth, 1, () => ausblendenEintrag(cfg.meta.type, cfg.meta.id));
+                        animateSwipeRemoval(shell, shellWidth, 1, () => dependencies.ausblendenEintrag(cfg.meta.type, cfg.meta.id));
                     } else if (card) card.style.transform = 'translate3d(0,0,0)';
                     activeShell = null;
                     horizontal = false;
@@ -757,3 +768,5 @@
             }
         })();
     
+return {  };
+});

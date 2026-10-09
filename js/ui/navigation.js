@@ -1,5 +1,51 @@
+Kostentracker.module({
+  "id": "js/ui/navigation.js",
+  "dependencies": [
+    "applyLetzteAlltagsKategorie",
+    "closeAddSheet",
+    "closeCategoryAddPanels",
+    "getAktuellerMonat",
+    "getGehaltstag",
+    "getGehaltszeitraum",
+    "getStartgehalt",
+    "heuteISO",
+    "initGrafik",
+    "renderAusgabenArchiv",
+    "renderDesignMenuStatus",
+    "renderDesignSettings",
+    "renderEinnahmen",
+    "renderFreizeit",
+    "renderGeplanteAusgaben",
+    "renderGestureSettings",
+    "renderGrafik",
+    "renderHaushalt",
+    "renderHomeUebersicht",
+    "renderLaender",
+    "renderLaufendeKosten",
+    "renderNextSalarySettings",
+    "renderQuickAddSettings",
+    "renderQuickAmountSettings",
+    "renderSparenInvestieren",
+    "renderUebersicht",
+    "renderVersicherungen",
+    "renderWarnSettings",
+    "setupFreizeitEnterFlow",
+    "updateGeplantBereichUI",
+    "updateGeplantKategorieSelect",
+    "verarbeiteFaelligeGeplanteAusgaben"
+  ],
+  "session": [
+    "kostentrackerRememberView",
+    "offeneVersicherung",
+    "state"
+  ],
+  "read": [],
+  "write": [],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/ui/navigation.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function monatZuZahl(name) {
             const monate = [
@@ -16,7 +62,7 @@
         }
 
         function show(id) {
-            window.kostentrackerRememberView?.(id);
+            context.session.kostentrackerRememberView?.(id);
 
             const views = [
                 "home",
@@ -65,23 +111,23 @@
         }
 
         function goHome() {
-            verarbeiteFaelligeGeplanteAusgaben();
+            dependencies.verarbeiteFaelligeGeplanteAusgaben();
             show("home");
-            renderHomeUebersicht();
+            dependencies.renderHomeUebersicht();
         }
 
         function openUebersicht() {
-            verarbeiteFaelligeGeplanteAusgaben();
+            dependencies.verarbeiteFaelligeGeplanteAusgaben();
             show("uebersichtView");
-            renderUebersicht();
+            dependencies.renderUebersicht();
         }
 
         function openSparenInvestieren(direktHinzufuegen = false) {
-            closeAddSheet();
+            dependencies.closeAddSheet();
             show("sparenInvestierenView");
             const datum = document.getElementById("sparenInvestierenDatum");
-            if (datum && !datum.value) datum.value = heuteISO();
-            renderSparenInvestieren();
+            if (datum && !datum.value) datum.value = dependencies.heuteISO();
+            dependencies.renderSparenInvestieren();
             if (direktHinzufuegen) {
                 document.getElementById("sparenInvestierenAddPanel")?.classList.remove("hidden");
                 setTimeout(() => document.getElementById("sparenInvestierenBetrag")?.focus(), 80);
@@ -89,14 +135,14 @@
         }
 
         function openGeplanteAusgaben(direktHinzufuegen = false) {
-            closeAddSheet();
-            verarbeiteFaelligeGeplanteAusgaben();
+            dependencies.closeAddSheet();
+            dependencies.verarbeiteFaelligeGeplanteAusgaben();
             show("geplanteAusgabenView");
             const datum = document.getElementById("geplantDatum");
-            if (datum && !datum.value) datum.value = heuteISO();
-            updateGeplantKategorieSelect();
-            updateGeplantBereichUI(false);
-            renderGeplanteAusgaben();
+            if (datum && !datum.value) datum.value = dependencies.heuteISO();
+            dependencies.updateGeplantKategorieSelect();
+            dependencies.updateGeplantBereichUI(false);
+            dependencies.renderGeplanteAusgaben();
             if (direktHinzufuegen) {
                 document.getElementById("geplantAddPanel")?.classList.remove("hidden");
                 setTimeout(() => document.getElementById("geplantText")?.focus(), 80);
@@ -105,128 +151,128 @@
 
         function openGrafik() {
             show("grafikView");
-            initGrafik();
-            renderGrafik();
+            dependencies.initGrafik();
+            dependencies.renderGrafik();
         }
 
         function openSettings() {
             show("settingsView");
-            renderDesignMenuStatus();
-            renderGestureSettings();
+            dependencies.renderDesignMenuStatus();
+            dependencies.renderGestureSettings();
         }
 
         function openSettingsBudget() {
             show("settingsBudgetView");
-            const z = getGehaltszeitraum();
+            const z = dependencies.getGehaltszeitraum();
             const startInput = document.getElementById("startgehaltInput");
             const tagInput = document.getElementById("gehaltstagInput");
-            if (startInput) startInput.value = getStartgehalt(z) || "";
-            if (tagInput) tagInput.value = getGehaltstag();
-            renderNextSalarySettings();
+            if (startInput) startInput.value = dependencies.getStartgehalt(z) || "";
+            if (tagInput) tagInput.value = dependencies.getGehaltstag();
+            dependencies.renderNextSalarySettings();
         }
 
         function openSettingsQuickAdd() {
             show("settingsQuickAddView");
-            renderQuickAddSettings();
-            renderQuickAmountSettings();
+            dependencies.renderQuickAddSettings();
+            dependencies.renderQuickAmountSettings();
         }
 
         function openSettingsWarnings() {
             show("settingsWarningsView");
-            renderWarnSettings();
+            dependencies.renderWarnSettings();
         }
 
         function openSettingsDesign() {
             show("settingsDesignView");
-            renderDesignSettings();
+            dependencies.renderDesignSettings();
         }
 
         function openReisen() {
             show("reisen");
-            closeCategoryAddPanels();
+            dependencies.closeCategoryAddPanels();
 
             // 🔥 WICHTIG: alte Land-Ansicht komplett resetten
             document.getElementById("land")?.classList.add("hidden");
 
-            state.editLandName = null;
-            offeneVersicherung = null;
+            context.session.state.editLandName = null;
+            context.session.offeneVersicherung = null;
 
-            renderLaender();
+            dependencies.renderLaender();
         }
 
         function openVersicherungen() {
             show("versicherungenView");
-            closeCategoryAddPanels();
-            state.editVersicherungId = null;
+            dependencies.closeCategoryAddPanels();
+            context.session.state.editVersicherungId = null;
 
             const datum = document.getElementById("versDatum");
             const monat = document.getElementById("versMonat");
 
-            if (datum && !datum.value) datum.value = heuteISO();
-            if (monat) monat.value = String(getAktuellerMonat());
+            if (datum && !datum.value) datum.value = dependencies.heuteISO();
+            if (monat) monat.value = String(dependencies.getAktuellerMonat());
 
-            renderVersicherungen();
+            dependencies.renderVersicherungen();
         }
 
         function openHaushalt() {
             show("haushaltView");
-            closeCategoryAddPanels();
-            state.editHaushaltId = null;
+            dependencies.closeCategoryAddPanels();
+            context.session.state.editHaushaltId = null;
 
             const datum = document.getElementById("hausDatum");
-            if (datum && !datum.value) datum.value = heuteISO();
-            applyLetzteAlltagsKategorie("haushalt");
+            if (datum && !datum.value) datum.value = dependencies.heuteISO();
+            dependencies.applyLetzteAlltagsKategorie("haushalt");
 
-            renderHaushalt();
+            dependencies.renderHaushalt();
         }
 
         function openFreizeit() {
             show("freizeitView");
-            closeCategoryAddPanels();
-            state.editFreizeitId = null;
+            dependencies.closeCategoryAddPanels();
+            context.session.state.editFreizeitId = null;
 
             const datum = document.getElementById("freizeitDatum");
-            if (datum && !datum.value) datum.value = heuteISO();
-            applyLetzteAlltagsKategorie("freizeit");
+            if (datum && !datum.value) datum.value = dependencies.heuteISO();
+            dependencies.applyLetzteAlltagsKategorie("freizeit");
 
-            renderFreizeit();
-            setupFreizeitEnterFlow();
+            dependencies.renderFreizeit();
+            dependencies.setupFreizeitEnterFlow();
         }
 
         function openAusgabenArchiv(typ) {
-            state.ausgabenArchivTyp = typ === "freizeit" ? "freizeit" : "haushalt";
-            state.editAusgabenArchivId = null;
+            context.session.state.ausgabenArchivTyp = typ === "freizeit" ? "freizeit" : "haushalt";
+            context.session.state.editAusgabenArchivId = null;
             const suche = document.getElementById("ausgabenArchivSuche");
             if (suche) suche.value = "";
             show("ausgabenArchivView");
-            renderAusgabenArchiv();
+            dependencies.renderAusgabenArchiv();
         }
 
         function closeAusgabenArchiv() {
-            state.editAusgabenArchivId = null;
-            if (state.ausgabenArchivTyp === "freizeit") openFreizeit();
+            context.session.state.editAusgabenArchivId = null;
+            if (context.session.state.ausgabenArchivTyp === "freizeit") openFreizeit();
             else openHaushalt();
         }
 
         function openEinnahmen() {
             show("einnahmenView");
-            closeCategoryAddPanels();
-            state.editEinnahmeId = null;
+            dependencies.closeCategoryAddPanels();
+            context.session.state.editEinnahmeId = null;
 
             const datum = document.getElementById("einnahmenDatum");
-            if (datum && !datum.value) datum.value = heuteISO();
+            if (datum && !datum.value) datum.value = dependencies.heuteISO();
 
-            renderEinnahmen();
+            dependencies.renderEinnahmen();
         }
 
         function openKosten() {
             show("kostenView");
-            closeCategoryAddPanels();
+            dependencies.closeCategoryAddPanels();
 
             const datum = document.getElementById("costDatum");
-            if (datum && !datum.value) datum.value = heuteISO();
+            if (datum && !datum.value) datum.value = dependencies.heuteISO();
 
-            renderLaufendeKosten();
+            dependencies.renderLaufendeKosten();
         }
 
         function hideAllViews() {
@@ -236,11 +282,14 @@
         }
 
         function toggleKostenDetails() {
-            state.homeKostenOffen = !state.homeKostenOffen;
-            renderHomeUebersicht();
+            context.session.state.homeKostenOffen = !context.session.state.homeKostenOffen;
+            dependencies.renderHomeUebersicht();
         }
 
         function toggleFaelligDetails() {
-            state.homeFaelligOffen = !state.homeFaelligOffen;
-            renderHomeUebersicht();
+            context.session.state.homeFaelligOffen = !context.session.state.homeFaelligOffen;
+            dependencies.renderHomeUebersicht();
         }
+
+return { monatZuZahl, safeId, show, goHome, openUebersicht, openSparenInvestieren, openGeplanteAusgaben, openGrafik, openSettings, openSettingsBudget, openSettingsQuickAdd, openSettingsWarnings, openSettingsDesign, openReisen, openVersicherungen, openHaushalt, openFreizeit, openAusgabenArchiv, closeAusgabenArchiv, openEinnahmen, openKosten, hideAllViews, toggleKostenDetails, toggleFaelligDetails };
+});

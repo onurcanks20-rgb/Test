@@ -1,3 +1,15 @@
+Kostentracker.module({
+  "id": "js/ui/zurueckwischen.js",
+  "dependencies": [],
+  "session": [
+    "kostentrackerRememberView",
+    "state"
+  ],
+  "read": [],
+  "write": [],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 
         // Interactive edge navigation. Visual copies live in a shadow root so
         // duplicate form IDs never affect the app's renderers or saved inputs.
@@ -128,7 +140,7 @@
             }
 
             // Called before show() clears the outgoing travel lists.
-            window.kostentrackerRememberView = nextId => {
+            context.session.kostentrackerRememberView = nextId => {
                 const view = activeView();
                 if (gesture && !gesture.navigating) cleanup();
                 if (view && view.id !== nextId) {
@@ -140,7 +152,7 @@
             function destination(button) {
                 const action = (button.getAttribute('onclick') || '').trim();
                 const targets = {'goHome()':'home','openUebersicht()':'uebersichtView','openSettings()':'settingsView','backToReisen()':'reisen'};
-                if (action === 'closeAusgabenArchiv()') return state.ausgabenArchivTyp === 'freizeit' ? 'freizeitView' : 'haushaltView';
+                if (action === 'closeAusgabenArchiv()') return context.session.state.ausgabenArchivTyp === 'freizeit' ? 'freizeitView' : 'haushaltView';
                 return targets[action.replace(/;$/, '')];
             }
 
@@ -307,3 +319,5 @@
             schedulePreparation();
         })();
     
+return {  };
+});
