@@ -20,7 +20,7 @@ Kostentracker.module({
             const overlay = document.createElement('div');
             overlay.setAttribute('aria-hidden', 'true');
             overlay.inert = true;
-            overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;overflow:hidden;pointer-events:none;display:none;opacity:0;will-change:opacity;';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;overflow:hidden;pointer-events:none;display:none;visibility:hidden;opacity:0;will-change:opacity;';
             const shadow = overlay.attachShadow({mode:'closed'});
             const style = document.createElement('style');
             // Same-origin external stylesheets are loaded before this classic script executes.
@@ -30,6 +30,7 @@ Kostentracker.module({
             });
             style.textContent = (sheetRules.length ? sheetRules.join('\n') : [...document.querySelectorAll('style')].map(el => el.textContent).join('\n')).replace(/:root\[data-theme="(light|dark)"\]/g, ':host([data-theme="$1"])')
                 .replace(/:root/g, ':host').replace(/\bbody\b/g, '.edge-page-content').replace(/\bhtml\b/g, '.edge-page-content') + `
+                :host, :host * { pointer-events:none !important; }
                 :host { font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",sans-serif; }
                 .edge-back-layer { position:absolute; inset:0; overflow:hidden; background:var(--bg); will-change:transform; contain:paint; }
                 .edge-page-content * { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; animation:none !important; transition:none !important; }
@@ -75,6 +76,7 @@ Kostentracker.module({
                 frame = 0;
                 if (gesture?.front) gesture.front.remove();
                 if (gesture?.back) gesture.back.remove();
+                overlay.style.visibility = 'hidden';
                 overlay.style.opacity = '0';
                 overlay.style.display = 'none';
                 gesture = null;
@@ -85,7 +87,8 @@ Kostentracker.module({
                 warmed?.front.remove();
                 warmed?.back.remove();
                 warmed = null;
-                if (!gesture) { overlay.style.opacity = '0'; overlay.style.display = 'none'; }
+                if (!gesture) { overlay.style.visibility = 'hidden';
+                overlay.style.opacity = '0'; overlay.style.display = 'none'; }
             }
 
             function syncPreviewTheme() {
@@ -117,6 +120,7 @@ Kostentracker.module({
                 warmed.shade.style.opacity = '.22';
                 // Keep prepared layers attached and compositable before the first touch.
                 overlay.style.display = 'block';
+                overlay.style.visibility = 'hidden';
                 overlay.style.opacity = '0';
             }
 
@@ -282,6 +286,7 @@ Kostentracker.module({
                 }
                 gesture.sourceScroll = window.scrollY;
                 overlay.style.display = 'block';
+                overlay.style.visibility = 'visible';
                 overlay.style.opacity = '1';
                 // Reserve only the edge strip; entry swipes elsewhere are untouched.
                 event.stopImmediatePropagation();
