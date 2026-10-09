@@ -1,10 +1,25 @@
+Kostentracker.module({
+  "id": "js/budget/berechnungen.js",
+  "dependencies": [
+    "getGehaltszeitraum",
+    "laufendeKostenImZeitraum",
+    "parseBetrag",
+    "versicherungenDiesenMonat",
+    "versicherungsZahlungenImZeitraum"
+  ],
+  "session": [],
+  "read": [],
+  "write": [],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/budget/berechnungen.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function berechneMonat(monatAktuell) {
 
-            return versicherungenDiesenMonat(monatAktuell).reduce((summe, v) => {
-                let betrag = parseBetrag(v.betrag);
+            return dependencies.versicherungenDiesenMonat(monatAktuell).reduce((summe, v) => {
+                let betrag = dependencies.parseBetrag(v.betrag);
                 return summe + (isNaN(betrag) ? 0 : betrag);
             }, 0);
         }
@@ -17,7 +32,7 @@
 
             liste.forEach(e => {
 
-                let betrag = parseBetrag(e.betrag);
+                let betrag = dependencies.parseBetrag(e.betrag);
                 if (isNaN(betrag)) return;
 
                 let monat = parseInt(e.monat);
@@ -39,13 +54,16 @@
         }
 
         function berechneMonatGesamt() {
-            const zeitraum = getGehaltszeitraum();
+            const zeitraum = dependencies.getGehaltszeitraum();
 
-            const laufende = laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende)
+            const laufende = dependencies.laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende)
                 .reduce((sum, e) => sum + e.betrag, 0);
 
-            const versicherungen = versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende)
+            const versicherungen = dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende)
                 .reduce((sum, e) => sum + e.betrag, 0);
 
             return laufende + versicherungen;
         }
+
+return { berechneMonat, berechneSimpleMonat, berechneMonatGesamt };
+});

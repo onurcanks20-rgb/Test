@@ -1,34 +1,65 @@
+Kostentracker.module({
+  "id": "js/budget/uebersicht.js",
+  "dependencies": [
+    "berechneNochFaelligBisGehalt",
+    "berechneSparBudgetStatus",
+    "einnahmenZahlungenImZeitraum",
+    "escapeHtml",
+    "formatBetrag",
+    "formatDatum",
+    "formatKurzDatum",
+    "freizeitImZeitraum",
+    "geplanteAusgabenImZeitraum",
+    "getGehaltstag",
+    "getGehaltszeitraum",
+    "haushaltImZeitraum",
+    "isoAusDate",
+    "laufendeKostenImZeitraum",
+    "maybeOpenNextSalaryPrompt",
+    "reisenGesamt",
+    "renderBudgetUndWochen",
+    "renderHomeWarnings",
+    "versicherungsZahlungenImZeitraum"
+  ],
+  "session": [
+    "state"
+  ],
+  "read": [],
+  "write": [],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
 // Kostentracker Test: js/budget/uebersicht.js
-// Functions share the existing app state; initialize only in app/start.js.
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function renderUebersicht() {
-            const z = getGehaltszeitraum();
-            const h = haushaltImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
-            const fr = freizeitImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
-            const f = laufendeKostenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
-            const v = versicherungsZahlungenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
-            const ei = einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
-            const gp = geplanteAusgabenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
-            const sparStatus = berechneSparBudgetStatus(z);
-            const set=(id,val)=>{const el=document.getElementById(id); if(el) el.innerHTML=formatBetrag(val);};
-            set("overviewHaushalt",h); set("overviewFreizeit",fr); set("overviewFixkosten",f); set("overviewVersicherungen",v); set("overviewGeplant",gp); set("overviewReisen",reisenGesamt());
+            const z = dependencies.getGehaltszeitraum();
+            const h = dependencies.haushaltImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const fr = dependencies.freizeitImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const f = dependencies.laufendeKostenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const v = dependencies.versicherungsZahlungenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const ei = dependencies.einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const gp = dependencies.geplanteAusgabenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const sparStatus = dependencies.berechneSparBudgetStatus(z);
+            const set=(id,val)=>{const el=document.getElementById(id); if(el) el.innerHTML=dependencies.formatBetrag(val);};
+            set("overviewHaushalt",h); set("overviewFreizeit",fr); set("overviewFixkosten",f); set("overviewVersicherungen",v); set("overviewGeplant",gp); set("overviewReisen",dependencies.reisenGesamt());
             set("overviewSparenInvestieren", sparStatus.investieren + sparStatus.gespart);
             const siSub = document.getElementById("overviewSparenInvestierenSub");
-            if (siSub) siSub.innerHTML = `Investiert ${formatBetrag(sparStatus.investieren)} · Gespart ${formatBetrag(sparStatus.gespart)} von ${formatBetrag(sparStatus.sparenPlan)}`;
+            if (siSub) siSub.innerHTML = `Investiert ${dependencies.formatBetrag(sparStatus.investieren)} · Gespart ${dependencies.formatBetrag(sparStatus.gespart)} von ${dependencies.formatBetrag(sparStatus.sparenPlan)}`;
             const einnahmenEl = document.getElementById("overviewEinnahmen");
-            if (einnahmenEl) einnahmenEl.innerHTML = "+" + formatBetrag(ei);
+            if (einnahmenEl) einnahmenEl.innerHTML = "+" + dependencies.formatBetrag(ei);
         }
 
         function renderHomeUebersicht() {
 
-            const zeitraum = getGehaltszeitraum();
-            renderBudgetUndWochen(zeitraum);
-            renderHomeWarnings();
+            const zeitraum = dependencies.getGehaltszeitraum();
+            dependencies.renderBudgetUndWochen(zeitraum);
+            dependencies.renderHomeWarnings();
 
             // Kosten im aktuellen Gehaltsmonat:
             // Beispiel bei Gehaltstag 26: 26.04. bis 25.05.
-            const laufendeImGehalt = laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende);
-            const versicherungenImGehalt = versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende);
+            const laufendeImGehalt = dependencies.laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende);
+            const versicherungenImGehalt = dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende);
 
             const laufend = laufendeImGehalt.reduce((sum, e) => sum + e.betrag, 0);
             const versicherungen = versicherungenImGehalt.reduce((sum, e) => sum + e.betrag, 0);
@@ -43,16 +74,16 @@
             const laufendListeEl = document.getElementById("homeKostenLaufendListe");
             const versListeEl = document.getElementById("homeVersicherungenListe");
 
-            if (gesamtEl) gesamtEl.innerHTML = formatBetrag(gesamt);
-            if (laufendEl) laufendEl.innerHTML = formatBetrag(laufend);
-            if (versicherungenEl) versicherungenEl.innerHTML = formatBetrag(versicherungen);
+            if (gesamtEl) gesamtEl.innerHTML = dependencies.formatBetrag(gesamt);
+            if (laufendEl) laufendEl.innerHTML = dependencies.formatBetrag(laufend);
+            if (versicherungenEl) versicherungenEl.innerHTML = dependencies.formatBetrag(versicherungen);
 
             if (kostenDetailsEl) {
-                kostenDetailsEl.classList.toggle("hidden", !state.homeKostenOffen);
+                kostenDetailsEl.classList.toggle("hidden", !context.session.state.homeKostenOffen);
             }
 
             if (kostenToggleEl) {
-                kostenToggleEl.innerText = state.homeKostenOffen ? "▲ Details ausblenden" : "▼ Details anzeigen";
+                kostenToggleEl.innerText = context.session.state.homeKostenOffen ? "▲ Details ausblenden" : "▼ Details anzeigen";
             }
 
             if (laufendListeEl) {
@@ -63,8 +94,8 @@
                     <small class="home-summary-small">Laufende Kosten</small>
                     ${laufendeImGehalt.map(e => `
                         <div class="home-mini-item">
-                            <span>${formatKurzDatum(e.datum)} ${escapeHtml(e.name || "Laufende Kosten")}</span>
-                            <span>${formatBetrag(e.betrag)}</span>
+                            <span>${dependencies.formatKurzDatum(e.datum)} ${dependencies.escapeHtml(e.name || "Laufende Kosten")}</span>
+                            <span>${dependencies.formatBetrag(e.betrag)}</span>
                         </div>
                     `).join("")}
                 `;
@@ -73,8 +104,8 @@
 
             if (monatEl) {
                 monatEl.innerText =
-                    "Gehaltsmonat: " + formatDatum(isoAusDate(zeitraum.start)) +
-                    " bis " + formatDatum(isoAusDate(zeitraum.ende));
+                    "Gehaltsmonat: " + dependencies.formatDatum(dependencies.isoAusDate(zeitraum.start)) +
+                    " bis " + dependencies.formatDatum(dependencies.isoAusDate(zeitraum.ende));
             }
 
             if (versListeEl) {
@@ -85,15 +116,15 @@
                     <small class="home-summary-small">Versicherungen</small>
                     ${versicherungenImGehalt.map(e => `
                         <div class="home-mini-item">
-                            <span>${formatKurzDatum(e.datum)} ${escapeHtml(e.name || "Versicherung")}</span>
-                            <span>${formatBetrag(e.betrag)}</span>
+                            <span>${dependencies.formatKurzDatum(e.datum)} ${dependencies.escapeHtml(e.name || "Versicherung")}</span>
+                            <span>${dependencies.formatBetrag(e.betrag)}</span>
                         </div>
                     `).join("")}
                 `;
                 }
             }
 
-            const faellig = berechneNochFaelligBisGehalt();
+            const faellig = dependencies.berechneNochFaelligBisGehalt();
             const gehaltstagInput = document.getElementById("gehaltstagInput");
             const faelligGesamtEl = document.getElementById("homeFaelligGesamt");
             const faelligLaufendEl = document.getElementById("homeFaelligLaufend");
@@ -104,28 +135,28 @@
             const faelligToggleEl = document.getElementById("homeFaelligToggle");
 
             if (gehaltstagInput && document.activeElement !== gehaltstagInput) {
-                gehaltstagInput.value = getGehaltstag();
+                gehaltstagInput.value = dependencies.getGehaltstag();
             }
 
-            if (faelligGesamtEl) faelligGesamtEl.innerHTML = formatBetrag(faellig.gesamt);
-            if (faelligLaufendEl) faelligLaufendEl.innerHTML = formatBetrag(faellig.summeLaufend);
-            if (faelligVersEl) faelligVersEl.innerHTML = formatBetrag(faellig.summeVersicherungen);
+            if (faelligGesamtEl) faelligGesamtEl.innerHTML = dependencies.formatBetrag(faellig.gesamt);
+            if (faelligLaufendEl) faelligLaufendEl.innerHTML = dependencies.formatBetrag(faellig.summeLaufend);
+            if (faelligVersEl) faelligVersEl.innerHTML = dependencies.formatBetrag(faellig.summeVersicherungen);
 
             if (faelligZeitraumEl) {
                 faelligZeitraumEl.innerText =
-                    "Von heute bis " + formatDatum(isoAusDate(faellig.zeitraum.ende)) +
-                    " · nächstes Gehalt am " + formatDatum(isoAusDate(faellig.zeitraum.naechstesGehalt));
+                    "Von heute bis " + dependencies.formatDatum(dependencies.isoAusDate(faellig.zeitraum.ende)) +
+                    " · nächstes Gehalt am " + dependencies.formatDatum(dependencies.isoAusDate(faellig.zeitraum.naechstesGehalt));
             }
 
             if (faelligToggleEl) {
-                faelligToggleEl.innerText = state.homeFaelligOffen ? "▲ Details ausblenden" : "▼ Details anzeigen";
+                faelligToggleEl.innerText = context.session.state.homeFaelligOffen ? "▲ Details ausblenden" : "▼ Details anzeigen";
             }
 
             if (faelligDetailsEl) {
-                faelligDetailsEl.classList.toggle("hidden", !state.homeFaelligOffen);
+                faelligDetailsEl.classList.toggle("hidden", !context.session.state.homeFaelligOffen);
             }
 
-            setTimeout(maybeOpenNextSalaryPrompt, 0);
+            setTimeout(dependencies.maybeOpenNextSalaryPrompt, 0);
 
             if (faelligListeEl) {
                 if (faellig.alle.length === 0) {
@@ -133,42 +164,25 @@
                 } else {
                     faelligListeEl.innerHTML = faellig.alle.map(e => `
                     <div class="home-due-item">
-                        <span class="home-due-date">${formatKurzDatum(e.datum)}</span>
+                        <span class="home-due-date">${dependencies.formatKurzDatum(e.datum)}</span>
                         <span class="home-due-name">
-                            <span>${escapeHtml(e.name)}</span>
+                            <span>${dependencies.escapeHtml(e.name)}</span>
                             <span class="home-due-type">${e.typLabel}</span>
                         </span>
-                        <span class="home-due-amount">${formatBetrag(e.betrag)}</span>
+                        <span class="home-due-amount">${dependencies.formatBetrag(e.betrag)}</span>
                     </div>
                 `).join("");
                 }
             }
         }
 
-        function kostenLaufend() {
+        
 
-            daten["Laufende Kosten"] ??= { fix: [] };
-            daten["Laufende Kosten"].fix ??= [];
+        
 
-            return daten["Laufende Kosten"].fix.reduce((sum, e) => {
-                let betrag = parseBetrag(e.betrag);
-                return sum + (isNaN(betrag) ? 0 : betrag);
-            }, 0);
-        }
+        
 
-        function berechneGesamtFixkosten() {
-            return berechneMonatGesamt();
-        }
+        
 
-        function berechneLaufendeKosten(monatTag = new Date().getDate()) {
-
-            return daten["Laufende Kosten"].fix.reduce((sum, e) => {
-                return sum + e.betrag;
-            }, 0);
-        }
-
-        function faelligeKostenHeute() {
-            let tag = new Date().getDate();
-
-            return daten["Laufende Kosten"].fix.filter(e => tagAusDatum(e.datum || datumAusTagAktuellerMonat(e.tag)) === tag);
-        }
+return { renderUebersicht, renderHomeUebersicht };
+});
