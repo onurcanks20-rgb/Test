@@ -1,4 +1,4 @@
-const WORKER_VERSION = "test-architecture-v9-edge-smooth";
+const WORKER_VERSION = "test-architecture-v10-edge-hitfix";
 const APP_SCOPE = new URL(self.registration.scope);
 const CACHE_PREFIX = `kostentracker-test:${encodeURIComponent(APP_SCOPE.pathname)}:`;
 const CACHE_NAME = `${CACHE_PREFIX}${WORKER_VERSION}`;
@@ -38,7 +38,7 @@ const CODE_ASSETS = [
   "./js/app/design-start.js?v=arch-v2",
   "./js/app/start.js?v=arch-v2",
   "./js/ui/wischgesten.js?v=arch-v2",
-  "./js/ui/zurueckwischen.js?v=edge-smooth-v1",
+  "./js/ui/zurueckwischen.js?v=edge-smooth-v2",
   "./js/server/synchronisierung.js?v=arch-v2",
   "./css/app.css?v=arch-v2",
   "./css/bedienung.css?v=arch-v2"
