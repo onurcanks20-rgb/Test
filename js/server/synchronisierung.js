@@ -1,3 +1,33 @@
+Kostentracker.module({
+  "id": "js/server/synchronisierung.js",
+  "dependencies": [
+    "addDays",
+    "appendFreizeitExternalExpense",
+    "appendHaushaltExternalExpense",
+    "formatBetragText",
+    "formatDatum",
+    "generateId",
+    "isoAusDate",
+    "istEintragAusgeblendet",
+    "laufendeKostenImZeitraum",
+    "normalizeFixkostenZuordnungTage",
+    "parseBetrag",
+    "parseISODate",
+    "renderHomeUebersicht",
+    "renderRecentAusgaben",
+    "show",
+    "versicherungsZahlungenImZeitraum"
+  ],
+  "session": [],
+  "read": [
+    "*"
+  ],
+  "write": [
+    "Einstellungen"
+  ],
+  "replace": true
+}, (context, dependencies) => {
+"use strict";
 
         let testServiceWorkerPromise = null;
 
@@ -39,7 +69,7 @@
         }
 
 
-function openServerSettings() {show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();}
+function openServerSettings() {dependencies.show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();}
 async function renderPushTestStatus() {
   const node=document.getElementById('serverNotificationStatus');if(!node)return;
   if(!('Notification' in window)){node.textContent='Für Benachrichtigungen die App über ihr Home-Bildschirm-Icon öffnen.';return;}
@@ -102,23 +132,23 @@ function showPaymentImportedNotice(success=true) {
 function classifyPushPayment(payment) {
   if(payment.reviewReason) return {review:payment.reviewReason};
   if(payment.source!=='bank-push') return {normal:true};
-  const paid=parseISODate(payment.date), from=addDays(paid,-31), to=addDays(paid,31);
-  const rows=[...laufendeKostenImZeitraum(from,to),...versicherungsZahlungenImZeitraum(from,to)];
+  const paid=dependencies.parseISODate(payment.date), from=dependencies.addDays(paid,-31), to=dependencies.addDays(paid,31);
+  const rows=[...dependencies.laufendeKostenImZeitraum(from,to),...dependencies.versicherungsZahlungenImZeitraum(from,to)];
   const matches=[],unknown=[];
   const calendar=d=>Date.UTC(d.getFullYear(),d.getMonth(),d.getDate());
   for(const due of rows) {
-    if(Math.round((parseBetrag(due.betrag)||0)*100)!==payment.amountCents) continue;
+    if(Math.round((dependencies.parseBetrag(due.betrag)||0)*100)!==payment.amountCents) continue;
     const insurance=due.typ==='versicherung';
-    const item=(insurance?daten.Versicherungen:daten['Laufende Kosten']?.fix)?.find(e=>String(e.id)===String(due.sourceId));
-    if(!item||istEintragAusgeblendet(insurance?'versicherungen':'fixkosten',item.id)) continue;
-    const window=normalizeFixkostenZuordnungTage(item.zuordnungTage);
+    const item=(insurance?context.repository.view.Versicherungen:context.repository.view['Laufende Kosten']?.fix)?.find(e=>String(e.id)===String(due.sourceId));
+    if(!item||dependencies.istEintragAusgeblendet(insurance?'versicherungen':'fixkosten',item.id)) continue;
+    const window=dependencies.normalizeFixkostenZuordnungTage(item.zuordnungTage);
     if(Math.abs(calendar(due.datum)-calendar(paid))/86400000>window) continue;
     const aliases=String(insurance?item.anbieter||'':item.haendler||'').split(';').map(normalizedProvider).filter(Boolean);
     if(!aliases.length) {unknown.push(due);continue;}
-    if(aliases.includes(normalizedProvider(payment.merchant))) matches.push({...due,key:[due.typ,String(item.id),isoAusDate(due.datum)].join(':')});
+    if(aliases.includes(normalizedProvider(payment.merchant))) matches.push({...due,key:[due.typ,String(item.id),dependencies.isoAusDate(due.datum)].join(':')});
   }
   if(matches.length===1&&!unknown.length) {
-    if(daten.Einstellungen?.serverRecurringMatches?.[matches[0].key]) return {review:'Für diese Fälligkeit wurde bereits eine Zahlung zugeordnet.'};
+    if(context.repository.view.Einstellungen?.serverRecurringMatches?.[matches[0].key]) return {review:'Für diese Fälligkeit wurde bereits eine Zahlung zugeordnet.'};
     return {recurring:matches[0]};
   }
   if(matches.length>1||unknown.length) return {review:'Mögliche Fixkosten/Versicherung: Anbieter, Betrag und Fälligkeit bitte prüfen.'};
@@ -131,18 +161,18 @@ function importedPaymentDestination(payment) {
 }
 function appendImportedPayment(payment) {
   const target=importedPaymentDestination(payment),month=Number(payment.date.slice(5,7));
-  daten[target.area]??={};daten[target.area][month]??=[];
-  daten[target.area][month].push({id:generateId(),text:String(payment.merchant||'Apple Pay').slice(0,200),betrag:payment.amountCents/100,datum:payment.date,kategorie:target.category,_serverPaymentId:payment.id});
+  const entry={id:dependencies.generateId(),text:String(payment.merchant||'Apple Pay').slice(0,200),betrag:payment.amountCents/100,datum:payment.date,kategorie:target.category,_serverPaymentId:payment.id};
+  if(target.area==='Freizeit') dependencies.appendFreizeitExternalExpense(entry,month);else dependencies.appendHaushaltExternalExpense(entry,month);
 }
 function renderServerPaymentReview() {
   const host=document.getElementById('serverPaymentReview');if(!host)return;
   host.replaceChildren();
-  const pending=daten.Einstellungen?.serverPendingReview||[];
+  const pending=context.repository.view.Einstellungen?.serverPendingReview||[];
   const title=document.createElement('strong');title.textContent=`Zahlungen zur Prüfung: ${pending.length}`;host.appendChild(title);
   const note=document.createElement('div');note.className='settings-note';note.textContent='Unsichere Zahlungen werden erst nach deiner Entscheidung als zusätzliche Ausgabe erfasst. Eindeutig zugeordnete Fixkosten werden nicht erneut abgezogen.';host.appendChild(note);
   for(const payment of pending) {
     const row=document.createElement('div');row.style.cssText='margin-top:12px;padding:12px;border-radius:12px;background:var(--secondary);';
-    const label=document.createElement('div');label.textContent=`${payment.merchant} · ${formatBetragText(payment.amountCents/100)} · ${formatDatum(payment.date)}`;row.appendChild(label);
+    const label=document.createElement('div');label.textContent=`${payment.merchant} · ${dependencies.formatBetragText(payment.amountCents/100)} · ${dependencies.formatDatum(payment.date)}`;row.appendChild(label);
     const reason=document.createElement('div');reason.className='settings-note';reason.textContent=payment.reviewReason;row.appendChild(reason);
     for(const [text,book] of [['Als zusätzliche Ausgabe erfassen',true],['Bereits berücksichtigt / ignorieren',false]]) {
       const button=document.createElement('button');button.type='button';button.textContent=text;button.addEventListener('click',()=>resolveServerPaymentReview(payment.id,book));row.appendChild(button);
@@ -151,41 +181,41 @@ function renderServerPaymentReview() {
   }
 }
 function resolveServerPaymentReview(id,book) {
-  const pending=daten.Einstellungen?.serverPendingReview||[],payment=pending.find(p=>p.id===id);if(!payment)return;
-  const before=structuredClone(daten);
+  const pending=context.repository.view.Einstellungen?.serverPendingReview||[],payment=pending.find(p=>p.id===id);if(!payment)return;
+  const before=context.clone(context.repository.view);
   try {
     if(book) appendImportedPayment(payment);
-    daten.Einstellungen.serverPendingReview=pending.filter(p=>p.id!==id);
-    localStorage.setItem('kostenApp_test',JSON.stringify(daten));zuletztGespeicherteDaten=JSON.stringify(daten);
-  } catch(error) {daten=before;showPaymentImportedNotice(false);serverStatus('Entscheidung konnte nicht gespeichert werden. Bitte erneut versuchen.');return;}
+    context.repository.view.Einstellungen.serverPendingReview=pending.filter(p=>p.id!==id);
+    context.storage.setItem(context.storage.key,JSON.stringify(context.repository.view));context.storage.lastSaved=JSON.stringify(context.repository.view);
+  } catch(error) {context.repository.view=before;showPaymentImportedNotice(false);serverStatus('Entscheidung konnte nicht gespeichert werden. Bitte erneut versuchen.');return;}
   if(book) showPaymentImportedNotice();
-  renderServerPaymentReview();renderHomeUebersicht();renderRecentAusgaben('haushalt');renderRecentAusgaben('freizeit');scheduleTestServerSync();
+  renderServerPaymentReview();dependencies.renderHomeUebersicht();dependencies.renderRecentAusgaben('haushalt');dependencies.renderRecentAusgaben('freizeit');scheduleTestServerSync();
 }
 
 function importTestServerPayments(payments) {
   if(!Array.isArray(payments)||payments.length>100) throw new Error('Ungültige Zahlungsliste.');
-  const ids=new Set(daten.Einstellungen?.serverImportIds||[]);
-  for(const area of ['Haushalt','Freizeit']) Object.values(daten[area]||{}).forEach(list=>Array.isArray(list)&&list.forEach(e=>{if(e._serverPaymentId)ids.add(e._serverPaymentId);}));
-  const before=structuredClone(daten);let count=0;
+  const ids=new Set(context.repository.view.Einstellungen?.serverImportIds||[]);
+  for(const area of ['Haushalt','Freizeit']) Object.values(context.repository.view[area]||{}).forEach(list=>Array.isArray(list)&&list.forEach(e=>{if(e._serverPaymentId)ids.add(e._serverPaymentId);}));
+  const before=context.clone(context.repository.view);let count=0;
   try {
     for(const payment of payments) {
       if(!payment||typeof payment.id!=='string'||!/^[-A-Za-z0-9_:]{1,128}$/.test(payment.id)||!Number.isInteger(payment.amountCents)||payment.amountCents<=0||payment.amountCents>100000000||typeof payment.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(payment.date)||!Number.isFinite(Date.parse(payment.date+'T12:00:00Z'))||new Date(payment.date+'T12:00:00Z').toISOString().slice(0,10)!==payment.date) throw new Error('Ungültige Zahlung vom Server.');
       if(ids.has(payment.id)) continue;
       const classification=classifyPushPayment(payment);
-      daten.Einstellungen??={};
+      context.repository.view.Einstellungen??={};
       if(classification.review) {
-        daten.Einstellungen.serverPendingReview??=[];
-        if(!daten.Einstellungen.serverPendingReview.some(p=>p.id===payment.id)) daten.Einstellungen.serverPendingReview.push({...payment,reviewReason:classification.review});
+        context.repository.view.Einstellungen.serverPendingReview??=[];
+        if(!context.repository.view.Einstellungen.serverPendingReview.some(p=>p.id===payment.id)) context.repository.view.Einstellungen.serverPendingReview.push({...payment,reviewReason:classification.review});
       } else if(classification.recurring) {
-        daten.Einstellungen.serverRecurringMatches??={};
-        daten.Einstellungen.serverRecurringMatches[classification.recurring.key]={paymentId:payment.id,date:payment.date,merchant:payment.merchant};
+        context.repository.view.Einstellungen.serverRecurringMatches??={};
+        context.repository.view.Einstellungen.serverRecurringMatches[classification.recurring.key]={paymentId:payment.id,date:payment.date,merchant:payment.merchant};
       } else {appendImportedPayment(payment);count++;}
       ids.add(payment.id);
     }
-    daten.Einstellungen??={};daten.Einstellungen.serverImportIds=[...ids];
+    context.repository.view.Einstellungen??={};context.repository.view.Einstellungen.serverImportIds=[...ids];
     // Save before acknowledgment: after a crash/retry the IDs prevent duplication.
-    localStorage.setItem('kostenApp_test',JSON.stringify(daten));zuletztGespeicherteDaten=JSON.stringify(daten);
-  } catch(error) {daten=before;showPaymentImportedNotice(false);throw error;}
+    context.storage.setItem(context.storage.key,JSON.stringify(context.repository.view));context.storage.lastSaved=JSON.stringify(context.repository.view);
+  } catch(error) {context.repository.view=before;showPaymentImportedNotice(false);throw error;}
   if(count>0) showPaymentImportedNotice();
   renderServerPaymentReview();
   return count;
@@ -207,13 +237,13 @@ async function syncTestServer(saveSettings=false) {
     let count=0;for(let page=0;page<10;page++) {
       const result=await testServerRequest('/api/payments');
       count+=importTestServerPayments(result.payments);
-      if(result.payments.length) renderHomeUebersicht();
+      if(result.payments.length) dependencies.renderHomeUebersicht();
       if(result.payments.length) await testServerRequest('/api/payments/ack',{ids:result.payments.map(p=>p.id)});
       if(result.payments.length<100) break;
     }
-    renderHomeUebersicht();
-    await testServerRequest('/api/backup',{data:daten});
-    serverStatus('Verbunden. '+count+' zusätzliche Ausgabe'+(count===1?'':'n')+' übernommen. '+(daten.Einstellungen?.serverPendingReview?.length||0)+' zur Prüfung. Serverbackup aktualisiert.');
+    dependencies.renderHomeUebersicht();
+    await testServerRequest('/api/backup',{data:context.repository.view});
+    serverStatus('Verbunden. '+count+' zusätzliche Ausgabe'+(count===1?'':'n')+' übernommen. '+(context.repository.view.Einstellungen?.serverPendingReview?.length||0)+' zur Prüfung. Serverbackup aktualisiert.');
   } catch(error) {serverStatus('Noch nicht synchronisiert: '+(error.name==='AbortError'?'Zeitüberschreitung. Später erneut verbinden.':error.message));}
   finally {testServerBusy=false;if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
 }
@@ -251,7 +281,7 @@ async function restoreTestServerBackup() {
     const saved=await testServerRequest('/api/backup');if(!saved.data) throw new Error('Für deinen Zugang gibt es noch kein Serverbackup.');
     if(!saved.data.Haushalt||typeof saved.data.Haushalt!=='object'||!saved.data.Einstellungen||typeof saved.data.Einstellungen!=='object') throw new Error('Das Serverbackup ist nicht gültig.');
     if(!confirm('Deine lokalen Daten durch dein Serverbackup ersetzen? Vorher bei Bedarf deine lokalen Daten in den Backup-Einstellungen exportieren.')) return;
-    localStorage.setItem('kostenApp_test',JSON.stringify(saved.data));
+    context.storage.setItem(context.storage.key,JSON.stringify(saved.data));
     localStorage.removeItem('kostenApp_test_backup_check');location.reload();
   } catch(error) {serverStatus(error.message);}
   finally {testServerBusy=false;}
@@ -260,3 +290,6 @@ window.addEventListener('online',()=>syncTestServer(false));
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') syncTestServer(false);});
 window.addEventListener('load',()=>{renderTestServerSettings();if(testServerConfig.token) syncTestServer(false);});
 
+
+return { withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+});
