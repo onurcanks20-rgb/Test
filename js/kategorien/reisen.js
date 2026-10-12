@@ -31,6 +31,7 @@ Kostentracker.module({
     "show",
     "speichern",
     "getNewReiseCurrency",
+    "getNewReiseCurrencyCountry",
     "resetNewReiseCurrency",
     "renderReiseCurrencySelector",
     "initExistingReiseCurrency"
@@ -84,7 +85,7 @@ Kostentracker.module({
                 Sonstiges: []
             };
             context.repository.view.ReisenMeta ||= {};
-            context.repository.view.ReisenMeta[name] = { budget, von, bis, currency };
+            context.repository.view.ReisenMeta[name] = { budget, von, bis, currency, currencyCountry:dependencies.getNewReiseCurrencyCountry() };
 
             if (dependencies.speichern() === false) return;
             document.getElementById("landInput").value = "";
