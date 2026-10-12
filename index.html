@@ -20,7 +20,7 @@
     <script src="./js/core/dienste.js?v=arch-v2"></script>
     <script src="./js/app/design-start.js?v=arch-v2"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=reise-ansicht-v4">
+    <link rel="stylesheet" href="./css/app.css?v=reise-waehrung-v1">
 </head>
 
 <body>
@@ -707,8 +707,13 @@
 
             <div id="reisenAddPanel" class="category-add-panel hidden">
                 <h3>Reise hinzufügen</h3>
-                <input id="landInput" autocapitalize="words" placeholder="Neues Land" enterkeyhint="next">
-                <input id="landBudget" type="text" inputmode="decimal" placeholder="Budget (optional)" enterkeyhint="next">
+                <input id="landInput" autocapitalize="words" placeholder="Neues Land" enterkeyhint="next" oninput="updateNewReiseCurrencySuggestion()">
+                <div class="reise-currency-field">
+                    <label for="landCurrency">Währung</label>
+                    <select id="landCurrency" onchange="markNewReiseCurrencyManual()"><option value="">Währung wählen</option></select>
+                    <div id="landCurrencyHint" class="reise-currency-note">Bitte die passende Währung auswählen.</div>
+                </div>
+                <input id="landBudget" type="text" inputmode="decimal" placeholder="Budget in Euro (optional)" enterkeyhint="next">
                 <div class="date-range">
                     <div class="date-field">
                         <label for="landVon">Von</label>
@@ -1042,7 +1047,8 @@
 <script src="./js/ui/schnelleingabe.js?v=arch-v2"></script>
 <script src="./js/kategorien/geplante-ausgaben.js?v=arch-v2"></script>
 <script src="./js/kategorien/sparen-investieren.js?v=arch-v2"></script>
-<script src="./js/kategorien/reisen.js?v=reise-ansicht-v4"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=reise-waehrung-v1"></script>
+<script src="./js/kategorien/reisen.js?v=reise-waehrung-v1"></script>
 <script src="./js/kategorien/fixkosten.js?v=arch-v2"></script>
 <script src="./js/ui/listen.js?v=arch-v2"></script>
 <script src="./js/kategorien/versicherungen.js?v=arch-v2"></script>
