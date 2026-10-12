@@ -448,7 +448,7 @@ Kostentracker.module({
         }
 
         function applyLetzteReiseKategorie(focusBetrag = false) {
-            const fallback = "Essen";
+            const fallback = "Essen / Trinken";
             const kat = getLetzteKategorie("reisen", fallback);
             const btn = document.querySelector(`#reiseKategorieGrid [data-category="${CSS.escape(kat)}"]`)
                 || document.querySelector(`#reiseKategorieGrid [data-category="${fallback}"]`);
