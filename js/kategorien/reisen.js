@@ -647,9 +647,8 @@ Kostentracker.module({
                         <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                             <div class="reise-entry-heading" onclick="toggleReiseDetails('${e.id}')">
                                 <span class="reise-entry-label">${dependencies.escapeHtml(e.text || k)}</span>
-                                <strong class="reise-entry-amount">${dependencies.formatBetrag(e.betrag)}</strong>
+                                <div class="reise-entry-amounts"><strong class="reise-entry-amount">${dependencies.formatBetrag(e.betrag)}</strong>${entryFxDetails(e)}</div>
                             </div>
-                            ${entryFxDetails(e)}
                             <div class="reise-entry-controls">
                                 <div class="actions reise-entry-actions">
                                     <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben">↪️</button>
