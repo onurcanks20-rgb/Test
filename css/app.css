@@ -1865,3 +1865,6 @@
 #land .reise-currency-settings { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;font-size:13px; }
 #land .reise-budget-rate-note { opacity:.75; }
 #land .reise-rate-refresh { display:inline-flex;align-items:center;justify-content:center;width:32px;min-height:32px;height:32px;padding:0;margin:0 0 0 4px;border:0;border-radius:9px;background:rgba(128,128,128,.12);color:var(--text);font-size:20px;vertical-align:middle; }
+
+#land .reise-amount-preview { font-size:13px;line-height:1.5;opacity:.75;margin:-4px 0 16px;text-align:left;overflow-wrap:anywhere; }
+#land .reise-original-amount { text-align:right;font-size:13px;opacity:.7;font-variant-numeric:tabular-nums; }
