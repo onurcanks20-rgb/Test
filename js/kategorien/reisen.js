@@ -227,7 +227,6 @@ Kostentracker.module({
                 new Date().toISOString().split('T')[0];
 
             updateDropdown();
-            renderListe();
             renderKategorienUebersicht();
             dependencies.applyLetzteReiseKategorie();
             dependencies.setupReisenEnterFlow();
@@ -590,6 +589,8 @@ Kostentracker.module({
             const gesamtEl = document.getElementById("gesamt");
             if (gesamtEl) gesamtEl.innerText = "Gesamt: " + dependencies.formatBetragText(gesamt);
             renderReiseBudget();
+            // Prepare connected swipe rows synchronously, before the first paint.
+            document.dispatchEvent(new CustomEvent('kostentracker:rowsRendered', {detail:{root:div}}));
         }
 
         function toggleReiseDetails(id) {
