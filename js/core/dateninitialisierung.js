@@ -283,15 +283,31 @@ function migriereKategorienDaten() {
             };
             mergeKat("Flug", "Transport");
             mergeKat("Aktivitäten", "Aktivität");
-            mergeKat("Verpflegung", "Essen");
-            mergeKat("Snacks", "Essen");
-            ["Essen", "Trinken", "Transport", "Unterkunft", "Aktivität", "Einkauf", "Sonstiges"].forEach(k => reise[k] ??= []);
+            const food = "Essen / Trinken";
+            const aliases = ["Essen", "Trinken", "Verpflegung", "Snacks", "Essen & Trinken"];
+            const removed = context.repository.view.geloeschteKategorien?.[land] || [];
+            if (context.repository.view.geloeschteKategorien) {
+                const mapped = removed.filter(k => !aliases.includes(k));
+                if (removed.includes("Essen") && removed.includes("Trinken") && !mapped.includes(food)) mapped.push(food);
+                context.repository.view.geloeschteKategorien[land] = mapped;
+            }
+            const deleted = context.repository.view.geloeschteKategorien?.[land] || [];
+            const suppressEmptyMerge = deleted.includes(food) && !Array.isArray(reise[food]) && aliases.every(old => !Array.isArray(reise[old]) || reise[old].length === 0);
+            aliases.forEach(old => { if (suppressEmptyMerge) delete reise[old]; else mergeKat(old, food); });
+            [food, "Transport", "Unterkunft", "Aktivität", "Einkauf", "Sonstiges"].forEach(k => { if (!deleted.includes(k)) reise[k] ??= []; });
+            if (Array.isArray(reise[food])) context.repository.view.Reisen[land] = { [food]: reise[food], ...reise };
+            const last = context.repository.view.Einstellungen?.letzteKategorien?.reisen;
+            if (last && aliases.includes(last[land])) last[land] = food;
         }
 
+        for (const entry of context.repository.view["Geplante Ausgaben"] || []) {
+            if (entry.bereich === "reisen" && ["Essen", "Trinken", "Verpflegung", "Snacks", "Essen & Trinken"].includes(entry.kategorie)) entry.kategorie = "Essen / Trinken";
+        }
         for (let land in context.repository.view.Reisen) {
             for (let k in context.repository.view.Reisen[land]) {
 
                 context.repository.view.Reisen[land][k] = context.repository.view.Reisen[land][k].map(e => ({
+                    ...e,
                     id: e.id ?? dependencies.generateId(),
                     betrag: e.betrag ?? 0,
                     text: e.text ?? "",
@@ -308,8 +324,7 @@ function migriereVersicherungsUndReisestruktur() {
         }
 
         const standardKategorien = [
-            "Essen",
-            "Trinken",
+            "Essen / Trinken",
             "Transport",
             "Unterkunft",
             "Aktivität",
