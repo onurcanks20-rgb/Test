@@ -1,6 +1,6 @@
 Kostentracker.module({
  id:"js/kategorien/reise-waehrung.js",
- dependencies:["escapeHtml","speichern","renderReiseBudget"],
+ dependencies:["escapeHtml","speichern","renderReiseBudget","prepareReiseBudgetRate"],
  session:["aktuellesLand"],read:["ReisenMeta"],write:["ReisenMeta"],replace:false
 }, (context, dependencies) => {
  "use strict";
@@ -106,6 +106,7 @@ Kostentracker.module({
    context.repository.view.ReisenMeta[land].currencyCountry=region==='ZZ'?'':region;
    dependencies.speichern();
    dependencies.renderReiseBudget();
+   dependencies.prepareReiseBudgetRate();
  }
  initReiseCurrencyChoice();
  return {inferReiseCurrency,reiseCurrencyOptions,updateNewReiseCurrencySuggestion,markNewReiseCurrencyManual,initReiseCurrencyChoice,resetNewReiseCurrency,getNewReiseCurrency,getNewReiseCurrencyCountry,getReiseCurrency,initExistingReiseCurrency,renderReiseCurrencySelector,setReiseCurrency};

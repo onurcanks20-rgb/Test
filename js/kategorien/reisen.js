@@ -34,7 +34,12 @@ Kostentracker.module({
     "getNewReiseCurrencyCountry",
     "resetNewReiseCurrency",
     "renderReiseCurrencySelector",
-    "initExistingReiseCurrency"
+    "initExistingReiseCurrency",
+    "reiseBudgetPresentation",
+    "formatReiseBudgetAmount",
+    "renderReiseBudgetToggle",
+    "renderReiseBudgetRateNote",
+    "prepareReiseBudgetRate"
   ],
   "session": [
     "aktuellesLand",
@@ -243,6 +248,7 @@ Kostentracker.module({
             renderKategorienUebersicht();
             dependencies.applyLetzteReiseKategorie();
             dependencies.setupReisenEnterFlow();
+            dependencies.prepareReiseBudgetRate();
         }
 
         function reiseGesamtAusgegeben(land) {
@@ -261,6 +267,7 @@ Kostentracker.module({
             const budget = dependencies.parseBetrag(meta.budget) || 0;
             const ausgegeben = reiseGesamtAusgegeben(context.session.aktuellesLand);
             const uebrig = budget - ausgegeben;
+            const presentation = dependencies.reiseBudgetPresentation();
             const zeitraum = meta.von || meta.bis
                 ? `${meta.von ? dependencies.formatDatum(meta.von) : "…"} – ${meta.bis ? dependencies.formatDatum(meta.bis) : "…"}`
                 : "Kein Zeitraum festgelegt";
@@ -292,20 +299,21 @@ Kostentracker.module({
                 <div class="item reise-budget-card">
                     <div class="reise-budget-heading">
                         <div class="reise-budget-title">Reisebudget</div>
-                        ${dependencies.renderReiseCurrencySelector()}
+                        ${dependencies.renderReiseBudgetToggle()}
                         <button type="button" onclick="setReiseBudgetEditing(true)" class="reise-budget-edit" aria-label="Reisebudget bearbeiten" title="Budget bearbeiten">
                             <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1 12-12a2.8 2.8 0 0 0-4-4L4 15l-1 6Z"/></svg>
                         </button>
                     </div>
                     ${budget > 0 ? `
-                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
-                            <div><div style="font-size:12px;opacity:.65;">Budget</div><strong>${dependencies.formatBetrag(budget)}</strong></div>
-                            <div><div style="font-size:12px;opacity:.65;">Ausgegeben</div><strong>${dependencies.formatBetrag(ausgegeben)}</strong></div>
-                            <div><div style="font-size:12px;opacity:.65;">Übrig</div><strong>${dependencies.formatBetrag(uebrig)}</strong></div>
+                        <div class="reise-budget-values${presentation.local ? ' reise-budget-values-local' : ''}">
+                            <div><div style="font-size:12px;opacity:.65;">Budget</div><strong class="reise-budget-value">${dependencies.formatReiseBudgetAmount(budget)}</strong></div>
+                            <div><div style="font-size:12px;opacity:.65;">Ausgegeben</div><strong class="reise-budget-value">${dependencies.formatReiseBudgetAmount(ausgegeben)}</strong></div>
+                            <div><div style="font-size:12px;opacity:.65;">Übrig</div><strong class="reise-budget-value">${dependencies.formatReiseBudgetAmount(uebrig)}</strong></div>
                         </div>` : `
                         <div style="opacity:.7;">Noch kein Budget festgelegt.</div>`}
                     <div style="font-size:13px;opacity:.72;">🗓️ ${zeitraum}</div>
-                    <div class="reise-currency-note">Alle Beträge weiterhin in Euro.</div>
+                    <div class="reise-currency-settings"><span>Reisewährung</span>${dependencies.renderReiseCurrencySelector()}</div>
+                    <div class="reise-currency-note reise-budget-rate-note" role="status">${dependencies.renderReiseBudgetRateNote()}</div>
                 </div>`;
         }
 
