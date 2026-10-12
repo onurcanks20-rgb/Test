@@ -1851,3 +1851,7 @@
 #reisen .land-item.land-editing .land-actions { position:static;transform:none;margin-top:14px; }
 @media (max-width:420px) { #land .reise-budget-editor .date-range { grid-template-columns:minmax(0,1fr); } }
 @media (max-width:340px) { #land .reise-form-actions, #reisen .land-item.land-editing .land-actions { grid-template-columns:minmax(0,1fr); } }
+
+/* Alphabetische Landesliste im nativen Picker, kompakter Währungscode oben. */
+#land .reise-currency-picker { position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 86px;width:86px;height:44px;border:1px solid rgba(128,128,128,.25);border-radius:12px;box-sizing:border-box;font-size:13px;font-weight:600; }
+#land .reise-currency-picker .reise-currency-compact { position:absolute;inset:0;opacity:0;width:100%;max-width:none;height:100%;padding:0;border:0;cursor:pointer; }
