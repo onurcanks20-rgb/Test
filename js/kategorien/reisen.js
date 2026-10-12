@@ -85,8 +85,7 @@ Kostentracker.module({
                 return;
             }
             context.repository.view.Reisen[name] = {
-                Essen: [],
-                Trinken: [],
+                "Essen / Trinken": [],
                 Transport: [],
                 Unterkunft: [],
                 Aktivität: [],
@@ -368,7 +367,7 @@ Kostentracker.module({
                 select.appendChild(opt);
             });
 
-            const letzte = dependencies.getLetzteKategorie("reisen", "Essen");
+            const letzte = dependencies.getLetzteKategorie("reisen", "Essen / Trinken");
             if ([...select.options].some(o => o.value === letzte)) select.value = letzte;
         }
 
@@ -898,7 +897,7 @@ Kostentracker.module({
             Object.defineProperty(land, newName, { value: land[oldName], enumerable: true, writable: true, configurable: true });
             delete land[oldName];
             if (context.session.state.offeneKategorie === oldName) context.session.state.offeneKategorie = newName;
-            if (dependencies.getLetzteKategorie("reisen", "Essen") === oldName) dependencies.merkeLetzteKategorie("reisen", newName);
+            if (dependencies.getLetzteKategorie("reisen", "Essen / Trinken") === oldName) dependencies.merkeLetzteKategorie("reisen", newName);
             if (dependencies.speichern() === false) return;
             context.session.state.editKategorieName = null;
             updateDropdown();
@@ -1045,7 +1044,8 @@ Kostentracker.module({
 
 function bookReisePlannedOccurrence(entry, datum, occurrenceKey, wiederholung) {
     const reise = context.repository.view.Reisen?.[entry.land || ""]; if (!reise) return false;
-    const kategorie = entry.kategorie || "Sonstiges"; reise[kategorie] ??= [];
+    const rawCategory = entry.kategorie || "Sonstiges";
+    const kategorie = ["Essen", "Trinken", "Verpflegung", "Snacks", "Essen & Trinken"].includes(rawCategory) ? "Essen / Trinken" : rawCategory; reise[kategorie] ??= [];
     const exists = reise[kategorie].some(x => String(x.geplantOccurrenceKey || "") === occurrenceKey || (wiederholung === "einmalig" && String(x.geplantId || "") === String(entry.id)));
     if (!exists) reise[kategorie].push({id:dependencies.generateId(), geplantId:entry.id, geplantOccurrenceKey:occurrenceKey, ausGeplant:true,
         text:entry.text || kategorie || "Geplante Ausgabe", betrag:dependencies.parseBetrag(entry.betrag)||0, datum});
