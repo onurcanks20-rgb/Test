@@ -90,13 +90,13 @@ Kostentracker.module({
    context.repository.view.ReisenMeta[land].currency=proposed;
    dependencies.speichern();
  }
- function renderReiseCurrencySelector() {
+ function renderReiseCurrencySelector(editing = false) {
    const code=getReiseCurrency();
    const savedCountry=context.repository.view.ReisenMeta?.[context.session.aktuellesLand]?.currencyCountry;
    const key=resolveCurrencyChoice(savedCountry? savedCountry+':'+code:code,context.session.aktuellesLand);
-   return `<div class="reise-currency-picker"><span aria-hidden="true">${code||'Währung'} ▾</span><select id="reiseCurrencySelect" class="reise-currency-compact" aria-label="Reisewährung nach Land auswählen" title="Reisewährung auswählen" onchange="setReiseCurrency(this.value)">${reiseCurrencyOptions(key)}</select></div>`;
+   return `<div class="reise-currency-picker"><span aria-hidden="true">${code||'Währung'} ▾</span><select id="reiseCurrencySelect" class="reise-currency-compact" aria-label="Reisewährung nach Land auswählen" title="Reisewährung auswählen" ${editing ? '' : 'onchange="setReiseCurrency(this.value)"'}>${reiseCurrencyOptions(key)}</select></div>`;
  }
- function setReiseCurrency(value) {
+ function setReiseCurrency(value, persist = true) {
    const land=context.session.aktuellesLand, key=resolveCurrencyChoice(value,land),code=currencyFromChoice(key);
    if(!land||!code){dependencies.renderReiseBudget();return;}
    context.repository.view.ReisenMeta ||= {};
@@ -104,6 +104,7 @@ Kostentracker.module({
    context.repository.view.ReisenMeta[land].currency=code;
    const region=choicesByKey.get(key)?.country;
    context.repository.view.ReisenMeta[land].currencyCountry=region==='ZZ'?'':region;
+   if (!persist) return true;
    dependencies.speichern();
    dependencies.renderReiseBudget();
    dependencies.prepareReiseBudgetRate();

@@ -34,6 +34,7 @@ Kostentracker.module({
     "getNewReiseCurrencyCountry",
     "resetNewReiseCurrency",
     "renderReiseCurrencySelector",
+    "setReiseCurrency",
     "initExistingReiseCurrency",
     "reiseBudgetPresentation",
     "formatReiseBudgetAmount",
@@ -277,6 +278,7 @@ Kostentracker.module({
                     <div class="item reise-budget-editor">
                         <div class="reise-budget-editor-title">Reise planen</div>
                         <input id="reiseBudgetEdit" type="text" inputmode="decimal" value="${budget ? dependencies.formatInputBetrag(budget) : ""}" placeholder="Budget in Euro" enterkeyhint="next">
+                        <div class="reise-currency-settings"><span>Reisewährung</span>${dependencies.renderReiseCurrencySelector(true)}</div>
                         <div class="date-range">
                             <div class="date-field">
                                 <label for="reiseVonEdit">Von</label>
@@ -312,7 +314,6 @@ Kostentracker.module({
                         </div>` : `
                         <div style="opacity:.7;">Noch kein Budget festgelegt.</div>`}
                     <div style="font-size:13px;opacity:.72;">🗓️ ${zeitraum}</div>
-                    <div class="reise-currency-settings"><span>Reisewährung</span>${dependencies.renderReiseCurrencySelector()}</div>
                     <div class="reise-currency-note reise-budget-rate-note" role="status">${dependencies.renderReiseBudgetRateNote()}</div>
                 </div>`;
         }
@@ -333,10 +334,13 @@ Kostentracker.module({
             }
             context.repository.view.ReisenMeta ||= {};
             context.repository.view.ReisenMeta[context.session.aktuellesLand] = { ...context.repository.view.ReisenMeta[context.session.aktuellesLand], budget, von, bis };
+            const currencyChoice = document.getElementById("reiseCurrencySelect")?.value;
+            if (currencyChoice) dependencies.setReiseCurrency(currencyChoice, false);
             if (dependencies.speichern() === false) return;
             context.session.state.reiseBudgetEdit = false;
             renderReiseBudget();
             renderLaender();
+            dependencies.prepareReiseBudgetRate();
         }
 
         function backToReisen() {
