@@ -1868,3 +1868,9 @@
 
 #land .reise-amount-preview { font-size:13px;line-height:1.5;opacity:.75;margin:-4px 0 16px;text-align:left;overflow-wrap:anywhere; }
 #land .reise-original-amount { text-align:right;font-size:13px;opacity:.7;font-variant-numeric:tabular-nums; }
+
+.reise-amount-input-row { display:flex;align-items:stretch;gap:8px;margin:14px 0;min-width:0; }
+.reise-amount-input-row #betrag { flex:1;width:0;min-width:0;margin:0; }
+.reise-amount-input-row button { flex:0 0 80px;width:80px;margin:0;padding:0 6px;border-radius:14px;font-size:14px; }
+.reise-amount-input-row button:disabled { opacity:.5; }
+#reiseAmountPreview { font-size:13px;line-height:1.5;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;margin:0 0 14px; }
