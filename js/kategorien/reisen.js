@@ -29,7 +29,11 @@ Kostentracker.module({
     "setupReiseEditEnterFlow",
     "setupReisenEnterFlow",
     "show",
-    "speichern"
+    "speichern",
+    "getNewReiseCurrency",
+    "resetNewReiseCurrency",
+    "renderReiseCurrencySelector",
+    "initExistingReiseCurrency"
   ],
   "session": [
     "aktuellesLand",
@@ -56,6 +60,8 @@ Kostentracker.module({
             if (!name) return;
 
             name = name.charAt(0).toUpperCase() + name.slice(1);
+            const currency = dependencies.getNewReiseCurrency();
+            if (!currency) { alert("Bitte eine Währung für die Reise auswählen."); return; }
             const budget = dependencies.parseBetrag(document.getElementById("landBudget")?.value) || 0;
             const von = document.getElementById("landVon")?.value || "";
             const bis = document.getElementById("landBis")?.value || "";
@@ -78,10 +84,11 @@ Kostentracker.module({
                 Sonstiges: []
             };
             context.repository.view.ReisenMeta ||= {};
-            context.repository.view.ReisenMeta[name] = { budget, von, bis };
+            context.repository.view.ReisenMeta[name] = { budget, von, bis, currency };
 
             if (dependencies.speichern() === false) return;
             document.getElementById("landInput").value = "";
+            dependencies.resetNewReiseCurrency();
             if (document.getElementById("landBudget")) document.getElementById("landBudget").value = "";
             if (document.getElementById("landVon")) document.getElementById("landVon").value = "";
             if (document.getElementById("landBis")) document.getElementById("landBis").value = "";
@@ -217,6 +224,7 @@ Kostentracker.module({
             context.session.state.reiseBudgetEdit = false;
 
             context.session.aktuellesLand = l;
+            dependencies.initExistingReiseCurrency(l);
 
             dependencies.show("land");
 
@@ -279,6 +287,7 @@ Kostentracker.module({
                 <div class="item reise-budget-card">
                     <div class="reise-budget-heading">
                         <div class="reise-budget-title">Reisebudget</div>
+                        ${dependencies.renderReiseCurrencySelector()}
                         <button type="button" onclick="setReiseBudgetEditing(true)" class="reise-budget-edit" aria-label="Reisebudget bearbeiten" title="Budget bearbeiten">
                             <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1 12-12a2.8 2.8 0 0 0-4-4L4 15l-1 6Z"/></svg>
                         </button>
@@ -291,6 +300,7 @@ Kostentracker.module({
                         </div>` : `
                         <div style="opacity:.7;">Noch kein Budget festgelegt.</div>`}
                     <div style="font-size:13px;opacity:.72;">🗓️ ${zeitraum}</div>
+                    <div class="reise-currency-note">Alle Beträge weiterhin in Euro.</div>
                 </div>`;
         }
 
@@ -309,7 +319,7 @@ Kostentracker.module({
                 return;
             }
             context.repository.view.ReisenMeta ||= {};
-            context.repository.view.ReisenMeta[context.session.aktuellesLand] = { budget, von, bis };
+            context.repository.view.ReisenMeta[context.session.aktuellesLand] = { ...context.repository.view.ReisenMeta[context.session.aktuellesLand], budget, von, bis };
             if (dependencies.speichern() === false) return;
             context.session.state.reiseBudgetEdit = false;
             renderReiseBudget();
