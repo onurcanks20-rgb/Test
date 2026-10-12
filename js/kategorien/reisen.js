@@ -270,17 +270,19 @@ Kostentracker.module({
                         </div>
                         <div class="row">
                             <button onclick="saveReiseBudget()" class="btn btn-primary">Speichern</button>
-                            <button onclick="state.reiseBudgetEdit=false;renderReiseBudget()" style="background:#3a3a3c;">Abbrechen</button>
+                            <button onclick="setReiseBudgetEditing(false)" style="background:#3a3a3c;">Abbrechen</button>
                         </div>
                     </div>`;
                 return;
             }
 
             box.innerHTML = `
-                <div class="item" style="margin-bottom:16px;display:flex;flex-direction:column;gap:10px;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-                        <div style="font-weight:700;">Reisebudget</div>
-                        <button onclick="state.reiseBudgetEdit=true;renderReiseBudget()" class="edit" title="Budget bearbeiten">✏️</button>
+                <div class="item reise-budget-card">
+                    <div class="reise-budget-heading">
+                        <div class="reise-budget-title">Reisebudget</div>
+                        <button type="button" onclick="setReiseBudgetEditing(true)" class="reise-budget-edit" aria-label="Reisebudget bearbeiten" title="Budget bearbeiten">
+                            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1 12-12a2.8 2.8 0 0 0-4-4L4 15l-1 6Z"/></svg>
+                        </button>
                     </div>
                     ${budget > 0 ? `
                         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
@@ -291,6 +293,11 @@ Kostentracker.module({
                         <div style="opacity:.7;">Noch kein Budget festgelegt.</div>`}
                     <div style="font-size:13px;opacity:.72;">🗓️ ${zeitraum}</div>
                 </div>`;
+        }
+
+        function setReiseBudgetEditing(enabled) {
+            context.session.state.reiseBudgetEdit = !!enabled;
+            renderReiseBudget();
         }
 
         function saveReiseBudget() {
@@ -438,11 +445,12 @@ Kostentracker.module({
                 gesamt += sum;
 
                 let item = document.createElement("div");
-                item.className = "item";
+                item.className = "item reise-category-card";
 
                 const editingCategory = context.session.state.editKategorieName === k;
                 const categoryMain = document.createElement("div");
-                categoryMain.style.cssText = `display:flex; align-items:center; min-width:0; flex:1; cursor:${editingCategory ? 'default' : 'pointer'}; padding:4px 0;`;
+                categoryMain.className = 'reise-category-main';
+                categoryMain.style.cursor = editingCategory ? 'default' : 'pointer';
                 if (editingCategory) {
                     const input = document.createElement("input");
                     input.id = "editKategorie-" + dependencies.safeId(k);
@@ -451,13 +459,16 @@ Kostentracker.module({
                     categoryMain.appendChild(input);
                 } else {
                     const label = document.createElement("span");
-                    label.style.cssText = "font-weight:600; overflow-wrap:anywhere;";
-                    label.textContent = k + " – " + dependencies.formatBetragText(sum);
-                    categoryMain.appendChild(label);
+                    label.className = "reise-category-label";
+                    label.textContent = k;
+                    const amount = document.createElement("strong");
+                    amount.className = "reise-category-amount";
+                    amount.textContent = dependencies.formatBetragText(sum);
+                    categoryMain.append(label, amount);
                     categoryMain.addEventListener("click", () => toggleKategorie(k));
                 }
                 const categoryActions = document.createElement("div");
-                categoryActions.className = "actions";
+                categoryActions.className = "actions reise-category-actions";
                 categoryActions.style.cssText = "display:flex; gap:8px; align-items:center;";
                 const addCategoryAction = (label, className, action) => {
                     const button = document.createElement("button");
@@ -498,8 +509,8 @@ Kostentracker.module({
                         }
 
                         let sub = document.createElement("div");
-                        sub.className = "item";
-                        sub.style.marginLeft = "20px";
+                        sub.className = "item reise-entry-card";
+                        sub.style.marginLeft = "12px";
                         sub.style.background = "#3a3a3c";
 
                         if (context.session.state.editReiseId === e.id) {
@@ -523,15 +534,12 @@ Kostentracker.module({
                             const reiseBeschreibung = dependencies.escapeHtml(e.text || '');
                             sub.innerHTML = `
                         <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
-                            <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                                <div onclick="toggleReiseDetails('${e.id}')"
-                                     style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                    <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
-                                        <span style="font-weight:700; overflow-wrap:anywhere;">${dependencies.escapeHtml(k)}</span>
-                                        <strong style="font-size:18px;">${dependencies.formatBetrag(e.betrag)}</strong>
-                                    </div>
-                                </div>
-                                <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                            <div class="reise-entry-heading" onclick="toggleReiseDetails('${e.id}')">
+                                <span class="reise-entry-label">${dependencies.escapeHtml(e.text || k)}</span>
+                                <strong class="reise-entry-amount">${dependencies.formatBetrag(e.betrag)}</strong>
+                            </div>
+                            <div class="reise-entry-controls">
+                                <div class="actions reise-entry-actions">
                                     <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben">↪️</button>
                                     <button class="edit" onclick="event.stopPropagation(); startEditReise(${e.id})">✏️</button>
                                     <button class="delete" data-delete-reise>🗑️</button>
@@ -967,5 +975,5 @@ function deleteEintrag(k, i) {
             dependencies.finishUndoDelete("Reiseausgabe gelöscht");
         }
 
-return { addLand, renderLaender, openLand, reiseGesamtAusgegeben, renderReiseBudget, saveReiseBudget, backToReisen, updateDropdown, addKategorie, addEintrag, toggleKategorie, renderListe, toggleReiseDetails, editKategorie, clearKategorie, deleteKategorie, renderKategorienUebersicht, deleteLand, clearLand, startEditReise, saveEditReise, cancelEditReise, saveEditKategorie, cancelEditKategorie, startEditKategorie, editLand, startEditLand, saveEditLand, cancelEditLand, reisenGesamt, bookReisePlannedOccurrence, editEintrag, deleteEintrag };
+return { addLand, renderLaender, openLand, reiseGesamtAusgegeben, renderReiseBudget, setReiseBudgetEditing, saveReiseBudget, backToReisen, updateDropdown, addKategorie, addEintrag, toggleKategorie, renderListe, toggleReiseDetails, editKategorie, clearKategorie, deleteKategorie, renderKategorienUebersicht, deleteLand, clearLand, startEditReise, saveEditReise, cancelEditReise, saveEditKategorie, cancelEditKategorie, startEditKategorie, editLand, startEditLand, saveEditLand, cancelEditLand, reisenGesamt, bookReisePlannedOccurrence, editEintrag, deleteEintrag };
 });
