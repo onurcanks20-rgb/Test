@@ -1825,3 +1825,12 @@
    Originalbereich darf keine zusätzliche Zeile in der Karte reservieren. */
 #land .reise-category-card.swipe-entry-ready .reise-category-actions { display:none !important; }
 #land .reise-entry-card.swipe-entry-ready .reise-entry-controls { display:none !important; }
+
+/* Währungswahl: Metadaten pro Reise, Beträge weiterhin in EUR. */
+.reise-currency-field { display:flex;flex-direction:column;gap:6px;margin-bottom:14px; }
+.reise-currency-field label { font-size:13px;font-weight:600;opacity:.75; }
+.reise-currency-field select { margin:0;width:100%; }
+.reise-currency-note { font-size:12px;line-height:1.4;opacity:.6; }
+#land .reise-budget-heading { gap:8px; }
+#land .reise-budget-title { flex:1;min-width:0; }
+#land .reise-currency-compact { flex:0 0 94px;min-width:0;width:94px;max-width:94px;height:44px;margin:0;padding:0 7px;font-size:13px;border:1px solid rgba(128,128,128,.25);border-radius:12px;background:var(--item-bg,var(--bg));color:var(--text); }
