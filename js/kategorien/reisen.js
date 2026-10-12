@@ -119,7 +119,7 @@ Kostentracker.module({
                 row.className = "reise-row";
 
                 let item = document.createElement("div");
-                item.className = "item land-item";
+                item.className = "item land-item" + (context.session.state.editLandName === land ? " land-editing" : "");
                 item.style.flex = "1";
 
                 const meta = context.repository.view.ReisenMeta?.[land] || { budget: 0, von: "", bis: "" };
@@ -150,7 +150,9 @@ Kostentracker.module({
 
                 if (context.session.state.editLandName === land) {
 
-                    editBtn.innerText = "💾";
+                    editBtn.innerText = "Speichern";
+                    editBtn.className = "btn btn-primary";
+                    editBtn.type = "button";
                     editBtn.onclick = (event) => {
                         event.stopPropagation();
                         saveEditLand(land);
@@ -170,7 +172,9 @@ Kostentracker.module({
 
                 if (context.session.state.editLandName === land) {
 
-                    cancelBtn.innerText = "❌";
+                    cancelBtn.innerText = "Abbrechen";
+                    cancelBtn.className = "btn";
+                    cancelBtn.type = "button";
                     cancelBtn.onclick = (event) => {
                         event.stopPropagation();
                         cancelEditLand();
@@ -262,9 +266,9 @@ Kostentracker.module({
 
             if (context.session.state.reiseBudgetEdit) {
                 box.innerHTML = `
-                    <div class="item" style="margin-bottom:16px;display:flex;flex-direction:column;gap:10px;">
-                        <div style="font-weight:700;">Reise planen</div>
-                        <input id="reiseBudgetEdit" type="text" inputmode="decimal" value="${budget ? dependencies.formatInputBetrag(budget) : ""}" placeholder="Budget" enterkeyhint="next">
+                    <div class="item reise-budget-editor">
+                        <div class="reise-budget-editor-title">Reise planen</div>
+                        <input id="reiseBudgetEdit" type="text" inputmode="decimal" value="${budget ? dependencies.formatInputBetrag(budget) : ""}" placeholder="Budget in Euro" enterkeyhint="next">
                         <div class="date-range">
                             <div class="date-field">
                                 <label for="reiseVonEdit">Von</label>
@@ -275,9 +279,9 @@ Kostentracker.module({
                                 <input id="reiseBisEdit" type="date" value="${dependencies.escapeHtml(meta.bis || "")}">
                             </div>
                         </div>
-                        <div class="row">
-                            <button onclick="saveReiseBudget()" class="btn btn-primary">Speichern</button>
-                            <button onclick="setReiseBudgetEditing(false)" style="background:#3a3a3c;">Abbrechen</button>
+                        <div class="reise-form-actions">
+                            <button type="button" onclick="saveReiseBudget()" class="btn btn-primary">Speichern</button>
+                            <button type="button" onclick="setReiseBudgetEditing(false)" class="btn reise-form-cancel">Abbrechen</button>
                         </div>
                     </div>`;
                 return;
