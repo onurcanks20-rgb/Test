@@ -37,6 +37,8 @@ Kostentracker.module({
     "setReiseCurrency",
     "initExistingReiseCurrency",
     "reiseBudgetPresentation",
+    "getReiseCurrency",
+    "requestReiseBudgetRate",
     "formatReiseBudgetAmount",
     "renderReiseBudgetToggle",
     "renderReiseBudgetRateNote",
@@ -249,7 +251,7 @@ Kostentracker.module({
             renderKategorienUebersicht();
             dependencies.applyLetzteReiseKategorie();
             dependencies.setupReisenEnterFlow();
-            dependencies.prepareReiseBudgetRate();
+            prepareReiseExpenseRate();
         }
 
         function reiseGesamtAusgegeben(land) {
@@ -340,7 +342,7 @@ Kostentracker.module({
             context.session.state.reiseBudgetEdit = false;
             renderReiseBudget();
             renderLaender();
-            dependencies.prepareReiseBudgetRate();
+            prepareReiseExpenseRate();
         }
 
         function backToReisen() {
@@ -388,6 +390,29 @@ Kostentracker.module({
             renderListe();
         }
 
+        function prepareReiseExpenseRate() {
+            updateReiseAmountPreview();
+            if ((dependencies.getReiseCurrency() || 'EUR') !== 'EUR') dependencies.requestReiseBudgetRate();
+        }
+        function updateReiseAmountPreview() {
+            const input = document.getElementById('betrag'), note = document.getElementById('reiseAmountPreview');
+            if (!input || !note) return;
+            const currency = dependencies.getReiseCurrency() || 'EUR';
+            input.placeholder = 'Betrag in ' + currency;
+            input.setAttribute('aria-label', 'Betrag in ' + currency);
+            const amount = dependencies.parseBetrag(input.value), record = dependencies.reiseBudgetPresentation().record;
+            if (currency === 'EUR') { note.textContent = 'Ausgabe in Euro'; return; }
+            if (!record) { note.textContent = 'Noch kein Kurs für ' + currency + ' verfügbar. Zum Speichern ist ein Kurs erforderlich.'; return; }
+            const converted = Number.isFinite(amount) ? Math.round(amount / record.rate * 100) / 100 : null;
+            note.textContent = (converted === null ? 'Eurobetrag erscheint nach der Eingabe' : '≈ ' + dependencies.formatBetrag(converted)) + ' · Kurs vom ' + dependencies.formatDatum(record.date) + (navigator.onLine === false ? ' · gespeicherter Offlinekurs' : ' · Richtwert');
+        }
+        function entryFxDetails(entry, details = false) {
+            const fx = entry.fx;
+            if (!fx || !Number.isFinite(fx.amount) || !Number.isFinite(fx.rate) || fx.rate <= 0 || !/^[A-Z]{3}$/.test(fx.currency)) return '';
+            const original = new Intl.NumberFormat('de-DE', {style:'currency',currency:fx.currency,currencyDisplay:'code'}).format(fx.amount);
+            return details ? `<div style="opacity:.7;">Umrechnungskurs vom ${dependencies.escapeHtml(dependencies.formatDatum(fx.date))} · Richtwert</div>` : `<div class="reise-original-amount">${original}</div>`;
+        }
+
         function addEintrag() {
 
             let kat = document.getElementById("kategorieSelect").value;
@@ -395,7 +420,16 @@ Kostentracker.module({
             let text = document.getElementById("text").value;
             let datum = document.getElementById("datum").value;
 
-            if (isNaN(betrag)) return;
+            if (!Number.isFinite(betrag) || betrag <= 0) return;
+            const currency = dependencies.getReiseCurrency() || 'EUR';
+            let fx;
+            if (currency !== 'EUR') {
+                const record = dependencies.reiseBudgetPresentation().record;
+                if (!record) { alert('Noch kein Wechselkurs verfügbar. Bitte mit Internet den Kurs laden und danach erneut Hinzufügen antippen.'); prepareReiseExpenseRate(); return; }
+                fx = { amount: betrag, currency, rate: record.rate, date: record.date };
+                betrag = Math.round(betrag / record.rate * 100) / 100;
+                if (betrag <= 0) { alert('Der umgerechnete Betrag ist kleiner als ein Cent.'); return; }
+            }
             if (!context.session.aktuellesLand || !context.repository.view.Reisen[context.session.aktuellesLand]) return;
 
             if (!context.repository.view.Reisen[context.session.aktuellesLand][kat]) {
@@ -407,6 +441,7 @@ Kostentracker.module({
             if (dependencies.addItem(context.repository.view.Reisen[context.session.aktuellesLand][kat], {
                 id: dependencies.generateId(),
                 betrag,
+                ...(fx ? {fx} : {}),
                 text,
                 datum,
                 ...dependencies.readReminderControl("add:reisen")
@@ -415,6 +450,7 @@ Kostentracker.module({
             const betragInput = document.getElementById("betrag");
             const textInput = document.getElementById("text");
             if (betragInput) betragInput.value = "";
+            updateReiseAmountPreview();
             if (textInput) textInput.value = "";
             const datumInput = document.getElementById("datum");
             if (datumInput) datumInput.value = dependencies.heuteISO();
@@ -547,7 +583,8 @@ Kostentracker.module({
                         if (context.session.state.editReiseId === e.id) {
 
                             sub.innerHTML = `
-                        <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                        <div style="font-size:13px;opacity:.75;">Betrag in ${e.fx ? e.fx.currency : 'EUR'}${e.fx ? ' · gespeicherter Kurs' : ''}</div>
+                        <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.fx ? e.fx.amount : e.betrag)}" placeholder="Betrag in ${e.fx ? e.fx.currency : 'EUR'}" enterkeyhint="next">
                         <input id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || "")}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                         <input id="editDatum-${e.id}" type="date" value="${e.datum || ""}">
 
@@ -569,6 +606,7 @@ Kostentracker.module({
                                 <span class="reise-entry-label">${dependencies.escapeHtml(e.text || k)}</span>
                                 <strong class="reise-entry-amount">${dependencies.formatBetrag(e.betrag)}</strong>
                             </div>
+                            ${entryFxDetails(e)}
                             <div class="reise-entry-controls">
                                 <div class="actions reise-entry-actions">
                                     <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben">↪️</button>
@@ -578,6 +616,7 @@ Kostentracker.module({
                             </div>
                             ${reiseOffen ? `
                                 <div onclick="toggleReiseDetails('${e.id}')" style="background:#48484a;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
+                                    ${entryFxDetails(e, true)}
                                     ${reiseBeschreibung ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Beschreibung</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${reiseBeschreibung}</span></div>` : ''}
                                     <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Datum</span><span style="font-weight:600;text-align:right;">${e.datum ? dependencies.formatDatum(e.datum) : '-'}</span></div>
                                 </div>` : ''}
@@ -755,7 +794,7 @@ Kostentracker.module({
             let betrag = dependencies.parseBetrag(betragEl.value);
             let datum = datumEl.value;
 
-            if (!text || isNaN(betrag) || !datum) return;
+            if (!text || !Number.isFinite(betrag) || betrag <= 0 || !datum) return;
 
             for (let k in context.repository.view.Reisen[context.session.aktuellesLand]) {
 
@@ -766,7 +805,10 @@ Kostentracker.module({
                 if (eintrag) {
 
                     eintrag.text = text;
-                    eintrag.betrag = betrag;
+                    if (eintrag.fx) {
+                        eintrag.fx = {...eintrag.fx, amount: betrag};
+                        eintrag.betrag = Math.round(betrag / eintrag.fx.rate * 100) / 100;
+                    } else eintrag.betrag = betrag;
                     eintrag.datum = datum;
                     Object.assign(eintrag, dependencies.readReminderControl(`edit:reisen:${id}`));
 
@@ -777,6 +819,8 @@ Kostentracker.module({
             if (dependencies.speichern() === false) return;
             context.session.state.editReiseId = null; // 👈 vereinheitlicht
             renderListe();
+            renderReiseBudget();
+            renderLaender();
         }
 
         function cancelEditReise() {
@@ -976,7 +1020,7 @@ function editEintrag(k, i) {
             let neuerText = prompt("Beschreibung:", eintrag.text);
             if (neuerText === null) return;
 
-            let neuerBetrag = prompt("Betrag:", eintrag.betrag);
+            let neuerBetrag = prompt("Betrag in " + (eintrag.fx?.currency || "EUR") + ":", eintrag.fx?.amount ?? eintrag.betrag);
             if (neuerBetrag === null) return;
 
             let neuesDatum = prompt("Datum (YYYY-MM-DD):", eintrag.datum);
@@ -985,7 +1029,8 @@ function editEintrag(k, i) {
             context.repository.view.Reisen[context.session.aktuellesLand][k][i] = {
                 ...eintrag,
                 text: neuerText,
-                betrag: dependencies.parseBetrag(neuerBetrag),
+                betrag: eintrag.fx ? Math.round(dependencies.parseBetrag(neuerBetrag) / eintrag.fx.rate * 100) / 100 : dependencies.parseBetrag(neuerBetrag),
+                ...(eintrag.fx ? {fx:{...eintrag.fx,amount:dependencies.parseBetrag(neuerBetrag)}} : {}),
                 datum: neuesDatum
             };
 
@@ -1008,5 +1053,5 @@ function deleteEintrag(k, i) {
             dependencies.finishUndoDelete("Reiseausgabe gelöscht");
         }
 
-return { addLand, renderLaender, openLand, reiseGesamtAusgegeben, renderReiseBudget, setReiseBudgetEditing, saveReiseBudget, backToReisen, updateDropdown, addKategorie, addEintrag, toggleKategorie, renderListe, toggleReiseDetails, editKategorie, clearKategorie, deleteKategorie, renderKategorienUebersicht, deleteLand, clearLand, startEditReise, saveEditReise, cancelEditReise, saveEditKategorie, cancelEditKategorie, startEditKategorie, editLand, startEditLand, saveEditLand, cancelEditLand, reisenGesamt, bookReisePlannedOccurrence, editEintrag, deleteEintrag };
+return { prepareReiseExpenseRate, updateReiseAmountPreview, entryFxDetails, addLand, renderLaender, openLand, reiseGesamtAusgegeben, renderReiseBudget, setReiseBudgetEditing, saveReiseBudget, backToReisen, updateDropdown, addKategorie, addEintrag, toggleKategorie, renderListe, toggleReiseDetails, editKategorie, clearKategorie, deleteKategorie, renderKategorienUebersicht, deleteLand, clearLand, startEditReise, saveEditReise, cancelEditReise, saveEditKategorie, cancelEditKategorie, startEditKategorie, editLand, startEditLand, saveEditLand, cancelEditLand, reisenGesamt, bookReisePlannedOccurrence, editEintrag, deleteEintrag };
 });

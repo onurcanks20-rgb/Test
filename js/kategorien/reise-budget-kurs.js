@@ -1,7 +1,7 @@
 Kostentracker.module({
  id:'js/kategorien/reise-budget-kurs.js',
- dependencies:['getReiseCurrency','renderReiseBudget','formatBetrag','formatDatum','speichern'],
- session:['aktuellesLand'],read:['ReisenMeta'],write:['ReisenMeta'],replace:false
+ dependencies:['getReiseCurrency','updateReiseAmountPreview','renderReiseBudget','formatBetrag','formatDatum','speichern'],
+ session:['aktuellesLand','state'],read:['ReisenMeta'],write:['ReisenMeta'],replace:false
 }, (context,dependencies)=>{
  'use strict';
  const pending=new Map(), states=new Map(), successful=new Map(), formats=new Map();
@@ -32,7 +32,7 @@ Kostentracker.module({
    if(!formats.has(display.currency))formats.set(display.currency,new Intl.NumberFormat('de-DE',{style:'currency',currency:display.currency,currencyDisplay:'code'}));
    return formats.get(display.currency).format(eur*display.rate);
  }
- function repaint(land) {if(context.session.aktuellesLand===land)dependencies.renderReiseBudget();}
+ function repaint(land) {if(context.session.aktuellesLand===land){if(!context.session.state.reiseBudgetEdit)dependencies.renderReiseBudget();dependencies.updateReiseAmountPreview();}}
  async function fetchRate(quote) {
    if(pending.has(quote))return pending.get(quote);
    const task=(async()=>{
