@@ -445,7 +445,7 @@ Kostentracker.module({
                 gesamt += sum;
 
                 let item = document.createElement("div");
-                item.className = "item reise-category-card";
+                item.className = "item reise-category-card" + ((context.session.state.offeneKategorie === k || context.session.state.editKategorieName === k) ? " reise-category-open" : "");
 
                 const editingCategory = context.session.state.editKategorieName === k;
                 const categoryMain = document.createElement("div");
@@ -464,17 +464,22 @@ Kostentracker.module({
                     const amount = document.createElement("strong");
                     amount.className = "reise-category-amount";
                     amount.textContent = dependencies.formatBetragText(sum);
-                    categoryMain.append(label, amount);
+                    const chevron = document.createElement("span");
+                    chevron.className = "reise-category-chevron";
+                    chevron.setAttribute("aria-hidden", "true");
+                    chevron.textContent = "›";
+                    categoryMain.append(label, amount, chevron);
                     categoryMain.addEventListener("click", () => toggleKategorie(k));
                 }
                 const categoryActions = document.createElement("div");
                 categoryActions.className = "actions reise-category-actions";
-                categoryActions.style.cssText = "display:flex; gap:8px; align-items:center;";
+                categoryActions.style.cssText = "gap:8px; align-items:center;";
                 const addCategoryAction = (label, className, action) => {
                     const button = document.createElement("button");
                     button.type = "button";
                     button.className = className;
                     button.textContent = label;
+                    button.setAttribute("aria-label", (className === "edit" ? "Kategorie bearbeiten" : className === "delete" ? "Kategorie löschen" : label) + " · " + k);
                     button.addEventListener("click", event => {
                         event.stopPropagation();
                         action();
