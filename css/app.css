@@ -1798,3 +1798,18 @@
         }
 
     
+/* Reiseansicht: Ausrichtung und kompakte Bedienelemente, keine Datenänderung. */
+#land .reise-budget-card { margin-bottom:16px;display:flex;flex-direction:column;align-items:stretch;gap:14px; }
+#land .reise-budget-heading { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%; }
+#land .reise-budget-title { font-weight:700;text-align:left; }
+#land button.reise-budget-edit { display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;padding:0;margin:0;border-radius:12px;background:transparent;color:var(--text);border:1px solid rgba(128,128,128,.24); }
+#land button.reise-budget-edit:active { background:rgba(128,128,128,.14); }
+#land .reise-category-card { display:flex;flex-direction:column;align-items:stretch;gap:10px; }
+#land .reise-category-main, #land .reise-entry-heading { display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;width:100%;min-width:0;padding:4px 0; }
+#land .reise-category-label, #land .reise-entry-label { font-weight:700;overflow-wrap:anywhere;text-align:left;min-width:0; }
+#land .reise-category-amount, #land .reise-entry-amount { font-size:18px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums; }
+#land .reise-category-actions, #land .reise-entry-controls { justify-content:flex-end;width:100%; }
+#land .reise-entry-controls { display:flex; }
+#land .reise-entry-heading { cursor:pointer; }
+#land .reise-entry-actions { display:flex;align-items:center;gap:8px;white-space:nowrap; }
+#land .reise-category-actions button, #land .reise-entry-actions button { width:44px;height:44px;min-height:44px;padding:0;margin:0;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;font-size:17px; }
