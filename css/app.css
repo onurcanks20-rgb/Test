@@ -1855,3 +1855,13 @@
 /* Alphabetische Landesliste im nativen Picker, kompakter Währungscode oben. */
 #land .reise-currency-picker { position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 86px;width:86px;height:44px;border:1px solid rgba(128,128,128,.25);border-radius:12px;box-sizing:border-box;font-size:13px;font-weight:600; }
 #land .reise-currency-picker .reise-currency-compact { position:absolute;inset:0;opacity:0;width:100%;max-width:none;height:100%;padding:0;border:0;cursor:pointer; }
+
+/* Nur die drei Budgetwerte werden in der gewählten Anzeige umgerechnet. */
+#land .reise-budget-switch { display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:0 0 86px;width:86px;min-height:44px;padding:0 6px;margin:0;font-size:14px;font-weight:600;border:1px solid rgba(128,128,128,.25);border-radius:12px;background:transparent;color:var(--text); }
+#land .reise-budget-switch:disabled { opacity:.5; }
+#land .reise-budget-values { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center; }
+#land .reise-budget-value { display:block;min-width:0;font-size:18px;line-height:1.35;font-variant-numeric:tabular-nums;overflow-wrap:anywhere; }
+#land .reise-budget-values-local .reise-budget-value { font-size:clamp(13px,3.7vw,17px); }
+#land .reise-currency-settings { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;font-size:13px; }
+#land .reise-budget-rate-note { opacity:.75; }
+#land .reise-rate-refresh { display:inline-flex;align-items:center;justify-content:center;width:32px;min-height:32px;height:32px;padding:0;margin:0 0 0 4px;border:0;border-radius:9px;background:rgba(128,128,128,.12);color:var(--text);font-size:20px;vertical-align:middle; }
