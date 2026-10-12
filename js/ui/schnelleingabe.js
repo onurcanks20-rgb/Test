@@ -2,6 +2,8 @@ Kostentracker.module({
   "id": "js/ui/schnelleingabe.js",
   "dependencies": [
     "addKategorie",
+    "prepareReiseExpenseRate",
+    "updateReiseAmountPreview",
     "formatInputBetrag",
     "generateId",
     "getAktuellerMonat",
@@ -192,13 +194,14 @@ Kostentracker.module({
             }
             if (panelId === "hausAddPanel") applyLetzteAlltagsKategorie("haushalt");
             if (panelId === "freizeitAddPanel") applyLetzteAlltagsKategorie("freizeit");
-            if (panelId === "reiseAddPanel") applyLetzteReiseKategorie(false);
+            if (panelId === "reiseAddPanel") { applyLetzteReiseKategorie(false); dependencies.prepareReiseExpenseRate(); }
         }
 
         function setQuickAmount(inputId, amount) {
             const input = document.getElementById(inputId);
             if (!input) return;
             input.value = String(amount).replace(".", ",");
+            if (inputId === "betrag") dependencies.updateReiseAmountPreview();
             input.focus();
         }
 
