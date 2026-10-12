@@ -20,7 +20,7 @@
     <script src="./js/core/dienste.js?v=arch-v2"></script>
     <script src="./js/app/design-start.js?v=arch-v2"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=reise-budget-fx-v2">
+    <link rel="stylesheet" href="./css/app.css?v=reise-ausgabe-fx-v1">
 </head>
 
 <body>
@@ -747,7 +747,8 @@
 
             <div id="reiseAddPanel" class="category-add-panel hidden">
                 <h3>Reiseausgabe hinzufügen</h3>
-                <input id="betrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+                <input id="betrag" oninput="updateReiseAmountPreview()" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+                <div id="reiseAmountPreview" class="reise-amount-preview" role="status" aria-live="polite"></div>
                 <div class="quick-category-grid" id="reiseKategorieGrid">
                     <button class="quick-category-btn selected" data-category="Essen" onclick="setReiseKategorie('Essen',this)">🍽️ Essen</button>
                     <button class="quick-category-btn" data-category="Trinken" onclick="setReiseKategorie('Trinken',this)">🥤 Trinken</button>
@@ -1044,12 +1045,12 @@
 <script src="./js/ui/einstellungen.js?v=arch-v2"></script>
 <script src="./js/ui/archiv.js?v=arch-v2"></script>
 <script src="./js/budget/wochenbudget.js?v=arch-v2"></script>
-<script src="./js/ui/schnelleingabe.js?v=arch-v2"></script>
+<script src="./js/ui/schnelleingabe.js?v=reise-ausgabe-fx-v1"></script>
 <script src="./js/kategorien/geplante-ausgaben.js?v=arch-v2"></script>
 <script src="./js/kategorien/sparen-investieren.js?v=arch-v2"></script>
-<script src="./js/kategorien/reise-waehrung.js?v=reise-budget-fx-v2"></script>
-<script src="./js/kategorien/reise-budget-kurs.js?v=reise-budget-fx-v2"></script>
-<script src="./js/kategorien/reisen.js?v=reise-budget-fx-v2"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=reise-ausgabe-fx-v1"></script>
+<script src="./js/kategorien/reise-budget-kurs.js?v=reise-ausgabe-fx-v1"></script>
+<script src="./js/kategorien/reisen.js?v=reise-ausgabe-fx-v1"></script>
 <script src="./js/kategorien/fixkosten.js?v=arch-v2"></script>
 <script src="./js/ui/listen.js?v=arch-v2"></script>
 <script src="./js/kategorien/versicherungen.js?v=arch-v2"></script>
