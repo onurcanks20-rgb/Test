@@ -295,7 +295,8 @@ function migriereKategorienDaten() {
                     id: e.id ?? dependencies.generateId(),
                     betrag: e.betrag ?? 0,
                     text: e.text ?? "",
-                    datum: e.datum ?? ""
+                    datum: e.datum ?? "",
+                    ...(e.fx && typeof e.fx === "object" ? { fx: e.fx } : {})
                 }));
             }
         }
