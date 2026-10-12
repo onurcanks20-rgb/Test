@@ -399,7 +399,7 @@ Kostentracker.module({
             }
 
             function enhanceItem(item) {
-                if (!item || item.classList.contains('swipe-entry-ready')) return;
+                if (!item || !item.isConnected || !item.parentNode || item.classList.contains('swipe-entry-ready')) return;
                 if (item.querySelector('input, select, textarea')) return;
 
                 const actions = item.querySelector('.actions');
@@ -742,11 +742,15 @@ Kostentracker.module({
                 document.querySelectorAll('.swipe-entry-shell').forEach(refreshRightRail);
             });
 
+            document.addEventListener('kostentracker:rowsRendered', event => {
+                if (event.detail?.root?.isConnected) enhanceAll(event.detail.root);
+            });
+
             const observer = new MutationObserver(mutations => {
                 let listWasRendered = false;
                 mutations.forEach(mutation => {
                     mutation.addedNodes.forEach(node => {
-                        if (!(node instanceof Element)) return;
+                        if (!(node instanceof Element) || !node.isConnected) return;
                         if (node.matches('.item') || node.querySelector?.('.item')) listWasRendered = true;
                         if (node.matches('.item')) enhanceItem(node);
                         enhanceAll(node);
