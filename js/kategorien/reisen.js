@@ -39,6 +39,7 @@ Kostentracker.module({
     "reiseBudgetPresentation",
     "getReiseCurrency",
     "requestReiseBudgetRate",
+    "refreshReiseQuickAmounts",
     "formatReiseBudgetAmount",
     "renderReiseBudgetToggle",
     "renderReiseBudgetRateNote",
@@ -251,7 +252,7 @@ Kostentracker.module({
             renderKategorienUebersicht();
             dependencies.applyLetzteReiseKategorie();
             dependencies.setupReisenEnterFlow();
-            prepareReiseExpenseRate();
+            prepareReiseExpenseRate(true);
         }
 
         function reiseGesamtAusgegeben(land) {
@@ -390,26 +391,63 @@ Kostentracker.module({
             renderListe();
         }
 
-        function prepareReiseExpenseRate() {
+        function getReiseInputCurrency() {
+            const quote = dependencies.getReiseCurrency() || 'EUR';
+            const state = context.session.state;
+            if (state.reiseInputLand !== context.session.aktuellesLand || state.reiseInputQuote !== quote) {
+                state.reiseInputLand = context.session.aktuellesLand;
+                state.reiseInputQuote = quote;
+                state.reiseInputCurrency = quote;
+            }
+            return state.reiseInputCurrency === 'EUR' ? 'EUR' : quote;
+        }
+        function prepareReiseExpenseRate(reset = false) {
+            if (reset) {
+                context.session.state.reiseInputLand = null;
+                const input = document.getElementById("betrag");
+                if (input) input.value = "";
+            }
             updateReiseAmountPreview();
             if ((dependencies.getReiseCurrency() || 'EUR') !== 'EUR') dependencies.requestReiseBudgetRate();
         }
+        function toggleReiseInputCurrency() {
+            const quote = dependencies.getReiseCurrency() || 'EUR';
+            if (quote === 'EUR') return;
+            const current = getReiseInputCurrency(), input = document.getElementById('betrag');
+            const amount = dependencies.parseBetrag(input?.value), record = dependencies.reiseBudgetPresentation().record;
+            if (input?.value.trim() && Number.isFinite(amount)) {
+                if (!record) { alert('Zum Umrechnen des eingegebenen Betrags fehlt noch der Kurs. Leere das Feld, um die Eingabewährung zu wechseln.'); return; }
+                const value = current === 'EUR' ? amount * record.rate : amount / record.rate;
+                const target = current === 'EUR' ? quote : 'EUR';
+                const digits = new Intl.NumberFormat('de-DE',{style:'currency',currency:target}).resolvedOptions().maximumFractionDigits;
+                input.value = value.toFixed(digits).replace('.', ',');
+            }
+            context.session.state.reiseInputCurrency = current === 'EUR' ? quote : 'EUR';
+            updateReiseAmountPreview();
+            dependencies.refreshReiseQuickAmounts();
+        }
         function updateReiseAmountPreview() {
-            const input = document.getElementById('betrag'), note = document.getElementById('reiseAmountPreview');
+            const input = document.getElementById('betrag'), note = document.getElementById('reiseAmountPreview'), button = document.getElementById('reiseInputCurrencyToggle');
             if (!input || !note) return;
-            const currency = dependencies.getReiseCurrency() || 'EUR';
+            const quote = dependencies.getReiseCurrency() || 'EUR', currency = getReiseInputCurrency();
             input.placeholder = 'Betrag in ' + currency;
             input.setAttribute('aria-label', 'Betrag in ' + currency);
+            if (button) { button.textContent = currency + ' ⇄'; button.disabled = quote === 'EUR'; button.setAttribute('aria-label','Eingabewährung auf ' + (currency === 'EUR' ? quote : 'EUR') + ' wechseln'); }
             const amount = dependencies.parseBetrag(input.value), record = dependencies.reiseBudgetPresentation().record;
-            if (currency === 'EUR') { note.textContent = 'Ausgabe in Euro'; return; }
-            if (!record) { note.textContent = 'Noch kein Kurs für ' + currency + ' verfügbar. Zum Speichern ist ein Kurs erforderlich.'; return; }
-            const converted = Number.isFinite(amount) ? Math.round(amount / record.rate * 100) / 100 : null;
-            note.textContent = (converted === null ? 'Eurobetrag erscheint nach der Eingabe' : '≈ ' + dependencies.formatBetrag(converted)) + ' · Kurs vom ' + dependencies.formatDatum(record.date) + (navigator.onLine === false ? ' · gespeicherter Offlinekurs' : ' · Richtwert');
+            if (quote === 'EUR') { note.textContent = 'Ausgabe in Euro'; return; }
+            if (!record) { note.textContent = currency === 'EUR' ? 'Eurobetrag speicherbar · Umrechnungskurs fehlt' : 'Kurs fehlt · Fremdwährungsbetrag noch nicht speicherbar'; return; }
+            const target = currency === 'EUR' ? quote : 'EUR';
+            const converted = Number.isFinite(amount) ? (currency === 'EUR' ? amount * record.rate : Math.round(amount / record.rate * 100) / 100) : null;
+            const formatted = converted === null ? 'Umrechnung in ' + target : target === 'EUR' ? dependencies.formatBetragText(converted) : new Intl.NumberFormat('de-DE',{style:'currency',currency:target,currencyDisplay:'code'}).format(converted);
+            note.textContent = (converted === null ? formatted : '≈ ' + formatted) + ' · ' + dependencies.formatDatum(record.date) + (navigator.onLine === false ? ' · Offlinekurs' : '');
+            note.setAttribute('title','Referenzkurs vom ' + dependencies.formatDatum(record.date) + ' · Richtwert');
         }
         function entryFxDetails(entry, details = false) {
             const fx = entry.fx;
             if (!fx || !Number.isFinite(fx.amount) || !Number.isFinite(fx.rate) || fx.rate <= 0 || !/^[A-Z]{3}$/.test(fx.currency)) return '';
-            const original = new Intl.NumberFormat('de-DE', {style:'currency',currency:fx.currency,currencyDisplay:'code'}).format(fx.amount);
+            const displayCurrency = fx.currency === 'EUR' && fx.counterCurrency ? fx.counterCurrency : fx.currency;
+            const displayAmount = fx.currency === 'EUR' && fx.counterCurrency ? fx.amount * fx.counterRate : fx.amount;
+            const original = (fx.currency === 'EUR' && fx.counterCurrency ? '≈ ' : '') + new Intl.NumberFormat('de-DE', {style:'currency',currency:displayCurrency,currencyDisplay:'code'}).format(displayAmount);
             return details ? `<div style="opacity:.7;">Umrechnungskurs vom ${dependencies.escapeHtml(dependencies.formatDatum(fx.date))} · Richtwert</div>` : `<div class="reise-original-amount">${original}</div>`;
         }
 
@@ -421,7 +459,7 @@ Kostentracker.module({
             let datum = document.getElementById("datum").value;
 
             if (!Number.isFinite(betrag) || betrag <= 0) return;
-            const currency = dependencies.getReiseCurrency() || 'EUR';
+            const currency = getReiseInputCurrency();
             let fx;
             if (currency !== 'EUR') {
                 const record = dependencies.reiseBudgetPresentation().record;
@@ -429,6 +467,11 @@ Kostentracker.module({
                 fx = { amount: betrag, currency, rate: record.rate, date: record.date };
                 betrag = Math.round(betrag / record.rate * 100) / 100;
                 if (betrag <= 0) { alert('Der umgerechnete Betrag ist kleiner als ein Cent.'); return; }
+            }
+            if (currency === 'EUR') {
+                betrag = Math.round(betrag * 100) / 100;
+                const quote = dependencies.getReiseCurrency(), record = dependencies.reiseBudgetPresentation().record;
+                if (quote && quote !== 'EUR' && record) fx = {amount:betrag,currency:'EUR',rate:1,date:record.date,counterCurrency:quote,counterRate:record.rate};
             }
             if (!context.session.aktuellesLand || !context.repository.view.Reisen[context.session.aktuellesLand]) return;
 
@@ -1053,5 +1096,5 @@ function deleteEintrag(k, i) {
             dependencies.finishUndoDelete("Reiseausgabe gelöscht");
         }
 
-return { prepareReiseExpenseRate, updateReiseAmountPreview, entryFxDetails, addLand, renderLaender, openLand, reiseGesamtAusgegeben, renderReiseBudget, setReiseBudgetEditing, saveReiseBudget, backToReisen, updateDropdown, addKategorie, addEintrag, toggleKategorie, renderListe, toggleReiseDetails, editKategorie, clearKategorie, deleteKategorie, renderKategorienUebersicht, deleteLand, clearLand, startEditReise, saveEditReise, cancelEditReise, saveEditKategorie, cancelEditKategorie, startEditKategorie, editLand, startEditLand, saveEditLand, cancelEditLand, reisenGesamt, bookReisePlannedOccurrence, editEintrag, deleteEintrag };
+return { getReiseInputCurrency, toggleReiseInputCurrency, prepareReiseExpenseRate, updateReiseAmountPreview, entryFxDetails, addLand, renderLaender, openLand, reiseGesamtAusgegeben, renderReiseBudget, setReiseBudgetEditing, saveReiseBudget, backToReisen, updateDropdown, addKategorie, addEintrag, toggleKategorie, renderListe, toggleReiseDetails, editKategorie, clearKategorie, deleteKategorie, renderKategorienUebersicht, deleteLand, clearLand, startEditReise, saveEditReise, cancelEditReise, saveEditKategorie, cancelEditKategorie, startEditKategorie, editLand, startEditLand, saveEditLand, cancelEditLand, reisenGesamt, bookReisePlannedOccurrence, editEintrag, deleteEintrag };
 });
