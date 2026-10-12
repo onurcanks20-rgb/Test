@@ -20,7 +20,7 @@
     <script src="./js/core/dienste.js?v=arch-v2"></script>
     <script src="./js/app/design-start.js?v=arch-v2"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=reise-food-merge-v1">
+    <link rel="stylesheet" href="./css/app.css?v=reise-food-grid-v1">
 </head>
 
 <body>
@@ -750,7 +750,7 @@
                 <div id="reiseAmountInputRow" class="reise-amount-input-row"><input id="betrag" oninput="updateReiseAmountPreview()" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next"><button id="reiseInputCurrencyToggle" type="button" onclick="toggleReiseInputCurrency()" aria-label="Eingabewährung wechseln">EUR ⇄</button></div>
                 <div id="reiseAmountPreview" class="reise-amount-preview" role="status" aria-live="polite"></div>
                 <div class="quick-category-grid" id="reiseKategorieGrid">
-                    <button class="quick-category-btn selected" data-category="Essen / Trinken" style="grid-column:1/-1" onclick="setReiseKategorie('Essen / Trinken',this)">🍽️ Essen / Trinken</button>
+                    <button class="quick-category-btn selected" data-category="Essen / Trinken" onclick="setReiseKategorie('Essen / Trinken',this)">🍽️ Essen / Trinken</button>
                     <button class="quick-category-btn" data-category="Transport" onclick="setReiseKategorie('Transport',this)">🚆 Transport</button>
                     <button class="quick-category-btn" data-category="Unterkunft" onclick="setReiseKategorie('Unterkunft',this)">🏨 Unterkunft</button>
                     <button class="quick-category-btn" data-category="Aktivität" onclick="setReiseKategorie('Aktivität',this)">🎯 Aktivität</button>
@@ -1033,7 +1033,7 @@
     </div>
 
 
-    <script src="./js/core/dateninitialisierung.js?v=reise-food-merge-v1"></script>
+    <script src="./js/core/dateninitialisierung.js?v=reise-food-grid-v1"></script>
     <script src="./js/core/speicherung-backup.js?v=arch-v2"></script>
 <script src="./js/ui/rueckgaengig.js?v=arch-v2"></script>
 <script src="./js/ui/erinnerungen.js?v=arch-v2"></script>
@@ -1044,12 +1044,12 @@
 <script src="./js/ui/einstellungen.js?v=arch-v2"></script>
 <script src="./js/ui/archiv.js?v=arch-v2"></script>
 <script src="./js/budget/wochenbudget.js?v=arch-v2"></script>
-<script src="./js/ui/schnelleingabe.js?v=reise-food-merge-v1"></script>
+<script src="./js/ui/schnelleingabe.js?v=reise-food-grid-v1"></script>
 <script src="./js/kategorien/geplante-ausgaben.js?v=arch-v2"></script>
 <script src="./js/kategorien/sparen-investieren.js?v=arch-v2"></script>
-<script src="./js/kategorien/reise-waehrung.js?v=reise-food-merge-v1"></script>
-<script src="./js/kategorien/reise-budget-kurs.js?v=reise-food-merge-v1"></script>
-<script src="./js/kategorien/reisen.js?v=reise-food-merge-v1"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=reise-food-grid-v1"></script>
+<script src="./js/kategorien/reise-budget-kurs.js?v=reise-food-grid-v1"></script>
+<script src="./js/kategorien/reisen.js?v=reise-food-grid-v1"></script>
 <script src="./js/kategorien/fixkosten.js?v=arch-v2"></script>
 <script src="./js/ui/listen.js?v=arch-v2"></script>
 <script src="./js/kategorien/versicherungen.js?v=arch-v2"></script>
