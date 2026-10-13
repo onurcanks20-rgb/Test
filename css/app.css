@@ -1890,3 +1890,17 @@
 .payment-review-error { color:var(--danger,#e74c3c);font-size:14px;line-height:1.4; }
 .payment-review-error:empty { display:none; }
 body.payment-review-fallback::after { content:"";position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:20000; }
+
+/* Aktive Reisen ergänzen die Startseite, ohne das Alltagsbudget zu ersetzen. */
+.home-active-trips { display: grid; gap: 12px; margin: 0 0 18px; }
+.home-trip-card { background: var(--card); border: 1px solid rgba(128,128,128,.22); border-radius: 20px; overflow: hidden; }
+.home-trip-open { display: flex; flex-direction: column; gap: 7px; width: 100%; margin: 0; padding: 17px 18px 13px; border: 0; border-radius: 0; background: transparent; color: inherit; text-align: left; }
+.home-trip-label { font-size: 12px; font-weight: 500; opacity: .65; }
+.home-trip-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; }
+.home-trip-country { font-size: 20px; overflow-wrap: anywhere; }
+.home-trip-row > span { font-size: 26px; line-height: 1; opacity: .6; }
+.home-trip-remaining { font-size: 14px; font-weight: 500; opacity: .8; overflow-wrap: anywhere; }
+.home-trip-add { display: block; width: calc(100% - 36px); margin: 0 18px 16px; padding: 11px 10px; border: 0; border-radius: 12px; background: var(--primary); color: #fff; font-size: 14px; font-weight: 600; }
+.home-trip-open:focus-visible, .home-trip-add:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
+
+.home-active-trips.hidden { display: none; }
