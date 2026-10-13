@@ -1904,3 +1904,21 @@ body.payment-review-fallback::after { content:"";position:fixed;inset:0;backgrou
 .home-trip-open:focus-visible, .home-trip-add:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
 
 .home-active-trips.hidden { display: none; }
+
+/* Nur während einer aktiven Reise Platz für die zusätzliche Karte schaffen. */
+#home.has-active-trip .hero-card {
+    min-height: 0;
+    padding: 12px 14px 8px;
+    border-radius: 20px;
+}
+#home.has-active-trip .hero-amount {
+    font-size: clamp(28px, 7.5vw, 32px);
+    line-height: 1.1;
+    margin: 4px 0 2px;
+    letter-spacing: -0.02em;
+}
+#home.has-active-trip .hero-card > .link-button {
+    margin-top: 0;
+    padding: 7px 10px;
+    font-size: 13px;
+}
