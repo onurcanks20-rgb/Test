@@ -229,6 +229,7 @@ Kostentracker.module({
             const host = document.getElementById('homeActiveTrips');
             if (!host) return;
             const trips = activeHomeTrips();
+            document.getElementById('home')?.classList.toggle('has-active-trip', trips.length > 0);
             host.replaceChildren();
             host.classList.toggle('hidden', trips.length === 0);
             for (const land of trips) {
