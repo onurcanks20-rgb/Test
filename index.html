@@ -20,7 +20,7 @@
     <script src="./js/core/dienste.js?v=arch-v2"></script>
     <script src="./js/app/design-start.js?v=arch-v2"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=travel-home-v2">
+    <link rel="stylesheet" href="./css/app.css?v=test-category-nav-v1">
 </head>
 
 <body>
@@ -1052,7 +1052,7 @@
 <script src="./js/ui/erinnerungen.js?v=arch-v2"></script>
 <script src="./js/core/formatierung.js?v=arch-v2"></script>
 <script src="./js/budget/gehalt.js?v=arch-v2"></script>
-<script src="./js/ui/navigation.js?v=arch-v2"></script>
+<script src="./js/ui/navigation.js?v=test-category-nav-v1"></script>
 <script src="./js/ui/eintragsaktionen.js?v=arch-v2"></script>
 <script src="./js/ui/einstellungen.js?v=arch-v2"></script>
 <script src="./js/ui/archiv.js?v=arch-v2"></script>
@@ -1101,6 +1101,12 @@
 <script src="./js/server/reise-zahlungen.js?v=travel-payment-review-v1"></script>
 <script src="./js/server/synchronisierung.js?v=travel-payment-review-v1"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
+    <!-- Gemeinsame Navigation in Kategorien (aus der Übersicht) -->
+    <nav id="categoryBottomNav" class="bottom-nav hidden" aria-label="Hauptnavigation in Kategorien">
+        <button type="button" onclick="goHome()"><span class="nav-icon">🏠</span>Start</button>
+        <button type="button" class="active" aria-current="page" onclick="openUebersicht()"><span class="nav-icon">📋</span>Übersicht</button>
+        <button type="button" onclick="openGrafik()"><span class="nav-icon">📊</span>Grafik</button>
+    </nav>
 </body>
 
 </html>
