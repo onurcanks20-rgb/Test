@@ -19,12 +19,25 @@ Kostentracker.module({
     "reisenGesamt",
     "renderBudgetUndWochen",
     "renderHomeWarnings",
-    "versicherungsZahlungenImZeitraum"
+    "versicherungsZahlungenImZeitraum",
+    "heuteISO",
+    "parseBetrag",
+    "formatBetragText",
+    "reiseGesamtAusgegeben",
+    "openLand",
+    "openStartQuickAdd",
+    "updateDropdown",
+    "initExistingReiseCurrency",
+    "resetAddReminderForPanel"
   ],
   "session": [
-    "state"
+    "state",
+    "aktuellesLand"
   ],
-  "read": [],
+  "read": [
+    "Reisen",
+    "ReisenMeta"
+  ],
   "write": [],
   "replace": false
 }, (context, dependencies) => {
@@ -51,6 +64,7 @@ Kostentracker.module({
         }
 
         function renderHomeUebersicht() {
+            renderHomeTrips();
 
             const zeitraum = dependencies.getGehaltszeitraum();
             dependencies.renderBudgetUndWochen(zeitraum);
@@ -184,5 +198,81 @@ Kostentracker.module({
 
         
 
-return { renderUebersicht, renderHomeUebersicht };
+
+        function activeHomeTrips() {
+            const today = dependencies.heuteISO();
+            return Object.keys(context.repository.view.Reisen || {}).filter(land => {
+                const meta = context.repository.view.ReisenMeta?.[land];
+                return /^\d{4}-\d{2}-\d{2}$/.test(meta?.von || '') &&
+                    /^\d{4}-\d{2}-\d{2}$/.test(meta?.bis || '') &&
+                    meta.von <= today && today <= meta.bis;
+            }).sort((a, b) => a.localeCompare(b, 'de'));
+        }
+
+        function openHomeTravelExpense(land) {
+            if (!activeHomeTrips().includes(land)) { renderHomeTrips(); return; }
+            context.session.state.editReiseId = null;
+            context.session.state.editLandName = null;
+            context.session.state.reiseBudgetEdit = false;
+            context.session.aktuellesLand = land;
+            dependencies.initExistingReiseCurrency(land);
+            dependencies.updateDropdown();
+            const date = document.getElementById('datum');
+            const text = document.getElementById('text');
+            if (date) date.value = dependencies.heuteISO();
+            if (text) text.value = '';
+            dependencies.resetAddReminderForPanel('reiseAddPanel');
+            dependencies.openStartQuickAdd('reiseAddPanel', 'betrag');
+        }
+
+        function renderHomeTrips() {
+            const host = document.getElementById('homeActiveTrips');
+            if (!host) return;
+            const trips = activeHomeTrips();
+            host.replaceChildren();
+            host.classList.toggle('hidden', trips.length === 0);
+            for (const land of trips) {
+                const meta = context.repository.view.ReisenMeta[land];
+                const card = document.createElement('article');
+                card.className = 'home-trip-card';
+                const open = document.createElement('button');
+                open.type = 'button';
+                open.className = 'home-trip-open';
+                open.setAttribute('aria-label', 'Reise nach ' + land + ' öffnen');
+                const label = document.createElement('span');
+                label.className = 'home-trip-label'; label.textContent = 'Aktuelle Reise';
+                const row = document.createElement('span'); row.className = 'home-trip-row';
+                const title = document.createElement('strong'); title.className = 'home-trip-country'; title.textContent = land;
+                const arrow = document.createElement('span'); arrow.textContent = '›'; arrow.setAttribute('aria-hidden', 'true');
+                row.append(title, arrow);
+                const remaining = document.createElement('span'); remaining.className = 'home-trip-remaining';
+                const budget = dependencies.parseBetrag(meta.budget) || 0;
+                remaining.textContent = budget > 0
+                    ? dependencies.formatBetragText(budget - dependencies.reiseGesamtAusgegeben(land)) + ' Reisebudget übrig'
+                    : 'Kein Reisebudget festgelegt';
+                open.append(label, row, remaining);
+                open.addEventListener('click', () => {
+                    if (activeHomeTrips().includes(land)) dependencies.openLand(land);
+                    else renderHomeTrips();
+                });
+                const add = document.createElement('button');
+                add.type = 'button'; add.className = 'home-trip-add'; add.textContent = '＋ Ausgabe hinzufügen';
+                add.setAttribute('aria-label', 'Ausgabe für ' + land + ' hinzufügen');
+                add.addEventListener('click', () => openHomeTravelExpense(land));
+                card.append(open, add); host.appendChild(card);
+            }
+        }
+
+        // Auch nach einem Tageswechsel ohne Neustart die aktiven Reisen neu bestimmen.
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') renderHomeTrips();
+        });
+        window.addEventListener('focus', renderHomeTrips);
+        function scheduleHomeTripDayChange() {
+            const next = new Date(); next.setHours(24, 0, 0, 0);
+            setTimeout(() => { renderHomeTrips(); scheduleHomeTripDayChange(); }, next.getTime() - Date.now() + 100);
+        }
+        scheduleHomeTripDayChange();
+
+return { activeHomeTrips, renderHomeTrips, openHomeTravelExpense, renderUebersicht, renderHomeUebersicht };
 });
