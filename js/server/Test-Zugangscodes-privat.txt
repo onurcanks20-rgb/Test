@@ -1,0 +1,14 @@
+KOSTENTRACKER – PERSÖNLICHE TEST-ZUGANGSCODES
+
+Testserver: https://kostentracker-test.onurcanks20.workers.dev
+
+Person 1 / dein Test-Zugang:
+YtnKOPenlv3kDPVb5dyH10no76Csbl_BefpRinc9f78
+
+Person 2 / zweiter Test-Zugang:
+cZM_Hv62PxcwG8NIOPPBjDezu_KrcxE3tkl1qTuzcog
+
+In der Test-App nur den jeweiligen Code eintragen.
+Im Kurzbefehl: Authorization = Bearer gefolgt von einem Leerzeichen und dem jeweiligen Code.
+
+Dies sind die bisher vorbereiteten Testcodes. Falls du sie inzwischen in Cloudflare geändert hast, gelten die dort neu eingetragenen Werte.
