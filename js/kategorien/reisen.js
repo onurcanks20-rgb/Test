@@ -447,7 +447,7 @@ Kostentracker.module({
             const displayCurrency = fx.currency === 'EUR' && fx.counterCurrency ? fx.counterCurrency : fx.currency;
             const displayAmount = fx.currency === 'EUR' && fx.counterCurrency ? fx.amount * fx.counterRate : fx.amount;
             const original = (fx.currency === 'EUR' && fx.counterCurrency ? '≈ ' : '') + new Intl.NumberFormat('de-DE', {style:'currency',currency:displayCurrency,currencyDisplay:'code'}).format(displayAmount);
-            return details ? `<div style="opacity:.7;">Umrechnungskurs vom ${dependencies.escapeHtml(dependencies.formatDatum(fx.date))} · Richtwert</div>` : `<div class="reise-original-amount">${original}</div>`;
+            return details ? `<div style="opacity:.7;">${fx.rateSource === 'bank' ? 'Bankabrechnung vom' : 'Umrechnungskurs vom'} ${dependencies.escapeHtml(dependencies.formatDatum(fx.date))}${fx.rateSource === 'bank' ? '' : ' · Richtwert'}</div>` : `<div class="reise-original-amount">${original}</div>`;
         }
 
         function addEintrag() {
@@ -1042,6 +1042,19 @@ Kostentracker.module({
             return sum;
         }
 
+function refreshReiseImportedViews() {
+    if (!context.session.state.editLandName) renderLaender();
+    if (context.session.aktuellesLand) {
+        if (!context.session.state.reiseBudgetEdit) renderReiseBudget();
+        if (!context.session.state.editReiseId) renderKategorienUebersicht();
+    }
+}
+function appendReiseExternalExpense(entry,land,category) {
+    const list=context.repository.view.Reisen?.[land]?.[category];
+    if(!Array.isArray(list))throw new Error('Reisekategorie nicht mehr vorhanden.');
+    list.push(entry);
+}
+
 function bookReisePlannedOccurrence(entry, datum, occurrenceKey, wiederholung) {
     const reise = context.repository.view.Reisen?.[entry.land || ""]; if (!reise) return false;
     const rawCategory = entry.kategorie || "Sonstiges";
@@ -1095,5 +1108,5 @@ function deleteEintrag(k, i) {
             dependencies.finishUndoDelete("Reiseausgabe gelöscht");
         }
 
-return { getReiseInputCurrency, toggleReiseInputCurrency, prepareReiseExpenseRate, updateReiseAmountPreview, entryFxDetails, addLand, renderLaender, openLand, reiseGesamtAusgegeben, renderReiseBudget, setReiseBudgetEditing, saveReiseBudget, backToReisen, updateDropdown, addKategorie, addEintrag, toggleKategorie, renderListe, toggleReiseDetails, editKategorie, clearKategorie, deleteKategorie, renderKategorienUebersicht, deleteLand, clearLand, startEditReise, saveEditReise, cancelEditReise, saveEditKategorie, cancelEditKategorie, startEditKategorie, editLand, startEditLand, saveEditLand, cancelEditLand, reisenGesamt, bookReisePlannedOccurrence, editEintrag, deleteEintrag };
+return { refreshReiseImportedViews, appendReiseExternalExpense, getReiseInputCurrency, toggleReiseInputCurrency, prepareReiseExpenseRate, updateReiseAmountPreview, entryFxDetails, addLand, renderLaender, openLand, reiseGesamtAusgegeben, renderReiseBudget, setReiseBudgetEditing, saveReiseBudget, backToReisen, updateDropdown, addKategorie, addEintrag, toggleKategorie, renderListe, toggleReiseDetails, editKategorie, clearKategorie, deleteKategorie, renderKategorienUebersicht, deleteLand, clearLand, startEditReise, saveEditReise, cancelEditReise, saveEditKategorie, cancelEditKategorie, startEditKategorie, editLand, startEditLand, saveEditLand, cancelEditLand, reisenGesamt, bookReisePlannedOccurrence, editEintrag, deleteEintrag };
 });
