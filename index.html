@@ -20,7 +20,7 @@
     <script src="./js/core/dienste.js?v=arch-v2"></script>
     <script src="./js/app/design-start.js?v=arch-v2"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=travel-payments-v1">
+    <link rel="stylesheet" href="./css/app.css?v=travel-payment-review-v1">
 </head>
 
 <body>
@@ -309,7 +309,7 @@
                 <button onclick="restoreTestServerBackup()" style="background:#3a3a3c;">Serverbackup wiederherstellen</button>
                 <div id="testServerStatus" class="settings-note" role="status" aria-live="polite" style="margin-top:16px;">Persönlichen Code einmal eintragen.</div>
             </div>
-            <div class="settings-page-card"><div id="serverPaymentReview"></div></div>
+
             <div class="settings-page-card" id="travelPaymentTests">
                 <h3>Reisezahlungen testen</h3>
                 <div class="settings-note">Nur Testversion: Diese Buttons erzeugen lokale Testausgaben oder Prüfungen. Keine echte Bankzahlung und keine nachgewiesenen Push-Formate. Für das Korea-Beispiel eine Reise mit KRW auswählen.</div>
@@ -1044,7 +1044,7 @@
     </div>
 
 
-    <script src="./js/core/dateninitialisierung.js?v=travel-payments-v1"></script>
+    <script src="./js/core/dateninitialisierung.js?v=travel-payment-review-v1"></script>
     <script src="./js/core/speicherung-backup.js?v=arch-v2"></script>
 <script src="./js/ui/rueckgaengig.js?v=arch-v2"></script>
 <script src="./js/ui/erinnerungen.js?v=arch-v2"></script>
@@ -1055,12 +1055,12 @@
 <script src="./js/ui/einstellungen.js?v=arch-v2"></script>
 <script src="./js/ui/archiv.js?v=arch-v2"></script>
 <script src="./js/budget/wochenbudget.js?v=arch-v2"></script>
-<script src="./js/ui/schnelleingabe.js?v=travel-payments-v1"></script>
+<script src="./js/ui/schnelleingabe.js?v=travel-payment-review-v1"></script>
 <script src="./js/kategorien/geplante-ausgaben.js?v=arch-v2"></script>
 <script src="./js/kategorien/sparen-investieren.js?v=arch-v2"></script>
-<script src="./js/kategorien/reise-waehrung.js?v=travel-payments-v1"></script>
-<script src="./js/kategorien/reise-budget-kurs.js?v=travel-payments-v1"></script>
-<script src="./js/kategorien/reisen.js?v=travel-payments-v1"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=travel-payment-review-v1"></script>
+<script src="./js/kategorien/reise-budget-kurs.js?v=travel-payment-review-v1"></script>
+<script src="./js/kategorien/reisen.js?v=travel-payment-review-v1"></script>
 <script src="./js/kategorien/fixkosten.js?v=arch-v2"></script>
 <script src="./js/ui/listen.js?v=arch-v2"></script>
 <script src="./js/kategorien/versicherungen.js?v=arch-v2"></script>
@@ -1088,10 +1088,16 @@
     <link rel="stylesheet" href="./css/bedienung.css?v=arch-v2">
     <script src="./js/ui/wischgesten.js?v=reise-ansicht-v4"></script>
 
-    <script src="./js/ui/zurueckwischen.js?v=edge-smooth-v2"></script>
+    <script src="./js/ui/zurueckwischen.js?v=travel-payment-review-v1"></script>
 
-<script src="./js/server/reise-zahlungen.js?v=travel-payments-v1"></script>
-<script src="./js/server/synchronisierung.js?v=travel-payments-v1"></script>
+<dialog id="paymentReviewDialog" class="payment-review-dialog" aria-labelledby="paymentReviewHeading" aria-describedby="paymentReviewRemaining" aria-modal="true" closedby="none">
+  <h2 id="paymentReviewHeading" tabindex="-1">Zahlungen prüfen</h2>
+  <p id="paymentReviewRemaining" class="settings-note"></p>
+  <div id="paymentReviewError" role="alert" class="payment-review-error"></div>
+  <div id="serverPaymentReview"></div>
+</dialog>
+<script src="./js/server/reise-zahlungen.js?v=travel-payment-review-v1"></script>
+<script src="./js/server/synchronisierung.js?v=travel-payment-review-v1"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
 </body>
 
