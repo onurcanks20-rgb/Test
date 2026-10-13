@@ -97,6 +97,18 @@ Kostentracker.module({
             // Gewünschte View anzeigen
             document.getElementById(id)?.classList.remove("hidden");
 
+            // Kategorien behalten die Übersicht-Navigation; Einstellungen bleiben unverändert.
+            const categoryViews = [
+                "reisen", "land", "haushaltView", "freizeitView",
+                "ausgabenArchivView", "globalArchivView", "geplanteAusgabenView",
+                "sparenInvestierenView", "einnahmenView", "kostenView",
+                "versicherungenView"
+            ];
+            const categoryNav = document.getElementById("categoryBottomNav");
+            const isCategory = categoryViews.includes(id);
+            categoryNav?.classList.toggle("hidden", !isCategory);
+            document.body?.classList.toggle("category-nav-visible", isCategory);
+
             // Kleine Resets, aber nur wenn die Elemente existieren
             if (id !== "reisen") {
                 document.getElementById("laenderListe")?.replaceChildren();
