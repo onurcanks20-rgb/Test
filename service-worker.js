@@ -1,4 +1,4 @@
-const WORKER_VERSION = "test-category-nav-v1";
+const WORKER_VERSION = "test-category-nav-spacing-v2";
 const APP_SCOPE = new URL(self.registration.scope);
 const CACHE_PREFIX = `kostentracker-test:${encodeURIComponent(APP_SCOPE.pathname)}:`;
 const CACHE_NAME = `${CACHE_PREFIX}${WORKER_VERSION}`;
@@ -43,7 +43,7 @@ const CODE_ASSETS = [
   "./js/ui/zurueckwischen.js?v=travel-payment-review-v1",
   "./js/server/reise-zahlungen.js?v=travel-payment-review-v1",
   "./js/server/synchronisierung.js?v=travel-payment-review-v1",
-  "./css/app.css?v=test-category-nav-v1",
+  "./css/app.css?v=test-category-nav-spacing-v2",
   "./css/bedienung.css?v=arch-v2"
 ].map(path => new URL(path, APP_SCOPE).href);
 const STATIC_ASSETS = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"]
