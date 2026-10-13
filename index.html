@@ -15,12 +15,12 @@
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
-    <title>Kostentracker Test</title>
+    <title>Kostentracker</title>
 
-    <script src="./js/core/dienste.js?v=arch-v2"></script>
-    <script src="./js/app/design-start.js?v=arch-v2"></script>
+    <script src="./js/core/dienste.js?v=main-travel-v1"></script>
+    <script src="./js/app/design-start.js?v=main-travel-v1"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=test-category-nav-spacing-v2">
+    <link rel="stylesheet" href="./css/app.css?v=main-category-nav-spacing-v2">
 </head>
 
 <body>
@@ -310,18 +310,6 @@
                 <div id="serverNotificationStatus" class="settings-note" style="margin:12px 0;"></div>
                 <button onclick="restoreTestServerBackup()" style="background:#3a3a3c;">Serverbackup wiederherstellen</button>
                 <div id="testServerStatus" class="settings-note" role="status" aria-live="polite" style="margin-top:16px;">Persönlichen Code einmal eintragen.</div>
-            </div>
-
-            <div class="settings-page-card" id="travelPaymentTests">
-                <h3>Reisezahlungen testen</h3>
-                <div class="settings-note">Nur Testversion: Diese Buttons erzeugen lokale Testausgaben oder Prüfungen. Keine echte Bankzahlung und keine nachgewiesenen Push-Formate. Für das Korea-Beispiel eine Reise mit KRW auswählen.</div>
-                <label for="travelPaymentTestLand">Testreise</label><select id="travelPaymentTestLand" onchange="updateTravelPaymentTestDate()"><option value="">Reise auswählen</option></select>
-                <label for="travelPaymentTestDate">Zahlungsdatum</label><input id="travelPaymentTestDate" type="date">
-                <button onclick="simulateTravelPayment('eur')">Nur Eurobetrag testen</button>
-                <button onclick="simulateTravelPayment('both')">Euro + Landeswährung testen</button>
-                <button onclick="simulateTravelPayment('foreign')">Nur Landeswährung testen</button>
-                <button onclick="removeTravelPaymentTests()" style="background:#3a3a3c">Diese Testzahlungen entfernen</button>
-                <div id="travelPaymentTestStatus" class="settings-note" role="status"></div>
             </div>
             <div class="settings-page-card">
                 <h3>Zahlungen</h3>
@@ -1046,39 +1034,39 @@
     </div>
 
 
-    <script src="./js/core/dateninitialisierung.js?v=travel-payment-review-v1"></script>
-    <script src="./js/core/speicherung-backup.js?v=arch-v2"></script>
-<script src="./js/ui/rueckgaengig.js?v=arch-v2"></script>
-<script src="./js/ui/erinnerungen.js?v=arch-v2"></script>
-<script src="./js/core/formatierung.js?v=arch-v2"></script>
-<script src="./js/budget/gehalt.js?v=arch-v2"></script>
-<script src="./js/ui/navigation.js?v=test-category-nav-v1"></script>
-<script src="./js/ui/eintragsaktionen.js?v=arch-v2"></script>
-<script src="./js/ui/einstellungen.js?v=arch-v2"></script>
-<script src="./js/ui/archiv.js?v=arch-v2"></script>
-<script src="./js/budget/wochenbudget.js?v=arch-v2"></script>
-<script src="./js/ui/schnelleingabe.js?v=travel-payment-review-v1"></script>
-<script src="./js/kategorien/geplante-ausgaben.js?v=arch-v2"></script>
-<script src="./js/kategorien/sparen-investieren.js?v=arch-v2"></script>
-<script src="./js/kategorien/reise-waehrung.js?v=travel-payment-review-v1"></script>
-<script src="./js/kategorien/reise-budget-kurs.js?v=travel-payment-review-v1"></script>
-<script src="./js/kategorien/reisen.js?v=travel-payment-review-v1"></script>
-<script src="./js/kategorien/fixkosten.js?v=arch-v2"></script>
-<script src="./js/ui/listen.js?v=arch-v2"></script>
-<script src="./js/kategorien/versicherungen.js?v=arch-v2"></script>
-<script src="./js/budget/berechnungen.js?v=arch-v2"></script>
-<script src="./js/ui/verschieben.js?v=arch-v2"></script>
-<script src="./js/kategorien/einnahmen.js?v=arch-v2"></script>
-<script src="./js/kategorien/haushalt.js?v=arch-v2"></script>
-<script src="./js/kategorien/freizeit.js?v=arch-v2"></script>
-<script src="./js/ui/formulare.js?v=arch-v2"></script>
-<script src="./js/kategorien/alltag-gemeinsam.js?v=arch-v2"></script>
-<script src="./js/ui/ausgabenarchiv.js?v=arch-v2"></script>
-<script src="./js/budget/faelligkeiten.js?v=arch-v2"></script>
-<script src="./js/budget/zeitraeume.js?v=arch-v2"></script>
-<script src="./js/budget/uebersicht.js?v=travel-home-v2"></script>
-<script src="./js/grafik/diagramme.js?v=arch-v2"></script>
-<script src="./js/app/start.js?v=arch-v2"></script>
+    <script src="./js/core/dateninitialisierung.js?v=main-travel-v1"></script>
+    <script src="./js/core/speicherung-backup.js?v=main-travel-v1"></script>
+<script src="./js/ui/rueckgaengig.js?v=main-travel-v1"></script>
+<script src="./js/ui/erinnerungen.js?v=main-travel-v1"></script>
+<script src="./js/core/formatierung.js?v=main-travel-v1"></script>
+<script src="./js/budget/gehalt.js?v=main-travel-v1"></script>
+<script src="./js/ui/navigation.js?v=main-category-nav-v1"></script>
+<script src="./js/ui/eintragsaktionen.js?v=main-travel-v1"></script>
+<script src="./js/ui/einstellungen.js?v=main-travel-v1"></script>
+<script src="./js/ui/archiv.js?v=main-travel-v1"></script>
+<script src="./js/budget/wochenbudget.js?v=main-travel-v1"></script>
+<script src="./js/ui/schnelleingabe.js?v=main-travel-v1"></script>
+<script src="./js/kategorien/geplante-ausgaben.js?v=main-travel-v1"></script>
+<script src="./js/kategorien/sparen-investieren.js?v=main-travel-v1"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=main-travel-v1"></script>
+<script src="./js/kategorien/reise-budget-kurs.js?v=main-travel-v1"></script>
+<script src="./js/kategorien/reisen.js?v=main-travel-v1"></script>
+<script src="./js/kategorien/fixkosten.js?v=main-travel-v1"></script>
+<script src="./js/ui/listen.js?v=main-travel-v1"></script>
+<script src="./js/kategorien/versicherungen.js?v=main-travel-v1"></script>
+<script src="./js/budget/berechnungen.js?v=main-travel-v1"></script>
+<script src="./js/ui/verschieben.js?v=main-travel-v1"></script>
+<script src="./js/kategorien/einnahmen.js?v=main-travel-v1"></script>
+<script src="./js/kategorien/haushalt.js?v=main-travel-v1"></script>
+<script src="./js/kategorien/freizeit.js?v=main-travel-v1"></script>
+<script src="./js/ui/formulare.js?v=main-travel-v1"></script>
+<script src="./js/kategorien/alltag-gemeinsam.js?v=main-travel-v1"></script>
+<script src="./js/ui/ausgabenarchiv.js?v=main-travel-v1"></script>
+<script src="./js/budget/faelligkeiten.js?v=main-travel-v1"></script>
+<script src="./js/budget/zeitraeume.js?v=main-travel-v1"></script>
+<script src="./js/budget/uebersicht.js?v=main-travel-home-v2"></script>
+<script src="./js/grafik/diagramme.js?v=main-travel-v1"></script>
+<script src="./js/app/start.js?v=main-travel-v1"></script>
 
 
     <div id="undoToast" class="undo-toast hidden" role="status" aria-live="polite">
@@ -1087,10 +1075,10 @@
     </div>
 
     <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
-    <link rel="stylesheet" href="./css/bedienung.css?v=arch-v2">
-    <script src="./js/ui/wischgesten.js?v=reise-ansicht-v4"></script>
+    <link rel="stylesheet" href="./css/bedienung.css?v=main-travel-v1">
+    <script src="./js/ui/wischgesten.js?v=main-travel-v1"></script>
 
-    <script src="./js/ui/zurueckwischen.js?v=travel-payment-review-v1"></script>
+    <script src="./js/ui/zurueckwischen.js?v=main-travel-v1"></script>
 
 <dialog id="paymentReviewDialog" class="payment-review-dialog" aria-labelledby="paymentReviewHeading" aria-describedby="paymentReviewRemaining" aria-modal="true" closedby="none">
   <h2 id="paymentReviewHeading" tabindex="-1">Zahlungen prüfen</h2>
@@ -1098,8 +1086,8 @@
   <div id="paymentReviewError" role="alert" class="payment-review-error"></div>
   <div id="serverPaymentReview"></div>
 </dialog>
-<script src="./js/server/reise-zahlungen.js?v=travel-payment-review-v1"></script>
-<script src="./js/server/synchronisierung.js?v=travel-payment-review-v1"></script>
+<script src="./js/server/reise-zahlungen.js?v=main-travel-v1"></script>
+<script src="./js/server/synchronisierung.js?v=main-travel-v1"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
     <!-- Gemeinsame Navigation in Kategorien (aus der Übersicht) -->
     <nav id="categoryBottomNav" class="bottom-nav hidden" aria-label="Hauptnavigation in Kategorien">
