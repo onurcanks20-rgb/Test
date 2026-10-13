@@ -2,6 +2,13 @@ Kostentracker.module({
   "id": "js/server/synchronisierung.js",
   "dependencies": [
     "addDays",
+    "appendReiseExternalExpense",
+    "refreshReiseImportedViews",
+    "validateImportedPayment",
+    "routeTravelPayment",
+    "travelPaymentCategory",
+    "importedForeignFx",
+    "setupTravelPaymentTests",
     "appendFreizeitExternalExpense",
     "appendHaushaltExternalExpense",
     "formatBetragText",
@@ -69,7 +76,7 @@ Kostentracker.module({
         }
 
 
-function openServerSettings() {dependencies.show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();}
+function openServerSettings() {dependencies.show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();dependencies.setupTravelPaymentTests();}
 async function renderPushTestStatus() {
   const node=document.getElementById('serverNotificationStatus');if(!node)return;
   if(!('Notification' in window)){node.textContent='Für Benachrichtigungen die App über ihr Home-Bildschirm-Icon öffnen.';return;}
@@ -131,7 +138,8 @@ function showPaymentImportedNotice(success=true) {
 
 function classifyPushPayment(payment) {
   if(payment.reviewReason) return {review:payment.reviewReason};
-  if(payment.source!=='bank-push') return {normal:true};
+  if(payment.amountCents===null)return dependencies.routeTravelPayment(payment);
+  if(payment.source!=='bank-push') return dependencies.routeTravelPayment(payment);
   const paid=dependencies.parseISODate(payment.date), from=dependencies.addDays(paid,-31), to=dependencies.addDays(paid,31);
   const rows=[...dependencies.laufendeKostenImZeitraum(from,to),...dependencies.versicherungsZahlungenImZeitraum(from,to)];
   const matches=[],unknown=[];
@@ -152,54 +160,83 @@ function classifyPushPayment(payment) {
     return {recurring:matches[0]};
   }
   if(matches.length>1||unknown.length) return {review:'Mögliche Fixkosten/Versicherung: Anbieter, Betrag und Fälligkeit bitte prüfen.'};
-  return {normal:true};
+  return dependencies.routeTravelPayment(payment);
 }
 function importedPaymentDestination(payment) {
+  const travel=dependencies.routeTravelPayment(payment);if(travel.destination)return travel.destination;
   const merchant=normalizedProvider(payment.merchant).replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const bakery=/(?:^|[^a-z])(?:baeckerei|backerei|baecker|backer|backstube|bakery)(?=$|[^a-z])/.test(merchant);
   return bakery ? {area:'Freizeit',category:'Essen / Trinken'} : {area:'Haushalt',category:['Einkauf','Tanken','Drogerie','Sonstiges'].includes(payment.category)?payment.category:'Einkauf'};
 }
-function appendImportedPayment(payment) {
-  const target=importedPaymentDestination(payment),month=Number(payment.date.slice(5,7));
-  const entry={id:dependencies.generateId(),text:String(payment.merchant||'Apple Pay').slice(0,200),betrag:payment.amountCents/100,datum:payment.date,kategorie:target.category,_serverPaymentId:payment.id};
+function appendImportedPayment(payment,destination=null) {
+  const target=destination||importedPaymentDestination(payment),month=Number(payment.date.slice(5,7));
+  const entry={id:dependencies.generateId(),text:String(payment.merchant||'Apple Pay').slice(0,200),betrag:payment.amountCents/100,datum:payment.date,kategorie:target.category,_serverPaymentId:payment.id,...(payment.notificationDate?{_notificationDate:payment.notificationDate}:{}),...(payment.testOnly?{_testPayment:true}:{})};
+  const fx=dependencies.importedForeignFx(payment,target.land);if(fx)entry.fx=fx;
+  if(target.area==='Reisen'){dependencies.appendReiseExternalExpense(entry,target.land,target.category);return;}
   if(target.area==='Freizeit') dependencies.appendFreizeitExternalExpense(entry,month);else dependencies.appendHaushaltExternalExpense(entry,month);
 }
+function reviewCategories(id) {
+  const target=document.getElementById('reviewTarget-'+id)?.value||'';
+  const select=document.getElementById('reviewCategory-'+id);if(!select)return;
+  select.replaceChildren();const options=target.startsWith('reise:')?Object.keys(context.repository.view.Reisen?.[target.slice(6)]||{}):[];
+  for(const category of options){const option=document.createElement('option');option.value=category;option.textContent=category;select.appendChild(option);}
+  select.disabled=!options.length;
+}
 function renderServerPaymentReview() {
-  const host=document.getElementById('serverPaymentReview');if(!host)return;
-  host.replaceChildren();
+  const host=document.getElementById('serverPaymentReview');if(!host)return;host.replaceChildren();
   const pending=context.repository.view.Einstellungen?.serverPendingReview||[];
   const title=document.createElement('strong');title.textContent=`Zahlungen zur Prüfung: ${pending.length}`;host.appendChild(title);
-  const note=document.createElement('div');note.className='settings-note';note.textContent='Unsichere Zahlungen werden erst nach deiner Entscheidung als zusätzliche Ausgabe erfasst. Eindeutig zugeordnete Fixkosten werden nicht erneut abgezogen.';host.appendChild(note);
+  const note=document.createElement('div');note.className='settings-note';note.textContent='Ziel und Betrag prüfen. Eindeutig zugeordnete Fixkosten werden nicht erneut abgezogen.';host.appendChild(note);
   for(const payment of pending) {
     const row=document.createElement('div');row.style.cssText='margin-top:12px;padding:12px;border-radius:12px;background:var(--secondary);';
-    const label=document.createElement('div');label.textContent=`${payment.merchant} · ${dependencies.formatBetragText(payment.amountCents/100)} · ${dependencies.formatDatum(payment.date)}`;row.appendChild(label);
+    const amount=payment.amountCents===null?`${payment.foreign.amount} ${payment.foreign.currency}`:dependencies.formatBetragText(payment.amountCents/100);
+    const label=document.createElement('div');label.textContent=`${payment.merchant} · ${amount} · ${dependencies.formatDatum(payment.date)}`;row.appendChild(label);
+    if(payment.foreign&&payment.amountCents!==null){const foreign=document.createElement('div');foreign.className='settings-note';foreign.textContent=`Originalbetrag: ${payment.foreign.amount} ${payment.foreign.currency}`;row.appendChild(foreign);}
     const reason=document.createElement('div');reason.className='settings-note';reason.textContent=payment.reviewReason;row.appendChild(reason);
-    for(const [text,book] of [['Als zusätzliche Ausgabe erfassen',true],['Bereits berücksichtigt / ignorieren',false]]) {
-      const button=document.createElement('button');button.type='button';button.textContent=text;button.addEventListener('click',()=>resolveServerPaymentReview(payment.id,book));row.appendChild(button);
-    }
-    host.appendChild(row);
+    if(payment.notificationText){const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Mitteilung anzeigen';details.appendChild(summary);const raw=document.createElement('div');raw.className='settings-note';raw.textContent=[payment.notificationTitle,payment.notificationSubtitle,payment.notificationText].filter(Boolean).join(' · ');details.appendChild(raw);row.appendChild(details);}
+    const route=dependencies.routeTravelPayment(payment),target=document.createElement('select');target.id='reviewTarget-'+payment.id;target.setAttribute('aria-label','Zahlung zuordnen');
+    const empty=document.createElement('option');empty.value='';empty.textContent='Ziel auswählen';target.appendChild(empty);
+    const alltag=document.createElement('option');alltag.value='alltag';alltag.textContent='Alltag (Haushalt / Freizeit)';target.appendChild(alltag);
+    for(const land of Object.keys(context.repository.view.Reisen||{})){const option=document.createElement('option');option.value='reise:'+land;option.textContent='Reise: '+land;target.appendChild(option);}
+    target.value=route.destination?'reise:'+route.destination.land:route.review?'':'alltag';target.addEventListener('change',()=>reviewCategories(payment.id));row.appendChild(target);
+    const category=document.createElement('select');category.id='reviewCategory-'+payment.id;category.setAttribute('aria-label','Reisekategorie');row.appendChild(category);
+    if(payment.amountCents===null){const euro=document.createElement('input');euro.id='reviewEuro-'+payment.id;euro.type='text';euro.inputMode='decimal';euro.placeholder='Abgerechneter Betrag in Euro';euro.setAttribute('aria-label','Abgerechneter Betrag in Euro');row.appendChild(euro);}
+    const accept=document.createElement('button');accept.type='button';accept.textContent='Zahlung übernehmen';accept.addEventListener('click',()=>resolveServerPaymentReview(payment.id,true,target.value,document.getElementById('reviewEuro-'+payment.id)?.value,category.value));row.appendChild(accept);
+    const ignore=document.createElement('button');ignore.type='button';ignore.textContent='Bereits berücksichtigt / ignorieren';ignore.addEventListener('click',()=>resolveServerPaymentReview(payment.id,false));row.appendChild(ignore);
+    host.appendChild(row);reviewCategories(payment.id);
+    if(route.destination)category.value=route.destination.category;
   }
 }
-function resolveServerPaymentReview(id,book) {
+function resolveServerPaymentReview(id,book,target=null,euroValue=null,category=null) {
   const pending=context.repository.view.Einstellungen?.serverPendingReview||[],payment=pending.find(p=>p.id===id);if(!payment)return;
+  let resolved=payment,destination;
+  if(book){
+    if(payment.amountCents===null){const euro=dependencies.parseBetrag(euroValue);if(!Number.isFinite(euro)||euro<=0||euro>1000000){alert('Bitte den abgerechneten Eurobetrag ergänzen.');return;}resolved={...payment,amountCents:Math.round(euro*100)};if(resolved.amountCents<=0){alert('Eurobetrag ist kleiner als ein Cent.');return;}}
+    const route=dependencies.routeTravelPayment(resolved);
+    if(target===null&&route.review){alert('Bitte Reise oder Alltag als Ziel auswählen.');return;}
+    if(target===''){alert('Bitte ein Ziel auswählen.');return;}
+    if(target?.startsWith('reise:')){const land=target.slice(6);destination={area:'Reisen',land,category:category||dependencies.travelPaymentCategory(resolved,land)};}
+    else if(target==='alltag'){const merchant=normalizedProvider(resolved.merchant);destination=/bäck|baeck|bakery/.test(merchant)?{area:'Freizeit',category:'Essen / Trinken'}:{area:'Haushalt',category:['Einkauf','Tanken','Drogerie','Sonstiges'].includes(resolved.category)?resolved.category:'Einkauf'};}
+    else if(target!==null){alert('Ungültiges Ziel.');return;}
+  }
   const before=context.clone(context.repository.view);
   try {
-    if(book) appendImportedPayment(payment);
+    if(book){dependencies.validateImportedPayment(resolved);appendImportedPayment(resolved,destination);}
     context.repository.view.Einstellungen.serverPendingReview=pending.filter(p=>p.id!==id);
     context.storage.setItem(context.storage.key,JSON.stringify(context.repository.view));context.storage.lastSaved=JSON.stringify(context.repository.view);
-  } catch(error) {context.repository.view=before;showPaymentImportedNotice(false);serverStatus('Entscheidung konnte nicht gespeichert werden. Bitte erneut versuchen.');return;}
-  if(book) showPaymentImportedNotice();
-  renderServerPaymentReview();dependencies.renderHomeUebersicht();dependencies.renderRecentAusgaben('haushalt');dependencies.renderRecentAusgaben('freizeit');scheduleTestServerSync();
+  } catch(error) {context.repository.view=before;showPaymentImportedNotice(false);serverStatus('Entscheidung konnte nicht gespeichert werden. Ziel prüfen und erneut versuchen.');return;}
+  if(book)showPaymentImportedNotice();renderServerPaymentReview();dependencies.refreshReiseImportedViews();dependencies.renderHomeUebersicht();dependencies.renderRecentAusgaben('haushalt');dependencies.renderRecentAusgaben('freizeit');scheduleTestServerSync();
 }
 
 function importTestServerPayments(payments) {
   if(!Array.isArray(payments)||payments.length>100) throw new Error('Ungültige Zahlungsliste.');
   const ids=new Set(context.repository.view.Einstellungen?.serverImportIds||[]);
   for(const area of ['Haushalt','Freizeit']) Object.values(context.repository.view[area]||{}).forEach(list=>Array.isArray(list)&&list.forEach(e=>{if(e._serverPaymentId)ids.add(e._serverPaymentId);}));
+  for(const trip of Object.values(context.repository.view.Reisen||{}))Object.values(trip||{}).forEach(list=>Array.isArray(list)&&list.forEach(e=>{if(e._serverPaymentId)ids.add(e._serverPaymentId);}));
   const before=context.clone(context.repository.view);let count=0;
   try {
     for(const payment of payments) {
-      if(!payment||typeof payment.id!=='string'||!/^[-A-Za-z0-9_:]{1,128}$/.test(payment.id)||!Number.isInteger(payment.amountCents)||payment.amountCents<=0||payment.amountCents>100000000||typeof payment.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(payment.date)||!Number.isFinite(Date.parse(payment.date+'T12:00:00Z'))||new Date(payment.date+'T12:00:00Z').toISOString().slice(0,10)!==payment.date) throw new Error('Ungültige Zahlung vom Server.');
+      dependencies.validateImportedPayment(payment);
       if(ids.has(payment.id)) continue;
       const classification=classifyPushPayment(payment);
       context.repository.view.Einstellungen??={};
@@ -210,6 +247,7 @@ function importTestServerPayments(payments) {
         context.repository.view.Einstellungen.serverRecurringMatches??={};
         context.repository.view.Einstellungen.serverRecurringMatches[classification.recurring.key]={paymentId:payment.id,date:payment.date,merchant:payment.merchant};
       } else {appendImportedPayment(payment);count++;}
+      if(payment.testOnly){context.repository.view.Einstellungen.serverTravelDemoIds??=[];context.repository.view.Einstellungen.serverTravelDemoIds.push(payment.id);}
       ids.add(payment.id);
     }
     context.repository.view.Einstellungen??={};context.repository.view.Einstellungen.serverImportIds=[...ids];
@@ -217,7 +255,7 @@ function importTestServerPayments(payments) {
     context.storage.setItem(context.storage.key,JSON.stringify(context.repository.view));context.storage.lastSaved=JSON.stringify(context.repository.view);
   } catch(error) {context.repository.view=before;showPaymentImportedNotice(false);throw error;}
   if(count>0) showPaymentImportedNotice();
-  renderServerPaymentReview();
+  renderServerPaymentReview();dependencies.refreshReiseImportedViews();
   return count;
 }
 async function syncTestServer(saveSettings=false) {
@@ -291,5 +329,5 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 window.addEventListener('load',()=>{renderTestServerSettings();if(testServerConfig.token) syncTestServer(false);});
 
 
-return { withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+return { reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
 });
