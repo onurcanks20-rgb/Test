@@ -1922,3 +1922,35 @@ body.payment-review-fallback::after { content:"";position:fixed;inset:0;backgrou
     padding: 7px 10px;
     font-size: 13px;
 }
+
+/* Gemeinsame untere Navigation für Kategorieansichten; Platz für iPhone-Home-Indikator. */
+body.category-nav-visible > #reisen > .container,
+body.category-nav-visible > #land > .container,
+body.category-nav-visible > #haushaltView > .container,
+body.category-nav-visible > #freizeitView > .container,
+body.category-nav-visible > #ausgabenArchivView > .container,
+body.category-nav-visible > #globalArchivView > .container,
+body.category-nav-visible > #geplanteAusgabenView > .container,
+body.category-nav-visible > #sparenInvestierenView > .container,
+body.category-nav-visible > #einnahmenView > .container,
+body.category-nav-visible > #kostenView > .container,
+body.category-nav-visible > #versicherungenView > .container {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+}
+@media (max-width: 600px) {
+    body.category-nav-visible > #reisen > .container,
+    body.category-nav-visible > #land > .container,
+    body.category-nav-visible > #haushaltView > .container,
+    body.category-nav-visible > #freizeitView > .container,
+    body.category-nav-visible > #ausgabenArchivView > .container,
+    body.category-nav-visible > #globalArchivView > .container,
+    body.category-nav-visible > #geplanteAusgabenView > .container,
+    body.category-nav-visible > #sparenInvestierenView > .container,
+    body.category-nav-visible > #einnahmenView > .container,
+    body.category-nav-visible > #kostenView > .container,
+    body.category-nav-visible > #versicherungenView > .container {
+        padding-bottom: calc(100px + env(safe-area-inset-bottom));
+    }
+}
+
+.bottom-nav.hidden { display: none; }
