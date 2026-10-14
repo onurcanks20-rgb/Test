@@ -1954,3 +1954,28 @@ body.category-nav-visible > #versicherungenView {
 }
 
 .bottom-nav.hidden { display: none; }
+
+/* Kurze Formulare, Erklärungen auf Wunsch; wichtige Zustände bleiben sichtbar. */
+.page-info-button { flex: 0 0 44px; width:44px; height:44px; min-height:44px; margin:0; padding:0; border:1px solid rgba(128,128,128,.25); border-radius:50%; background:transparent; color:inherit; font-size:25px; line-height:1; }
+.page-info-button:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+.page-info-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.page-info-heading h2, .page-info-heading h3 { min-width:0; margin:0; overflow-wrap:anywhere; }
+#serverSettingsView .topbar h2 { font-size:clamp(20px,5.5vw,25px); white-space:normal; overflow-wrap:normal; }
+.app-dialog { position:fixed; inset:0; width:calc(100% - 28px); max-width:480px; max-height:85vh; max-height:85dvh; overflow:auto; overscroll-behavior:contain; margin:auto; padding:20px; border:1px solid rgba(128,128,128,.25); border-radius:22px; background:var(--secondary); color:var(--text); z-index:20001; }
+.app-dialog:not([open]) { display:none; }
+.app-dialog[open] { display:block; }
+.app-dialog::backdrop { background:rgba(0,0,0,.65); backdrop-filter:blur(4px); }
+.app-dialog[open] { box-shadow:0 0 0 100vmax rgba(0,0,0,.4); }
+.app-dialog h2 { font-size:22px; line-height:1.25; margin-top:0; }
+.app-dialog p { font-size:15px; line-height:1.5; }
+.app-dialog button { min-height:44px; }
+.neutral-button { background:transparent; color:inherit; border:1px solid rgba(128,128,128,.3); }
+.server-login-status { font-size:16px; line-height:1.45; font-weight:600; }
+.server-restore-notice { margin-top:16px; padding:16px; border:1px solid var(--primary); border-radius:18px; background:rgba(52,152,219,.12); }
+.server-restore-notice h3 { font-size:20px; margin:0 0 8px; }
+.server-restore-notice p { font-size:15px; line-height:1.4; }
+#serverRestoreError { color:var(--danger); font-size:15px; }
+#serverRestoreError:empty { display:none; }
+.action-notice { font-size:14px; line-height:1.45; }
+.test-mode-label { font-size:12px; font-weight:700; opacity:.75; margin-bottom:10px; }
+button:disabled { opacity:.5; cursor:default; }
