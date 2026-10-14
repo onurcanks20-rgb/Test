@@ -180,8 +180,7 @@ Kostentracker.module({
                             item = dependencies.createItem(`<div style="display:flex; flex-direction:column; width:100%; gap:6px;">
                                 <input id="editArchivBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
                                 <input id="editArchivText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
-                                <input id="editArchivDatum-${e.id}" type="date" value="${e.datum || ''}">
-                                ${dependencies.renderEntryTimeInput(`editArchivUhrzeit-${e.id}`,e)}
+                                <div class="entry-date-time"><label><span>Datum</span><input id="editArchivDatum-${e.id}" type="date" value="${e.datum || ''}"></label>${dependencies.renderEntryTimeInput(`editArchivUhrzeit-${e.id}`,e)}</div>
                                 <div style="display:flex; gap:10px;">
                                     <button onclick="event.stopPropagation(); saveEditAusgabenArchiv('${typ}','${e.id}')">💾 Speichern</button>
                                     <button onclick="event.stopPropagation(); cancelEditAusgabenArchiv()">❌ Abbrechen</button>
