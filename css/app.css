@@ -2081,3 +2081,43 @@ button:disabled { opacity:.5; cursor:default; }
     min-height:0;
     line-height:24px;
 }
+
+/* DATUM & UHRZEIT – FARBEN HIER ÄNDERN
+   Für weiße Felder: #1c1c1e → #ffffff, #ffffff → #000000,
+   dark → light und #aaaaaa → #555555 (nur in diesem Block).
+*/
+.entry-date-time {
+    --datum-feld-hintergrund: #1c1c1e;
+    --datum-feld-text: #ffffff;
+    --datum-feld-farbschema: dark;
+    --datum-feld-entfernen: #aaaaaa;
+}
+:root[data-theme="light"] .entry-date-time {
+    --datum-feld-hintergrund: #ffffff;
+    --datum-feld-text: #000000;
+    --datum-feld-farbschema: light;
+    --datum-feld-entfernen: #555555;
+}
+.entry-date-time input[type="date"],
+.entry-date-time input[type="time"] {
+    background:var(--datum-feld-hintergrund);
+    color:var(--datum-feld-text);
+    color-scheme:var(--datum-feld-farbschema);
+}
+.entry-date-time .entry-time-clear { color:var(--datum-feld-entfernen); }
+
+/* Heller Modus: sichtbare Karten und ausreichender Textkontrast. */
+:root[data-theme="light"] .item,
+:root[data-theme="light"] .land-item,
+:root[data-theme="light"] .compact-details {
+    background:#f0f1f5 !important;
+    color:#111111 !important;
+    border-color:rgba(0,0,0,.09);
+}
+:root[data-theme="light"] .date-group-title { color:#222222; }
+:root[data-theme="light"] .date-group-title small { color:#63636b; }
+:root[data-theme="light"] .land-stats { color:#55555d; }
+:root[data-theme="light"] .land-spent { color:#222222; }
+:root[data-theme="light"] .compact-alltag-sub,
+:root[data-theme="light"] .entry-time { opacity:1; color:#595961; }
+:root[data-theme="light"] .bottom-nav button:not(.active) { color:#63636b; }
