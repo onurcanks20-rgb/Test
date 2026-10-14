@@ -634,8 +634,7 @@ Kostentracker.module({
                         <div style="font-size:13px;opacity:.75;">Betrag in ${e.fx ? e.fx.currency : 'EUR'}${e.fx ? ' · gespeicherter Kurs' : ''}</div>
                         <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.fx ? e.fx.amount : e.betrag)}" placeholder="Betrag in ${e.fx ? e.fx.currency : 'EUR'}" enterkeyhint="next">
                         <input id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || "")}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
-                        <input id="editDatum-${e.id}" type="date" value="${e.datum || ""}">
-                        ${dependencies.renderEntryTimeInput(`editReiseUhrzeit-${e.id}`,e)}
+                        <div class="entry-date-time"><label><span>Datum</span><input id="editDatum-${e.id}" type="date" value="${e.datum || ""}"></label>${dependencies.renderEntryTimeInput(`editReiseUhrzeit-${e.id}`,e)}</div>
 
                         <div class="actions">
                             <button onclick="saveEditReise(${e.id})">💾</button>
