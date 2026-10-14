@@ -248,17 +248,17 @@
             <div class="settings-menu">
                 <button class="settings-menu-item" type="button" onclick="openSettingsBudget()">
                     <span class="settings-menu-icon">💶</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Budget & Gehalt</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Budget & Gehalt</span><span class="settings-menu-sub">Aktuelles und nächstes Gehalt, Gehaltstag</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsQuickAdd()">
                     <span class="settings-menu-icon">⚡</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Schnelleingabe</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Schnelleingabe</span><span class="settings-menu-sub">Bereiche auswählen und Reihenfolge anpassen</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsWarnings()">
                     <span class="settings-menu-icon">🔔</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Erinnerungen & Warnungen</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Erinnerung</span><span class="settings-menu-sub">Große Ausgaben und Hinweise auf der Startseite</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsDesign()">
@@ -277,17 +277,17 @@
             <div class="settings-menu">
                 <button class="settings-menu-item" type="button" onclick="openGlobalArchiv()">
                     <span class="settings-menu-icon">📁</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Archiv</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Archiv</span><span class="settings-menu-sub">Alle gespeicherten Einträge durchsuchen und exportieren</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openServerSettings()">
                     <span class="settings-menu-icon">🔄</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Anmelden & Datensicherung</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Anmelden & Datensicherung</span><span class="settings-menu-sub">Persönlicher Zugang, gespeicherte Daten und Mitteilungen</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsBackup()">
                     <span class="settings-menu-icon">💾</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Datensicherung</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Datensicherung</span><span class="settings-menu-sub">Daten in einer Datei sichern oder wiederherstellen</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
             </div>
@@ -407,25 +407,25 @@
         <div class="container">
             <div class="topbar">
                 <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
-                <h2 style="flex:1;">Erinnerungen</h2>
-            <button class="page-info-button" type="button" onclick="openPageInfo('settingsWarningsView')" aria-label="Informationen zu Erinnerungen">ⓘ</button>
+                <h2 style="flex:1;">Erinnerung</h2>
+            <button class="page-info-button" type="button" onclick="openPageInfo('settingsWarningsView')" aria-label="Informationen zu Erinnerung">ⓘ</button>
             </div>
             <div class="settings-page-card">
                 <div class="settings-switch-row">
-                    <span class="switch-label">Automatische Warnungen</span>
-                    <button id="warnungenAktiv" type="button" class="settings-switch-button" role="switch" aria-checked="true" onclick="toggleWarnungenAktiv()" aria-label="Automatische Warnungen an oder aus">
+                    <span class="switch-label">Automatische Erinnerung</span>
+                    <button id="warnungenAktiv" type="button" class="settings-switch-button" role="switch" aria-checked="true" onclick="toggleWarnungenAktiv()" aria-label="Automatische Erinnerung an oder aus">
                         <span class="ios-switch on" aria-hidden="true"></span>
                     </button>
                 </div>
                 <div id="warnGlobalFields">
                     <div class="warning-settings-grid">
                         <div><label for="warnSchwelle">Ab Betrag</label><input id="warnSchwelle" type="text" inputmode="decimal" placeholder="100"></div>
-                        <div><label for="warnTage">Warnzeit (Tage)</label><input id="warnTage" type="number" min="0" max="365" placeholder="14"></div>
+                        <div><label for="warnTage">Erinnerungszeit (Tage)</label><input id="warnTage" type="number" min="0" max="365" placeholder="14"></div>
                     </div>
                     
                     <div style="font-weight:700;margin-top:16px;">Automatisch berücksichtigen</div>
                     <div id="warnKategorieGrid" class="warning-cat-grid"></div>
-                    <button onclick="saveWarnSettings()" style="margin-top:14px;">Warnungen speichern</button>
+                    <button onclick="saveWarnSettings()" style="margin-top:14px;">Erinnerung speichern</button>
                 </div>
             </div>
         </div>
@@ -1063,7 +1063,7 @@
 <script src="./js/budget/gehalt.js?v=arch-v2"></script>
 <script src="./js/ui/navigation.js?v=test-category-nav-v1"></script>
 <script src="./js/ui/eintragsaktionen.js?v=arch-v2"></script>
-<script src="./js/ui/einstellungen.js?v=test-settings-info-v1"></script>
+<script src="./js/ui/einstellungen.js?v=test-settings-info-v4"></script>
 <script src="./js/ui/archiv.js?v=arch-v2"></script>
 <script src="./js/budget/wochenbudget.js?v=arch-v2"></script>
 <script src="./js/ui/schnelleingabe.js?v=travel-payment-review-v1"></script>

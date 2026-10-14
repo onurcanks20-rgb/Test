@@ -1,4 +1,4 @@
-const WORKER_VERSION = "test-settings-info-v1";
+const WORKER_VERSION = "test-settings-info-v4";
 const APP_SCOPE = new URL(self.registration.scope);
 const CACHE_PREFIX = `kostentracker-test:${encodeURIComponent(APP_SCOPE.pathname)}:`;
 const CACHE_NAME = `${CACHE_PREFIX}${WORKER_VERSION}`;
@@ -13,7 +13,7 @@ const CODE_ASSETS = [
   "./js/budget/gehalt.js?v=arch-v2",
   "./js/ui/navigation.js?v=test-category-nav-v1",
   "./js/ui/eintragsaktionen.js?v=arch-v2",
-  "./js/ui/einstellungen.js?v=test-settings-info-v1",
+  "./js/ui/einstellungen.js?v=test-settings-info-v4",
   "./js/ui/archiv.js?v=arch-v2",
   "./js/budget/wochenbudget.js?v=arch-v2",
   "./js/ui/schnelleingabe.js?v=travel-payment-review-v1",
