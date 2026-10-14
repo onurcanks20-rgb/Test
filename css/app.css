@@ -1992,3 +1992,80 @@ button:disabled { opacity:.5; cursor:default; }
 .entry-time-input { display:flex; align-items:stretch; gap:4px; width:100%; min-width:0; }
 .entry-time-input input { flex:1 1 auto; min-width:0; width:0; }
 .entry-time-clear { flex:0 0 44px; width:44px; min-width:44px; min-height:50px; margin:0; padding:0; border:0; border-radius:10px; background:transparent; color:inherit; opacity:.7; font-size:24px; }
+
+
+/* Einheitliche native Datums- und Uhrzeitfelder, auch in der Bearbeitung. */
+.entry-date-time {
+    grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+    align-items:start;
+    gap:10px;
+    margin:10px 0;
+}
+.entry-date-time > label,
+.entry-date-time > .entry-time-field { gap:6px; margin:0; }
+.entry-date-time > label > span,
+.entry-date-time .entry-time-field > label {
+    color:var(--text);
+    opacity:.65;
+    font-size:12px;
+    line-height:18px;
+    font-weight:400;
+}
+.entry-date-time input[type="date"],
+.entry-date-time input[type="time"] {
+    display:block;
+    height:48px;
+    min-height:48px;
+    max-height:48px;
+    margin:0;
+    padding:0 12px;
+    border:1px solid rgba(128,128,128,.28);
+    border-radius:12px;
+    background:var(--card);
+    color:var(--text);
+    font:inherit;
+    font-size:16px;
+    font-weight:400;
+    line-height:normal;
+    text-align:left;
+    -webkit-appearance:none;
+    appearance:none;
+    color-scheme:dark;
+}
+:root[data-theme="light"] .entry-date-time input { color-scheme:light; }
+.entry-date-time input:focus-visible {
+    outline:2px solid var(--primary);
+    outline-offset:2px;
+}
+.entry-date-time input::-webkit-date-and-time-value {
+    min-height:1.2em;
+    margin:0;
+    padding:0;
+    text-align:left;
+}
+.entry-date-time input::-webkit-datetime-edit { padding:0; }
+.entry-date-time .entry-time-input { position:relative; display:block; }
+.entry-date-time .entry-time-input input { width:100%; padding-right:42px; }
+.entry-date-time .entry-time-clear {
+    position:absolute;
+    top:2px;
+    right:2px;
+    width:40px;
+    min-width:40px;
+    height:44px;
+    min-height:44px;
+    padding:0;
+    margin:0;
+    display:grid;
+    place-items:center;
+    border-radius:10px;
+    font-size:22px;
+    line-height:1;
+    opacity:.6;
+}
+.entry-date-time .entry-time-clear:focus-visible {
+    outline:2px solid var(--primary);
+    outline-offset:-2px;
+}
+
+.entry-date-time:has(> .entry-time-field.hidden) { grid-template-columns:minmax(0,1fr); }
