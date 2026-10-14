@@ -25,7 +25,8 @@ Kostentracker.module({
     "renderHomeUebersicht",
     "renderRecentAusgaben",
     "show",
-    "versicherungsZahlungenImZeitraum"
+    "versicherungsZahlungenImZeitraum",
+    "importedEntryTime"
   ],
   "session": [],
   "read": [
@@ -195,7 +196,7 @@ function importedPaymentDestination(payment) {
 }
 function appendImportedPayment(payment,destination=null) {
   const target=destination||importedPaymentDestination(payment),month=Number(payment.date.slice(5,7));
-  const entry={id:dependencies.generateId(),text:String(payment.merchant||'Apple Pay').slice(0,200),betrag:payment.amountCents/100,datum:payment.date,kategorie:target.category,_serverPaymentId:payment.id,...(payment.notificationDate?{_notificationDate:payment.notificationDate}:{}),...(payment.testOnly?{_testPayment:true}:{})};
+  const entry={id:dependencies.generateId(),text:String(payment.merchant||'Apple Pay').slice(0,200),betrag:payment.amountCents/100,datum:payment.date,kategorie:target.category,_serverPaymentId:payment.id,...(payment.notificationDate?{_notificationDate:payment.notificationDate}:{}),...dependencies.importedEntryTime(payment),...(payment.testOnly?{_testPayment:true}:{})};
   const fx=dependencies.importedForeignFx(payment,target.land);if(fx)entry.fx=fx;
   if(target.area==='Reisen'){dependencies.appendReiseExternalExpense(entry,target.land,target.category);return;}
   if(target.area==='Freizeit') dependencies.appendFreizeitExternalExpense(entry,month);else dependencies.appendHaushaltExternalExpense(entry,month);
