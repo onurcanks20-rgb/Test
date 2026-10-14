@@ -2069,3 +2069,15 @@ button:disabled { opacity:.5; cursor:default; }
 }
 
 .entry-date-time:has(> .entry-time-field.hidden) { grid-template-columns:minmax(0,1fr); }
+
+/* iOS setzt den nativen Wert ohne vertikalen Innenabstand an die Oberkante. */
+.entry-date-time input[type="date"],
+.entry-date-time input[type="time"] {
+    padding:11px 12px;
+    line-height:24px;
+}
+.entry-date-time .entry-time-input input { padding-right:42px; }
+.entry-date-time input::-webkit-date-and-time-value {
+    min-height:0;
+    line-height:24px;
+}
