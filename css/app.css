@@ -1979,3 +1979,16 @@ body.category-nav-visible > #versicherungenView {
 .action-notice { font-size:14px; line-height:1.45; }
 .test-mode-label { font-size:12px; font-weight:700; opacity:.75; margin-bottom:10px; }
 button:disabled { opacity:.5; cursor:default; }
+
+/* Uhrzeit bleibt dezent neben Händler/Name; Datum und optionale Ortszeit kompakt. */
+.entry-time { font-size:12px; font-weight:400; opacity:.7; white-space:nowrap; letter-spacing:normal; }
+.entry-date-time { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:12px; width:100%; margin:8px 0; }
+.entry-date-time label, .entry-time-field { display:flex; flex-direction:column; gap:5px; min-width:0; }
+.entry-date-time label > span, .entry-time-field > span { font-size:12px; opacity:.72; font-weight:500; }
+.entry-date-time input, .entry-time-field input { width:100%; min-width:0; max-width:100%; box-sizing:border-box; min-height:50px; margin:0; font-size:16px; }
+.entry-time-field.hidden { display:none; }
+
+.entry-time-field > label { font-size:12px; opacity:.72; font-weight:500; margin:0; }
+.entry-time-input { display:flex; align-items:stretch; gap:4px; width:100%; min-width:0; }
+.entry-time-input input { flex:1 1 auto; min-width:0; width:0; }
+.entry-time-clear { flex:0 0 44px; width:44px; min-width:44px; min-height:50px; margin:0; padding:0; border:0; border-radius:10px; background:transparent; color:inherit; opacity:.7; font-size:24px; }
