@@ -1,6 +1,6 @@
 Kostentracker.module({
  id:'js/server/reise-zahlungen.js',
- dependencies:['getReiseCurrency','parseBetrag','formatBetragText','formatDatum','importTestServerPayments','renderServerPaymentReview','renderHomeUebersicht','refreshReiseImportedViews','speichern'],
+ dependencies:['merchantDestination','getReiseCurrency','parseBetrag','formatBetragText','formatDatum','importTestServerPayments','renderServerPaymentReview','renderHomeUebersicht','refreshReiseImportedViews','speichern'],
  session:[],read:['Reisen','ReisenMeta','Einstellungen','Haushalt','Freizeit'],write:['Reisen','Einstellungen','Haushalt','Freizeit'],replace:false
 },(context,dependencies)=>{
  'use strict';
@@ -13,9 +13,8 @@ Kostentracker.module({
  }
  function travelPaymentCategory(payment,land) {
   const trip=context.repository.view.Reisen?.[land]||{},options=Object.keys(trip).filter(k=>Array.isArray(trip[k]));
-  const merchant=String(payment.merchant||'').normalize('NFKC').toLowerCase();
-  const food=/bäck|baeck|backerei|bakery|restaurant|café|cafe/.test(merchant);
-  const preferred=food?'Essen / Trinken':payment.category==='Tanken'?'Transport':payment.category||'Sonstiges';
+  const known=dependencies.merchantDestination(payment.merchant);
+  const preferred=known?.category==='Tanken'?'Transport':known?.category||payment.category||'Sonstiges';
   return options.includes(preferred)?preferred:options.includes('Sonstiges')?'Sonstiges':options[0]||'';
  }
  function routeTravelPayment(payment) {

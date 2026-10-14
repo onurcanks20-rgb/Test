@@ -1,6 +1,10 @@
 Kostentracker.module({
   "id": "js/server/synchronisierung.js",
   "dependencies": [
+    "merchantDestination",
+    "merchantCategories",
+    "validMerchantDestination",
+    "rememberMerchantRule",
     "addDays",
     "openAccessibleDialog",
     "closeAccessibleDialog",
@@ -165,7 +169,7 @@ function showPaymentImportedNotice(success=true) {
 function classifyPushPayment(payment) {
   if(payment.reviewReason) return {review:payment.reviewReason};
   if(payment.amountCents===null)return dependencies.routeTravelPayment(payment);
-  if(payment.source!=='bank-push') return dependencies.routeTravelPayment(payment);
+  if(payment.source!=='bank-push') return classifyMerchantPayment(payment);
   const paid=dependencies.parseISODate(payment.date), from=dependencies.addDays(paid,-31), to=dependencies.addDays(paid,31);
   const rows=[...dependencies.laufendeKostenImZeitraum(from,to),...dependencies.versicherungsZahlungenImZeitraum(from,to)];
   const matches=[],unknown=[];
@@ -186,13 +190,19 @@ function classifyPushPayment(payment) {
     return {recurring:matches[0]};
   }
   if(matches.length>1||unknown.length) return {review:'Mögliche Fixkosten/Versicherung: Anbieter, Betrag und Fälligkeit bitte prüfen.'};
-  return dependencies.routeTravelPayment(payment);
+  return classifyMerchantPayment(payment);
+}
+function classifyMerchantPayment(payment) {
+  const route=dependencies.routeTravelPayment(payment);
+  if(route.review)return route;
+  if(!dependencies.merchantDestination(payment.merchant))return {review:'Unbekannter Händler. Wohin gehört diese Zahlung?',travelCandidates:route.destination?[route.destination.land]:[]};
+  return route;
 }
 function importedPaymentDestination(payment) {
   const travel=dependencies.routeTravelPayment(payment);if(travel.destination)return travel.destination;
-  const merchant=normalizedProvider(payment.merchant).replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const bakery=/(?:^|[^a-z])(?:baeckerei|backerei|baecker|backer|backstube|bakery)(?=$|[^a-z])/.test(merchant);
-  return bakery ? {area:'Freizeit',category:'Essen / Trinken'} : {area:'Haushalt',category:['Einkauf','Tanken','Drogerie','Sonstiges'].includes(payment.category)?payment.category:'Einkauf'};
+  const target=dependencies.merchantDestination(payment.merchant);
+  if(!target)throw Error('Unbekannten Händler bitte zuerst zuordnen.');
+  return target;
 }
 function appendImportedPayment(payment,destination=null) {
   const target=destination||importedPaymentDestination(payment),month=Number(payment.date.slice(5,7));
@@ -243,9 +253,14 @@ function initializePaymentReviewGate() {
 function reviewCategories(id) {
   const target=document.getElementById('reviewTarget-'+id)?.value||'';
   const select=document.getElementById('reviewCategory-'+id);if(!select)return;
-  select.replaceChildren();const options=target.startsWith('reise:')?Object.keys(context.repository.view.Reisen?.[target.slice(6)]||{}):[];
+  select.replaceChildren();
+  const first=document.createElement('option');first.value='';first.textContent='Kategorie auswählen';select.appendChild(first);
+  const options=target.startsWith('reise:')?Object.keys(context.repository.view.Reisen?.[target.slice(6)]||{}):dependencies.merchantCategories(target);
   for(const category of options){const option=document.createElement('option');option.value=category;option.textContent=category;select.appendChild(option);}
-  select.disabled=!options.length;
+  select.value='';select.disabled=!options.length;
+  const payment=(context.repository.view.Einstellungen?.serverPendingReview||[]).find(p=>p.id===id),known=dependencies.merchantDestination(payment?.merchant);
+  if(known?.area===target&&options.includes(known.category))select.value=known.category;
+  const remember=document.getElementById('reviewRemember-'+id);if(remember){remember.disabled=!['Haushalt','Freizeit'].includes(target);if(remember.disabled)remember.checked=false;}
 }
 function renderServerPaymentReview() {
   const host=document.getElementById('serverPaymentReview');if(!host){syncPaymentReviewGate();return;}host.replaceChildren();const error=document.getElementById('paymentReviewError');if(error)error.textContent='';
@@ -261,33 +276,43 @@ function renderServerPaymentReview() {
     if(payment.notificationText){const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Mitteilung anzeigen';details.appendChild(summary);const raw=document.createElement('div');raw.className='settings-note';raw.textContent=[payment.notificationTitle,payment.notificationSubtitle,payment.notificationText].filter(Boolean).join(' · ');details.appendChild(raw);row.appendChild(details);}
     const route=dependencies.routeTravelPayment(payment),target=document.createElement('select');target.id='reviewTarget-'+payment.id;target.setAttribute('aria-label','Zahlung zuordnen');
     const empty=document.createElement('option');empty.value='';empty.textContent='Ziel auswählen';target.appendChild(empty);
-    const alltag=document.createElement('option');alltag.value='alltag';alltag.textContent='Alltag (Haushalt / Freizeit)';target.appendChild(alltag);
+    for(const area of ['Haushalt','Freizeit']){const option=document.createElement('option');option.value=area;option.textContent=area;target.appendChild(option);}
     for(const land of Object.keys(context.repository.view.Reisen||{})){const option=document.createElement('option');option.value='reise:'+land;option.textContent='Reise: '+land;target.appendChild(option);}
-    target.value=route.destination?'reise:'+route.destination.land:route.review?'':'alltag';target.addEventListener('change',()=>reviewCategories(payment.id));row.appendChild(target);
-    const category=document.createElement('select');category.id='reviewCategory-'+payment.id;category.setAttribute('aria-label','Reisekategorie');row.appendChild(category);
+    const known=dependencies.merchantDestination(payment.merchant);target.value=route.destination?'reise:'+route.destination.land:route.review?'':known?.area||'';target.addEventListener('change',()=>reviewCategories(payment.id));row.appendChild(target);
+    const category=document.createElement('select');category.id='reviewCategory-'+payment.id;category.setAttribute('aria-label','Kategorie');row.appendChild(category);
+    const rememberLabel=document.createElement('label');rememberLabel.className='merchant-remember';const remember=document.createElement('input');remember.type='checkbox';remember.id='reviewRemember-'+payment.id;rememberLabel.appendChild(remember);const rememberText=document.createElement('span');rememberText.textContent='Für diesen Händler merken';rememberLabel.appendChild(rememberText);row.appendChild(rememberLabel);
     if(payment.amountCents===null){const euro=document.createElement('input');euro.id='reviewEuro-'+payment.id;euro.type='text';euro.inputMode='decimal';euro.placeholder='Abgerechneter Betrag in Euro';euro.setAttribute('aria-label','Abgerechneter Betrag in Euro');row.appendChild(euro);}
-    const accept=document.createElement('button');accept.type='button';accept.textContent='Zahlung übernehmen';accept.addEventListener('click',()=>resolveServerPaymentReview(payment.id,true,target.value,document.getElementById('reviewEuro-'+payment.id)?.value,category.value));row.appendChild(accept);
+    const accept=document.createElement('button');accept.type='button';accept.textContent='Zahlung übernehmen';accept.addEventListener('click',()=>resolveServerPaymentReview(payment.id,true,target.value,document.getElementById('reviewEuro-'+payment.id)?.value,category.value,remember.checked));row.appendChild(accept);
     const ignore=document.createElement('button');ignore.type='button';ignore.textContent='Bereits berücksichtigt / ignorieren';ignore.addEventListener('click',()=>resolveServerPaymentReview(payment.id,false));row.appendChild(ignore);
     host.appendChild(row);reviewCategories(payment.id);
-    if(route.destination)category.value=route.destination.category;
+    if(route.destination&&known)category.value=route.destination.category;
   }
   syncPaymentReviewGate();
 }
-function resolveServerPaymentReview(id,book,target=null,euroValue=null,category=null) {
+function resolveServerPaymentReview(id,book,target=null,euroValue=null,category=null,remember=false) {
   const pending=context.repository.view.Einstellungen?.serverPendingReview||[],payment=pending.find(p=>p.id===id);if(!payment)return;
   let resolved=payment,destination;
   if(book){
     if(payment.amountCents===null){const euro=dependencies.parseBetrag(euroValue);if(!Number.isFinite(euro)||euro<=0||euro>1000000){alert('Bitte den abgerechneten Eurobetrag ergänzen.');return;}resolved={...payment,amountCents:Math.round(euro*100)};if(resolved.amountCents<=0){alert('Eurobetrag ist kleiner als ein Cent.');return;}}
     const route=dependencies.routeTravelPayment(resolved);
-    if(target===null&&route.review){alert('Bitte Reise oder Alltag als Ziel auswählen.');return;}
+    if(target===null&&(route.review||!dependencies.merchantDestination(resolved.merchant))){alert('Bitte Bereich und Kategorie auswählen.');return;}
     if(target===''){alert('Bitte ein Ziel auswählen.');return;}
-    if(target?.startsWith('reise:')){const land=target.slice(6);destination={area:'Reisen',land,category:category||dependencies.travelPaymentCategory(resolved,land)};}
-    else if(target==='alltag'){const merchant=normalizedProvider(resolved.merchant);destination=/bäck|baeck|bakery/.test(merchant)?{area:'Freizeit',category:'Essen / Trinken'}:{area:'Haushalt',category:['Einkauf','Tanken','Drogerie','Sonstiges'].includes(resolved.category)?resolved.category:'Einkauf'};}
-    else if(target!==null){alert('Ungültiges Ziel.');return;}
+    if(target?.startsWith('reise:')){
+      const land=target.slice(6),options=Object.keys(context.repository.view.Reisen?.[land]||{});
+      const chosen=category||(!remember&&dependencies.merchantDestination(resolved.merchant)?dependencies.travelPaymentCategory(resolved,land):'');
+      if(!options.includes(chosen)){alert('Bitte eine Reisekategorie auswählen.');return;}
+      destination={area:'Reisen',land,category:chosen};
+    }else if(['Haushalt','Freizeit'].includes(target)){
+      if(!dependencies.validMerchantDestination(target,category)){alert('Bitte eine Kategorie auswählen.');return;}
+      destination={area:target,category};
+    }else if(target==='alltag'){
+      destination=dependencies.merchantDestination(resolved.merchant);if(!destination){alert('Bitte Haushalt oder Freizeit und eine Kategorie auswählen.');return;}
+    }else if(target!==null){alert('Ungültiges Ziel.');return;}
+
   }
   const before=context.clone(context.repository.view);
   try {
-    if(book){dependencies.validateImportedPayment(resolved);appendImportedPayment(resolved,destination);}
+    if(book){dependencies.validateImportedPayment(resolved);if(remember){if(!destination||!['Haushalt','Freizeit'].includes(destination.area))throw Error('Händlerzuordnungen bitte für Haushalt oder Freizeit speichern.');dependencies.rememberMerchantRule(resolved.merchant,destination.area,destination.category);}appendImportedPayment(resolved,destination);}
     context.repository.view.Einstellungen.serverPendingReview=pending.filter(p=>p.id!==id);
     context.storage.setItem(context.storage.key,JSON.stringify(context.repository.view));context.storage.lastSaved=JSON.stringify(context.repository.view);
   } catch(error) {context.repository.view=before;showPaymentImportedNotice(false);serverStatus('Entscheidung konnte nicht gespeichert werden. Ziel prüfen und erneut versuchen.');const status=document.getElementById('paymentReviewError');if(status)status.textContent='Entscheidung konnte nicht gespeichert werden. Die Zahlung bleibt offen. Ziel prüfen und erneut versuchen.';syncPaymentReviewGate();return;}
