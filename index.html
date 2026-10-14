@@ -287,7 +287,7 @@
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsBackup()">
                     <span class="settings-menu-icon">💾</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Datensicherung</span><span class="settings-menu-sub">Daten in einer Datei sichern oder wiederherstellen</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Backup</span><span class="settings-menu-sub">Daten in einer Datei sichern oder wiederherstellen</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
             </div>
@@ -505,8 +505,8 @@
         <div class="container">
             <div class="topbar">
                 <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
-                <h2 style="flex:1;">Datensicherung</h2>
-            <button class="page-info-button" type="button" onclick="openPageInfo('settingsBackupView')" aria-label="Informationen zu Datensicherung">ⓘ</button>
+                <h2 style="flex:1;">Backup</h2>
+            <button class="page-info-button" type="button" onclick="openPageInfo('settingsBackupView')" aria-label="Informationen zu Backup">ⓘ</button>
             </div>
             <div class="settings-page-card">
                 <h3>Daten sichern</h3>
@@ -1063,7 +1063,7 @@
 <script src="./js/budget/gehalt.js?v=arch-v2"></script>
 <script src="./js/ui/navigation.js?v=test-category-nav-v1"></script>
 <script src="./js/ui/eintragsaktionen.js?v=arch-v2"></script>
-<script src="./js/ui/einstellungen.js?v=test-settings-info-v4"></script>
+<script src="./js/ui/einstellungen.js?v=test-settings-info-v5"></script>
 <script src="./js/ui/archiv.js?v=arch-v2"></script>
 <script src="./js/budget/wochenbudget.js?v=arch-v2"></script>
 <script src="./js/ui/schnelleingabe.js?v=travel-payment-review-v1"></script>
@@ -1104,7 +1104,7 @@
 <dialog id="serverRestoreDialog" class="app-dialog" aria-labelledby="serverRestoreTitle" aria-describedby="serverRestoreDescription">
     <h2 id="serverRestoreTitle" tabindex="-1">Deine gespeicherten Daten sind da</h2>
     <p id="serverRestoreDescription">Stelle deine bisherigen Einträge auf diesem Gerät wieder her. Danach werden neue Zahlungen automatisch übernommen.</p>
-    <p class="action-notice">Dabei werden die aktuellen Daten auf diesem Gerät ersetzt. Lokale Einträge vorher bei Bedarf unter Datensicherung sichern.</p>
+    <p class="action-notice">Dabei werden die aktuellen Daten auf diesem Gerät ersetzt. Lokale Einträge vorher bei Bedarf unter Backup sichern.</p>
     <p id="serverRestoreError" role="alert"></p>
     <button id="serverRestoreConfirm" type="button" onclick="restoreTestServerBackup(true)">Daten wiederherstellen</button>
     <button id="serverRestoreLater" class="neutral-button" type="button" onclick="closeServerRestorePrompt()">Später</button>
