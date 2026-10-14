@@ -20,7 +20,7 @@
     <script src="./js/core/dienste.js?v=arch-v2"></script>
     <script src="./js/app/design-start.js?v=arch-v2"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=test-category-nav-spacing-v3">
+    <link rel="stylesheet" href="./css/app.css?v=test-settings-info-v1">
 </head>
 
 <body>
@@ -241,23 +241,24 @@
             <div class="topbar">
                 <button class="back-btn" onclick="goHome()" aria-label="Zurück"><span class="back-icon"></span></button>
                 <h2 style="flex:1;">Einstellungen</h2>
+            <button class="page-info-button" type="button" onclick="openPageInfo('settingsView')" aria-label="Informationen zu Einstellungen">ⓘ</button>
             </div>
 
             <div class="settings-section-head">Allgemein</div>
             <div class="settings-menu">
                 <button class="settings-menu-item" type="button" onclick="openSettingsBudget()">
                     <span class="settings-menu-icon">💶</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Budget & Gehalt</span><span class="settings-menu-sub">Aktuelles und nächstes Gehalt, Gehaltstag</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Budget & Gehalt</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsQuickAdd()">
                     <span class="settings-menu-icon">⚡</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Schnelleingabe</span><span class="settings-menu-sub">Bereiche auswählen und Reihenfolge anpassen</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Schnelleingabe</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsWarnings()">
                     <span class="settings-menu-icon">🔔</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Erinnerungen & Warnungen</span><span class="settings-menu-sub">Große Ausgaben und Hinweise auf der Startseite</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Erinnerungen & Warnungen</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsDesign()">
@@ -276,17 +277,17 @@
             <div class="settings-menu">
                 <button class="settings-menu-item" type="button" onclick="openGlobalArchiv()">
                     <span class="settings-menu-icon">📁</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Archiv</span><span class="settings-menu-sub">Alle gespeicherten Einträge durchsuchen und exportieren</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Archiv</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openServerSettings()">
                     <span class="settings-menu-icon">🔄</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Server & Synchronisierung</span><span class="settings-menu-sub">Persönlicher Zugang, Sicherung und Benachrichtigungen</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Anmelden & Datensicherung</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsBackup()">
                     <span class="settings-menu-icon">💾</span>
-                    <span class="settings-menu-main"><span class="settings-menu-title">Backup</span><span class="settings-menu-sub">Daten sichern oder wiederherstellen</span></span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Datensicherung</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
             </div>
@@ -297,24 +298,32 @@
         <div class="container">
             <div class="topbar">
                 <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
-                <h2 style="flex:1;">Server & Synchronisierung</h2>
+                <h2 style="flex:1;">Anmelden & Datensicherung</h2>
+            <button class="page-info-button" type="button" onclick="openPageInfo('serverSettingsView')" aria-label="Informationen zu Anmelden & Datensicherung">ⓘ</button>
             </div>
             <div class="settings-page-card">
                 <h3>Dein persönlicher Zugang</h3>
-                <div class="settings-note" style="margin-bottom:16px;">Trage deinen Code einmal ein. Danach öffnet sich die App direkt. Deine Daten bleiben offline verfügbar. Mit Internet werden neue Zahlungen übernommen und deine Daten auf dem Server gesichert.</div>
-                <label for="testServerToken">Persönlicher Code</label>
-                <input id="testServerToken" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Deinen neuen persönlichen Code einfügen">
+                
+                <label for="testServerToken">Persönlicher Zugangscode</label>
+                <input id="testServerToken" oninput="updateServerLoginControls()" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Persönlichen Zugangscode einfügen">
                 <button id="testServerReveal" onclick="toggleTestServerCode()" style="background:#3a3a3c;">Code anzeigen</button>
-                <button onclick="syncTestServer(true)">🔄 Verbinden & synchronisieren</button>
+                <button id="serverLoginButton" onclick="syncTestServer(true)">Anmelden</button>
+                <div id="serverAccountActions" class="hidden">
                 <button onclick="activateTestServerPush()">🔔 Benachrichtigungen aktivieren</button>
                 <div id="serverNotificationStatus" class="settings-note" style="margin:12px 0;"></div>
-                <button onclick="restoreTestServerBackup()" style="background:#3a3a3c;">Serverbackup wiederherstellen</button>
-                <div id="testServerStatus" class="settings-note" role="status" aria-live="polite" style="margin-top:16px;">Persönlichen Code einmal eintragen.</div>
+                <button onclick="restoreTestServerBackup()" style="background:#3a3a3c;">Daten wiederherstellen</button>
+                </div>
+                <div id="testServerStatus" class="server-login-status" role="status" aria-live="polite" style="margin-top:16px;">Noch nicht angemeldet.</div>
             </div>
 
+            <section id="serverRestoreNotice" class="server-restore-notice hidden" aria-labelledby="serverRestoreNoticeTitle">
+                <h3 id="serverRestoreNoticeTitle">Deine gespeicherten Daten sind da</h3>
+                <p>Stelle deine bisherigen Einträge wieder her, um neue Zahlungen zu übernehmen.</p>
+                <button type="button" onclick="showServerRestorePrompt(true)">Daten wiederherstellen</button>
+            </section>
             <div class="settings-page-card" id="travelPaymentTests">
                 <h3>Reisezahlungen testen</h3>
-                <div class="settings-note">Nur Testversion: Diese Buttons erzeugen lokale Testausgaben oder Prüfungen. Keine echte Bankzahlung und keine nachgewiesenen Push-Formate. Für das Korea-Beispiel eine Reise mit KRW auswählen.</div>
+                <div class="test-mode-label">Nur Testversion</div>
                 <label for="travelPaymentTestLand">Testreise</label><select id="travelPaymentTestLand" onchange="updateTravelPaymentTestDate()"><option value="">Reise auswählen</option></select>
                 <label for="travelPaymentTestDate">Zahlungsdatum</label><input id="travelPaymentTestDate" type="date">
                 <button onclick="simulateTravelPayment('eur')">Nur Eurobetrag testen</button>
@@ -323,12 +332,7 @@
                 <button onclick="removeTravelPaymentTests()" style="background:#3a3a3c">Diese Testzahlungen entfernen</button>
                 <div id="travelPaymentTestStatus" class="settings-note" role="status"></div>
             </div>
-            <div class="settings-page-card">
-                <h3>Zahlungen</h3>
-                <div class="settings-note">Dein Kurzbefehl übermittelt Bank-Mitteilungen an deinen persönlichen Zugang. Bäckereien werden unter Freizeit → Essen / Trinken erfasst. Neue Zahlungen werden beim Öffnen der App mit Internet übernommen. Zahlungen im eindeutigen Reisezeitraum können in Reisen übernommen werden. An- und Abreisetage sowie Überschneidungen werden geprüft. Experimentelle Fremdwährungsmeldungen werden nicht ungeprüft gebucht.</div>
-                <h3>Benachrichtigungen auf dem iPhone</h3>
-                <div class="settings-note">Öffne die App über ihr Home-Bildschirm-Icon und erlaube Mitteilungen. Die Anmeldung richtet den Empfang von Servernachrichten ein; automatische Erinnerungen werden später ergänzt.</div>
-            </div>
+            
         </div>
     </div>
 
@@ -338,16 +342,17 @@
             <div class="topbar">
                 <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
                 <h2 style="flex:1;">Budget & Gehalt</h2>
+            <button class="page-info-button" type="button" onclick="openPageInfo('settingsBudgetView')" aria-label="Informationen zu Budget & Gehalt">ⓘ</button>
             </div>
             <div class="settings-page-card">
                 <label for="startgehaltInput">Startgehalt / Startbudget</label>
                 <input id="startgehaltInput" type="text" inputmode="decimal" min="0" step="0.01" placeholder="z. B. 2500">
                 <button onclick="saveStartgehalt()">Startgehalt speichern</button>
-                <div class="settings-note">Das Startgehalt wird getrennt für jeden Gehaltszeitraum gespeichert.</div>
+                
             </div>
             <div class="settings-page-card">
                 <h3>Nächstes Gehalt</h3>
-                <div class="settings-note" style="margin-bottom:12px;">Sobald deine Lohnabrechnung da ist, kannst du das tatsächliche Datum und den Betrag für das nächste Gehalt vormerken. Der neue Gehaltszeitraum beginnt erst, wenn du den Eingang bestätigst.</div>
+                
                 <div class="date-range">
                     <div class="date-field">
                         <label for="nextSalaryDateInput">Erwartetes Datum</label>
@@ -366,7 +371,7 @@
                 <label for="gehaltstagInput">Regulärer Gehaltstag</label>
                 <input id="gehaltstagInput" type="number" min="1" max="31" value="26">
                 <button onclick="saveGehaltstag()">Gehaltstag speichern</button>
-                <div class="settings-note">Dieser Tag bleibt der Standard, falls du kein konkretes nächstes Gehalt eingetragen hast. Fällt er auf Samstag oder Sonntag, verwendet die App weiterhin automatisch den folgenden Montag.</div>
+                
             </div>
         </div>
     </div>
@@ -377,14 +382,15 @@
             <div class="topbar">
                 <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
                 <h2 style="flex:1;">Schnelleingabe</h2>
+            <button class="page-info-button" type="button" onclick="openPageInfo('settingsQuickAddView')" aria-label="Informationen zu Schnelleingabe">ⓘ</button>
             </div>
             <div class="settings-page-card">
-                <div class="settings-note" style="margin-bottom:12px;">Lege fest, was unter „Abrechnung hinzufügen“ erscheint und in welcher Reihenfolge.</div>
+                
                 <div id="quickAddSettingsList" class="quick-fav-list"></div>
             </div>
             <div class="settings-page-card">
                 <div style="font-weight:750;font-size:16px;">Schnellbeträge</div>
-                <div class="settings-note" style="margin-top:5px;">Diese vier Beträge erscheinen bei Haushalt, Freizeit und Reisen in der Schnelleingabe.</div>
+                
                 <div class="quick-amount-settings-grid">
                     <input id="quickAmount1" type="text" inputmode="decimal" aria-label="Schnellbetrag 1">
                     <input id="quickAmount2" type="text" inputmode="decimal" aria-label="Schnellbetrag 2">
@@ -402,6 +408,7 @@
             <div class="topbar">
                 <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
                 <h2 style="flex:1;">Erinnerungen</h2>
+            <button class="page-info-button" type="button" onclick="openPageInfo('settingsWarningsView')" aria-label="Informationen zu Erinnerungen">ⓘ</button>
             </div>
             <div class="settings-page-card">
                 <div class="settings-switch-row">
@@ -415,7 +422,7 @@
                         <div><label for="warnSchwelle">Ab Betrag</label><input id="warnSchwelle" type="text" inputmode="decimal" placeholder="100"></div>
                         <div><label for="warnTage">Warnzeit (Tage)</label><input id="warnTage" type="number" min="0" max="365" placeholder="14"></div>
                     </div>
-                    <div class="settings-note">Automatische Hinweise nutzen Schwellwert und Warnzeit. Manuell markierte Einträge werden unabhängig vom Schwellwert angezeigt.</div>
+                    
                     <div style="font-weight:700;margin-top:16px;">Automatisch berücksichtigen</div>
                     <div id="warnKategorieGrid" class="warning-cat-grid"></div>
                     <button onclick="saveWarnSettings()" style="margin-top:14px;">Warnungen speichern</button>
@@ -430,6 +437,7 @@
             <div class="topbar">
                 <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
                 <h2 style="flex:1;">Gesten</h2>
+            <button class="page-info-button" type="button" onclick="openPageInfo('settingsGesturesView')" aria-label="Informationen zu Gesten">ⓘ</button>
             </div>
             <div class="settings-page-card">
                 <label for="rightSwipeAction">Nach rechts wischen</label>
@@ -440,13 +448,11 @@
                     <option value="bearbeiten">✏️ Bearbeiten</option>
                     <option value="verschieben">↪️ Verschieben</option>
                 </select>
-                <div class="settings-note" style="margin-top:10px;">
-                    Ein Rechts-Swipe führt die gewählte Aktion aus. „Erneut buchen“ ist für Haushalt, Freizeit und Reisen verfügbar und übernimmt Betrag, Kategorie und Beschreibung mit heutigem Datum.
-                </div>
+                
             </div>
             <div class="settings-page-card">
                 <div style="font-weight:750;font-size:16px;">Ausgeblendete Einträge</div>
-                <div class="settings-note" style="margin:6px 0 12px;">Ausgeblendete Einträge bleiben in Summen und Budgets enthalten. Du kannst sie jederzeit im Archiv wieder einblenden.</div>
+                
                 <button type="button" onclick="openHiddenArchive()" style="background:#3a3a3c;">👁️‍🗨️ Ausgeblendete verwalten</button>
             </div>
         </div>
@@ -458,9 +464,10 @@
             <div class="topbar">
                 <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
                 <h2 style="flex:1;">Design</h2>
+            <button class="page-info-button" type="button" onclick="openPageInfo('settingsDesignView')" aria-label="Informationen zu Design">ⓘ</button>
             </div>
             <div class="settings-page-card">
-                <div class="settings-note" style="margin:0 0 14px;">Wähle, ob der Kostentracker dunkel, hell oder automatisch passend zu deinem iPhone dargestellt wird.</div>
+                
                 <div class="design-choice-list">
                     <button type="button" class="design-choice" data-design-mode="system" onclick="setDesignMode('system')">
                         <span class="design-choice-main"><span class="design-choice-title">Automatisch</span><span class="design-choice-sub">Folgt der Systemeinstellung</span></span><span class="design-choice-check"></span>
@@ -475,7 +482,7 @@
             </div>
             <div class="settings-page-card">
                 <div class="accent-picker-title">Button-, Schalter- & Hakenfarben</div>
-                <div class="accent-picker-sub">Oben kannst du alle Farben gleichzeitig setzen. Darunter lässt sich jede Aktion bei Bedarf einzeln anpassen.</div>
+                
                 <div class="action-color-grid">
                     <div class="action-color-row"><span>Alle Buttons, Schalter & Haken</span><input id="actionColorCommon" type="color" value="#3498db" aria-label="Alle Buttons, Schalter und Haken färben" oninput="previewCommonActionColor(this.value)"></div>
                     <div class="action-color-row"><span>＋ Hinzufügen / Speichern</span><input id="actionColorAdd" type="color" value="#3498db" aria-label="Farbe für Hinzufügen und Speichern" oninput="previewActionColor('hinzufuegen',this.value)"></div>
@@ -483,7 +490,7 @@
                     <div class="action-color-row"><span>↪️ Verschieben</span><input id="actionColorMove" type="color" value="#3498db" aria-label="Farbe für Verschieben" oninput="previewActionColor('verschieben',this.value)"></div>
                     <div class="action-color-row"><span>◉ Schalter & Haken</span><input id="actionColorSwitch" type="color" value="#3498db" aria-label="Farbe für Schalter und Haken" oninput="previewActionColor('schalter',this.value)"></div>
                 </div>
-                <div class="action-color-help">„Alle Buttons, Schalter & Haken“ setzt Hinzufügen/Speichern, Bearbeiten, Verschieben sowie aktive Schalter und Auswahlhaken auf dieselbe Farbe. Darunter kannst du einzelne Farben wieder abweichend wählen. Erst mit „Farben speichern“ wird die Auswahl dauerhaft übernommen. Löschen bleibt bewusst rot.</div>
+                
                 <div class="action-color-save-row">
                     <button type="button" class="action-color-save-btn" onclick="saveActionColorsFromInputs()">Farben speichern</button>
                     <button type="button" class="accent-reset-btn" onclick="resetActionColors()">Standardfarbe zurücksetzen</button>
@@ -498,23 +505,24 @@
         <div class="container">
             <div class="topbar">
                 <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
-                <h2 style="flex:1;">Backup</h2>
+                <h2 style="flex:1;">Datensicherung</h2>
+            <button class="page-info-button" type="button" onclick="openPageInfo('settingsBackupView')" aria-label="Informationen zu Datensicherung">ⓘ</button>
             </div>
             <div class="settings-page-card">
                 <h3>Daten sichern</h3>
-                <div class="settings-note" style="margin-bottom:12px;">Sichere alle Einträge und Einstellungen in einer Datei. Diese kannst du später auf diesem oder einem neuen Gerät wieder einspielen.</div>
+                
                 <button onclick="exportBackup()">⬇️ Backup erstellen</button>
             </div>
             <div class="settings-page-card">
                 <h3>Backup wiederherstellen</h3>
-                <div class="settings-note" style="margin-bottom:12px;">Beim Wiederherstellen werden die aktuell gespeicherten App-Daten durch das gewählte Backup ersetzt.</div>
+                <p class="action-notice">Ersetzt die Daten auf diesem Gerät.</p>
                 <button onclick="document.getElementById('backupImportInput')?.click()" style="background:#3a3a3c;">⬆️ Backup auswählen</button>
                 <input id="backupImportInput" type="file" accept="application/json,.json" class="hidden" onchange="importBackup(event)">
                 <div id="backupStatus" class="settings-note" style="margin-top:10px;"></div>
             </div>
             <div class="settings-page-card">
                 <h3>Alle Einträge löschen</h3>
-                <div class="settings-note" style="margin-bottom:12px;">Löscht alle Ausgaben, Einnahmen, Fixkosten, Versicherungen sowie Spar- und Investitionseinträge aus allen Zeiträumen, einschließlich der Reiseeinträge. Länder, Kategorien, Budgets und Einstellungen bleiben erhalten. Erstelle vorher ein Backup, wenn du die Einträge später wiederherstellen möchtest.</div>
+                <p class="action-notice">Alle Einträge werden gelöscht.</p>
                 <button type="button" onclick="exportBackup()" style="background:#3a3a3c;">⬇️ Vorher Backup erstellen</button>
                 <button type="button" onclick="deleteAllAppEntries()" style="background:#c0392b;">🗑️ Alle Einträge löschen</button>
                 <div id="deleteAllEntriesStatus" class="settings-note" role="status" aria-live="polite" style="margin-top:10px;"></div>
@@ -528,7 +536,8 @@
             <div class="category-topbar">
                 <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
                 <h2>Archiv</h2>
-                <span style="width:44px;"></span>
+                
+            <button class="page-info-button" type="button" onclick="openPageInfo('globalArchivView')" aria-label="Informationen zu Archiv">ⓘ</button>
             </div>
 
             <div class="archive-filter-card">
@@ -584,8 +593,8 @@
     <!-- ===================== WOCHENBUDGET VORSCHAU ===================== -->
     <div id="weekPreviewSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) closeWeekPreview()">
         <div class="add-sheet">
-            <h3>Wochenbudget</h3>
-            <div class="week-preview-note">Das Budget dieser Woche bleibt fest. Ein positiver Wochenrest bleibt für diese Woche reserviert. Wenn du das Wochenbudget überschreitest, werden die kommenden Wochen sofort angepasst. Die Überschreitung ist im Gesamtbetrag bereits verrechnet und wird nicht noch einmal abgezogen. Teilwochen werden nach ihren Tagen verteilt.</div>
+            <div class="page-info-heading"><h3>Wochenbudget</h3><button class="page-info-button" type="button" onclick="openPageInfo('weekPreviewSheet')" aria-label="Informationen zu Wochenbudget">ⓘ</button></div>
+            
             <div id="weekPreviewList" class="week-preview-list"></div>
             <div class="week-preview-total"><span>Noch frei bis Gehalt</span><span id="weekPreviewTotal">0,00 €</span></div>
             <button onclick="closeWeekPreview()" style="background:#3a3a3c; margin-top:14px;">Schließen</button>
@@ -1054,7 +1063,7 @@
 <script src="./js/budget/gehalt.js?v=arch-v2"></script>
 <script src="./js/ui/navigation.js?v=test-category-nav-v1"></script>
 <script src="./js/ui/eintragsaktionen.js?v=arch-v2"></script>
-<script src="./js/ui/einstellungen.js?v=arch-v2"></script>
+<script src="./js/ui/einstellungen.js?v=test-settings-info-v1"></script>
 <script src="./js/ui/archiv.js?v=arch-v2"></script>
 <script src="./js/budget/wochenbudget.js?v=arch-v2"></script>
 <script src="./js/ui/schnelleingabe.js?v=travel-payment-review-v1"></script>
@@ -1086,11 +1095,26 @@
         <button type="button" onclick="undoDelete()">↩️ Rückgängig</button>
     </div>
 
+
+<dialog id="pageInfoDialog" class="app-dialog" aria-labelledby="pageInfoTitle">
+    <div class="page-info-heading"><h2 id="pageInfoTitle" tabindex="-1">Informationen</h2><button class="page-info-button" type="button" onclick="closePageInfo()" aria-label="Informationen schließen">×</button></div>
+    <div id="pageInfoContent" class="page-info-content"></div>
+    <button type="button" onclick="closePageInfo()">Verstanden</button>
+</dialog>
+<dialog id="serverRestoreDialog" class="app-dialog" aria-labelledby="serverRestoreTitle" aria-describedby="serverRestoreDescription">
+    <h2 id="serverRestoreTitle" tabindex="-1">Deine gespeicherten Daten sind da</h2>
+    <p id="serverRestoreDescription">Stelle deine bisherigen Einträge auf diesem Gerät wieder her. Danach werden neue Zahlungen automatisch übernommen.</p>
+    <p class="action-notice">Dabei werden die aktuellen Daten auf diesem Gerät ersetzt. Lokale Einträge vorher bei Bedarf unter Datensicherung sichern.</p>
+    <p id="serverRestoreError" role="alert"></p>
+    <button id="serverRestoreConfirm" type="button" onclick="restoreTestServerBackup(true)">Daten wiederherstellen</button>
+    <button id="serverRestoreLater" class="neutral-button" type="button" onclick="closeServerRestorePrompt()">Später</button>
+</dialog>
+
     <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
     <link rel="stylesheet" href="./css/bedienung.css?v=arch-v2">
     <script src="./js/ui/wischgesten.js?v=reise-ansicht-v4"></script>
 
-    <script src="./js/ui/zurueckwischen.js?v=travel-payment-review-v1"></script>
+    <script src="./js/ui/zurueckwischen.js?v=test-settings-info-v1"></script>
 
 <dialog id="paymentReviewDialog" class="payment-review-dialog" aria-labelledby="paymentReviewHeading" aria-describedby="paymentReviewRemaining" aria-modal="true" closedby="none">
   <h2 id="paymentReviewHeading" tabindex="-1">Zahlungen prüfen</h2>
@@ -1099,7 +1123,7 @@
   <div id="serverPaymentReview"></div>
 </dialog>
 <script src="./js/server/reise-zahlungen.js?v=travel-payment-review-v1"></script>
-<script src="./js/server/synchronisierung.js?v=travel-payment-review-v1"></script>
+<script src="./js/server/synchronisierung.js?v=test-settings-info-v1"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
     <!-- Gemeinsame Navigation in Kategorien (aus der Übersicht) -->
     <nav id="categoryBottomNav" class="bottom-nav hidden" aria-label="Hauptnavigation in Kategorien">
