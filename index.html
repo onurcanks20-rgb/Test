@@ -20,7 +20,7 @@
     <script src="./js/core/dienste.js?v=arch-v2"></script>
     <script src="./js/app/design-start.js?v=arch-v2"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=test-settings-info-v1">
+    <link rel="stylesheet" href="./css/app.css?v=test-entry-time-v1">
 </head>
 
 <body>
@@ -781,7 +781,7 @@
                 </div>
                 <select id="kategorieSelect" class="hidden" aria-hidden="true"></select>
                 <input id="text" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
-                <input id="datum" type="date">
+                <div class="entry-date-time"><label><span>Datum</span><input id="datum" type="date"></label><div id="reiseUhrzeitWrap" class="entry-time-field"><label for="reiseUhrzeit">Uhrzeit (optional)</label><div class="entry-time-input"><input id="reiseUhrzeit" type="time" step="60" aria-label="Uhrzeit (optional)" title="Ortszeit dieses Geräts"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div></div>
                 <button onclick="addEintrag()" class="btn btn-primary">Hinzufügen</button>
                 <button onclick="toggleCategoryAdd('reiseAddPanel')" class="btn" style="background:#3a3a3c;margin-top:10px;">Abbrechen</button>
             </div>
@@ -883,7 +883,7 @@
                 </div>
                 <input id="hausKategorie" type="hidden" value="Einkauf">
                 <input id="hausText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
-                <input id="hausDatum" type="date">
+                <div class="entry-date-time"><label><span>Datum</span><input id="hausDatum" type="date"></label><div id="hausUhrzeitWrap" class="entry-time-field"><label for="hausUhrzeit">Uhrzeit (optional)</label><div class="entry-time-input"><input id="hausUhrzeit" type="time" step="60" aria-label="Uhrzeit (optional)" title="Ortszeit dieses Geräts"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div></div>
                 <button onclick="addHaushalt()" class="btn btn-primary">Hinzufügen</button>
             </div>
         </div>
@@ -931,7 +931,7 @@
                 </div>
                 <input id="freizeitKategorie" type="hidden" value="Essen / Trinken">
                 <input id="freizeitText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
-                <input id="freizeitDatum" type="date">
+                <div class="entry-date-time"><label><span>Datum</span><input id="freizeitDatum" type="date"></label><div id="freizeitUhrzeitWrap" class="entry-time-field"><label for="freizeitUhrzeit">Uhrzeit (optional)</label><div class="entry-time-input"><input id="freizeitUhrzeit" type="time" step="60" aria-label="Uhrzeit (optional)" title="Ortszeit dieses Geräts"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div></div>
                 <button onclick="addFreizeit()" class="btn btn-primary">Hinzufügen</button>
             </div>
         </div>
@@ -986,8 +986,8 @@
                 <input id="einnahmenBetrag" type="text" inputmode="decimal" min="0" step="0.01" placeholder="Betrag" enterkeyhint="next">
                 <input id="einnahmenVon" autocapitalize="words" placeholder="Von wem? (optional)" enterkeyhint="next">
                 <label for="einnahmenDatum" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">Erste Zahlung / Datum</label>
-                <input id="einnahmenDatum" type="date">
-                <select id="einnahmenWiederholung">
+                <div class="entry-date-time"><label><span>Datum</span><input id="einnahmenDatum" type="date"></label><div id="einnahmenUhrzeitWrap" class="entry-time-field"><label for="einnahmenUhrzeit">Uhrzeit (optional)</label><div class="entry-time-input"><input id="einnahmenUhrzeit" type="time" step="60" aria-label="Uhrzeit (optional)" title="Ortszeit dieses Geräts"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div></div>
+                <select id="einnahmenWiederholung" onchange="toggleIncomeTime('einnahmenWiederholung','einnahmenUhrzeitWrap')">
                     <option value="einmalig">Einmalig</option>
                     <option value="monatlich">Monatlich</option>
                 </select>
@@ -1059,30 +1059,30 @@
     <script src="./js/core/speicherung-backup.js?v=arch-v2"></script>
 <script src="./js/ui/rueckgaengig.js?v=arch-v2"></script>
 <script src="./js/ui/erinnerungen.js?v=arch-v2"></script>
-<script src="./js/core/formatierung.js?v=arch-v2"></script>
+<script src="./js/core/formatierung.js?v=test-entry-time-v1"></script>
 <script src="./js/budget/gehalt.js?v=arch-v2"></script>
 <script src="./js/ui/navigation.js?v=test-category-nav-v1"></script>
-<script src="./js/ui/eintragsaktionen.js?v=arch-v2"></script>
+<script src="./js/ui/eintragsaktionen.js?v=test-entry-time-v1"></script>
 <script src="./js/ui/einstellungen.js?v=test-settings-info-v5"></script>
-<script src="./js/ui/archiv.js?v=arch-v2"></script>
+<script src="./js/ui/archiv.js?v=test-entry-time-v1"></script>
 <script src="./js/budget/wochenbudget.js?v=arch-v2"></script>
-<script src="./js/ui/schnelleingabe.js?v=travel-payment-review-v1"></script>
+<script src="./js/ui/schnelleingabe.js?v=test-entry-time-v1"></script>
 <script src="./js/kategorien/geplante-ausgaben.js?v=arch-v2"></script>
 <script src="./js/kategorien/sparen-investieren.js?v=arch-v2"></script>
 <script src="./js/kategorien/reise-waehrung.js?v=travel-payment-review-v1"></script>
 <script src="./js/kategorien/reise-budget-kurs.js?v=travel-payment-review-v1"></script>
-<script src="./js/kategorien/reisen.js?v=travel-payment-review-v1"></script>
+<script src="./js/kategorien/reisen.js?v=test-entry-time-v1"></script>
 <script src="./js/kategorien/fixkosten.js?v=arch-v2"></script>
 <script src="./js/ui/listen.js?v=arch-v2"></script>
 <script src="./js/kategorien/versicherungen.js?v=arch-v2"></script>
 <script src="./js/budget/berechnungen.js?v=arch-v2"></script>
-<script src="./js/ui/verschieben.js?v=arch-v2"></script>
-<script src="./js/kategorien/einnahmen.js?v=arch-v2"></script>
-<script src="./js/kategorien/haushalt.js?v=arch-v2"></script>
-<script src="./js/kategorien/freizeit.js?v=arch-v2"></script>
+<script src="./js/ui/verschieben.js?v=test-entry-time-v1"></script>
+<script src="./js/kategorien/einnahmen.js?v=test-entry-time-v1"></script>
+<script src="./js/kategorien/haushalt.js?v=test-entry-time-v1"></script>
+<script src="./js/kategorien/freizeit.js?v=test-entry-time-v1"></script>
 <script src="./js/ui/formulare.js?v=arch-v2"></script>
-<script src="./js/kategorien/alltag-gemeinsam.js?v=arch-v2"></script>
-<script src="./js/ui/ausgabenarchiv.js?v=arch-v2"></script>
+<script src="./js/kategorien/alltag-gemeinsam.js?v=test-entry-time-v1"></script>
+<script src="./js/ui/ausgabenarchiv.js?v=test-entry-time-v1"></script>
 <script src="./js/budget/faelligkeiten.js?v=arch-v2"></script>
 <script src="./js/budget/zeitraeume.js?v=arch-v2"></script>
 <script src="./js/budget/uebersicht.js?v=travel-home-v2"></script>
@@ -1123,7 +1123,7 @@
   <div id="serverPaymentReview"></div>
 </dialog>
 <script src="./js/server/reise-zahlungen.js?v=travel-payment-review-v1"></script>
-<script src="./js/server/synchronisierung.js?v=test-settings-info-v1"></script>
+<script src="./js/server/synchronisierung.js?v=test-entry-time-v1"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
     <!-- Gemeinsame Navigation in Kategorien (aus der Übersicht) -->
     <nav id="categoryBottomNav" class="bottom-nav hidden" aria-label="Hauptnavigation in Kategorien">
