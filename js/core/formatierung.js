@@ -230,5 +230,86 @@ function istInLetztenTagen(datum, tage = 7) {
             return d >= start && d <= heute;
         }
 
-return { daysBetween, getAktuellerMonat, heuteISO, tagAusDatum, datumAusTagAktuellerMonat, parseISODate, startOfToday, addDays, isoAusDate, formatKurzDatum, generateId, getSearchTerm, matchesSearch, datumZeitwert, createItem, escapeHtml, formatDatum, getMonatName, parseBetrag, formatInputBetrag, formatBetragText, formatBetrag, bindOnce, formatText, formatDateGroupLabel, appendDateGroupHeader, datumAlsLokalenTag, istInLetztenTagen };
+        function validEntryClock(value) { return typeof value === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value); }
+        function localClock(date = new Date()) { return String(date.getHours()).padStart(2,'0')+':'+String(date.getMinutes()).padStart(2,'0'); }
+        function entryClock(entry) {
+            const value = entry?.eintrag || entry || {};
+            if (Object.hasOwn(value,'uhrzeit')) return validEntryClock(value.uhrzeit) ? value.uhrzeit : '';
+            if (typeof value._notificationDate === 'string') {
+                const date = new Date(value._notificationDate);
+                if (Number.isFinite(date.getTime())) return localClock(date);
+            }
+            return '';
+        }
+        function timeFields(clock, datum) {
+            if (!validEntryClock(clock)) return null;
+            const now=new Date();
+            const date = datum===isoAusDate(now)&&clock===localClock(now)?now:new Date(datum+'T'+clock+':00');
+            if (!Number.isFinite(date.getTime()) || isoAusDate(date)!==datum || localClock(date)!==clock) return null;
+            return {uhrzeit:clock, zeitpunkt:date.toISOString(), zeitzone:Intl.DateTimeFormat().resolvedOptions().timeZone || '', utcOffset:-date.getTimezoneOffset()};
+        }
+        function readEntryTime(id, datum, previous = {}) {
+            const input = document.getElementById(id);
+            if (!input) return {};
+            const clock = input.value.trim();
+            if (!clock) return entryClock(previous) || Object.hasOwn(previous,'uhrzeit')
+                ? {uhrzeit:'',zeitpunkt:'',zeitzone:'',utcOffset:null} : {};
+            if (clock === entryClock(previous) && datum === previous.datum && previous.zeitpunkt && Number.isFinite(Date.parse(previous.zeitpunkt))) {
+                return {uhrzeit:clock, zeitpunkt:previous.zeitpunkt, zeitzone:previous.zeitzone || '', utcOffset:previous.utcOffset ?? null};
+            }
+            if (clock === entryClock(previous) && datum === previous.datum && previous._notificationDate && !Object.hasOwn(previous,'uhrzeit')) return {};
+            const fields = timeFields(clock,datum);
+            if (!fields) { alert('Bitte eine gültige Uhrzeit eingeben. Eine beim Zeitwechsel übersprungene Uhrzeit ist nicht möglich.'); return null; }
+            return fields;
+        }
+        function importedEntryTime(payment) {
+            if (typeof payment?.notificationDate !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(payment.notificationDate)) return {};
+            const date = new Date(payment.notificationDate);
+            if (!Number.isFinite(date.getTime())) return {};
+            return {uhrzeit:localClock(date),zeitpunkt:date.toISOString(),zeitzone:Intl.DateTimeFormat().resolvedOptions().timeZone || '',utcOffset:-date.getTimezoneOffset()};
+        }
+        function entryTimeSnapshot(entry) {
+            const fields={};for(const key of ['uhrzeit','zeitpunkt','zeitzone','utcOffset','_notificationDate','_serverPaymentId'])if(Object.hasOwn(entry || {},key))fields[key]=entry[key];
+            return fields;
+        }
+        function compareEntriesNewest(a,b) {
+            const first=a?.eintrag || a || {}, second=b?.eintrag || b || {};
+            const dayA=String(a?.datum || first.datum || '').slice(0,10),dayB=String(b?.datum || second.datum || '').slice(0,10);
+            const day=dayB.localeCompare(dayA);if(day)return day;
+            const score = entry => {
+                const clock=entryClock(entry);if(!clock)return -Infinity;
+                const original = entry.zeitpunkt || entry._notificationDate;
+                const timestamp=original?Date.parse(original):NaN;
+                if(Number.isFinite(timestamp))return timestamp;
+                const fallback=Date.parse(String(entry.datum || dayA).slice(0,10)+'T'+clock+':00');
+                return Number.isFinite(fallback)?fallback:-Infinity;
+            };
+            const x=score(first),y=score(second);return x===y?0:x<y?1:-1;
+        }
+        function renderEntryTime(entry, separator=true) {
+            const clock=entryClock(entry);if(!clock)return '';
+            const value=entry?.eintrag || entry;
+            const zone=value.zeitzone || (value._notificationDate?'aktuelle Gerätezeitzone':'');
+            const isNotification=value._notificationDate&&(!value.zeitpunkt||Date.parse(value.zeitpunkt)===Date.parse(value._notificationDate));
+            const title=(isNotification?'Mitteilungszeit':'Erfasste Uhrzeit')+(zone?' · '+zone:'');
+            return `<time class="entry-time" datetime="${clock}" title="${escapeHtml(title)}">${separator?' · ':''}${clock}</time>`;
+        }
+        function clearEntryTime(id,event) {
+            event?.preventDefault?.();event?.stopPropagation?.();
+            const input=document.getElementById(id);if(input)input.value='';
+        }
+        function renderEntryTimeInput(id, entry={}, hidden=false) {
+            const hint=entryClock(entry)&&entry.zeitzone?'Gespeichert: '+entry.zeitzone+' · Änderungen: aktuelle Geräte-Ortszeit':'Ortszeit dieses Geräts';
+            return `<div id="${escapeHtml(id)}Wrap" class="entry-time-field${hidden?' hidden':''}"><label for="${escapeHtml(id)}">Uhrzeit (optional)</label><div class="entry-time-input"><input id="${escapeHtml(id)}" type="time" step="60" value="${entryClock(entry)}" aria-label="Uhrzeit (optional)" title="${escapeHtml(hint)}"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div>`;
+        }
+        function prepareEntryTime(panelId) {
+            const ids={hausAddPanel:'hausUhrzeit',freizeitAddPanel:'freizeitUhrzeit',reiseAddPanel:'reiseUhrzeit',einnahmenAddPanel:'einnahmenUhrzeit'};
+            const input=document.getElementById(ids[panelId]);if(input)input.value=localClock();
+            if(panelId==='einnahmenAddPanel')toggleIncomeTime('einnahmenWiederholung','einnahmenUhrzeitWrap');
+        }
+        function toggleIncomeTime(selectId,wrapperId) {
+            document.getElementById(wrapperId)?.classList.toggle('hidden',document.getElementById(selectId)?.value==='monatlich');
+        }
+
+return { clearEntryTime, entryTimeSnapshot, validEntryClock, localClock, entryClock, timeFields, readEntryTime, importedEntryTime, compareEntriesNewest, renderEntryTime, renderEntryTimeInput, prepareEntryTime, toggleIncomeTime, daysBetween, getAktuellerMonat, heuteISO, tagAusDatum, datumAusTagAktuellerMonat, parseISODate, startOfToday, addDays, isoAusDate, formatKurzDatum, generateId, getSearchTerm, matchesSearch, datumZeitwert, createItem, escapeHtml, formatDatum, getMonatName, parseBetrag, formatInputBetrag, formatBetragText, formatBetrag, bindOnce, formatText, formatDateGroupLabel, appendDateGroupHeader, datumAlsLokalenTag, istInLetztenTagen };
 });
