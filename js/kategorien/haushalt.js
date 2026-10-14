@@ -15,7 +15,10 @@ Kostentracker.module({
     "renderBereichWocheninfo",
     "renderHomeUebersicht",
     "renderRecentAusgaben",
-    "speichern"
+    "speichern",
+    "readEntryTime",
+    "entryClock",
+    "timeFields"
   ],
   "session": [
     "state"
@@ -42,6 +45,7 @@ Kostentracker.module({
             if (isNaN(betrag) || !datum) return;
             if (!text) text = kategorie;
 
+            const zeit = dependencies.readEntryTime("hausUhrzeit",datum);if(zeit===null)return;
             let monat = new Date(datum).getMonth() + 1;
 
             if (!context.repository.view.Haushalt[monat]) {
@@ -54,6 +58,7 @@ Kostentracker.module({
                 betrag,
                 datum,
                 kategorie,
+                ...zeit,
                 ...dependencies.readReminderControl("add:haushalt")
             });
             dependencies.merkeLetzteKategorie("haushalt", kategorie);
@@ -185,7 +190,11 @@ Kostentracker.module({
             let originalIndex = originalListe.findIndex(e => e.id === eintrag.id);
             if (originalIndex === -1) return;
 
+            const zeit=dependencies.entryClock(eintrag)&&neuesDatum!==eintrag.datum?dependencies.timeFields(dependencies.entryClock(eintrag),neuesDatum):{};
+            if(zeit===null){alert("Bitte Datum und Uhrzeit prüfen.");return;}
             let updated = {
+                ...eintrag,
+                ...zeit,
                 id: eintrag.id,
                 text: dependencies.formatText(neuerName),
                 betrag: dependencies.parseBetrag(neuerBetrag),
@@ -260,13 +269,17 @@ Kostentracker.module({
 
             let neuerMonat = new Date(datum).getMonth() + 1;
 
+            let originalEntry = {};
             let existingKategorie = "Sonstiges";
             for (let monat in context.repository.view.Haushalt) {
                 const found = Array.isArray(context.repository.view.Haushalt[monat]) ? context.repository.view.Haushalt[monat].find(e => String(e.id) === String(id)) : null;
-                if (found) { existingKategorie = found.kategorie || "Sonstiges"; break; }
+                if (found) { originalEntry=found;existingKategorie = found.kategorie || "Sonstiges"; break; }
             }
 
+            const zeit = dependencies.readEntryTime("editUhrzeit-"+id,datum,originalEntry);if(zeit===null)return;
             let updated = {
+                ...originalEntry,
+                ...zeit,
                 id,
                 text: dependencies.formatText(text),
                 betrag,

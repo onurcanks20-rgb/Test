@@ -43,7 +43,11 @@ Kostentracker.module({
     "formatReiseBudgetAmount",
     "renderReiseBudgetToggle",
     "renderReiseBudgetRateNote",
-    "prepareReiseBudgetRate"
+    "prepareReiseBudgetRate",
+    "readEntryTime",
+    "renderEntryTime",
+    "renderEntryTimeInput",
+    "compareEntriesNewest"
   ],
   "session": [
     "aktuellesLand",
@@ -245,7 +249,7 @@ Kostentracker.module({
             renderReiseBudget();
 
             document.getElementById("datum").value =
-                new Date().toISOString().split('T')[0];
+                dependencies.heuteISO();
 
             updateDropdown();
             renderKategorienUebersicht();
@@ -479,11 +483,13 @@ Kostentracker.module({
                 return;
             }
 
+            const zeit=dependencies.readEntryTime("reiseUhrzeit",datum);if(zeit===null)return;
             dependencies.merkeLetzteKategorie("reisen", kat);
             if (dependencies.addItem(context.repository.view.Reisen[context.session.aktuellesLand][kat], {
                 id: dependencies.generateId(),
                 betrag,
                 ...(fx ? {fx} : {}),
+                ...zeit,
                 text,
                 datum,
                 ...dependencies.readReminderControl("add:reisen")
@@ -539,7 +545,7 @@ Kostentracker.module({
                 const gefilterteEintraege = alleEintraege
                     .filter(e => !dependencies.istEintragAusgeblendet("reisen", e.id))
                     .filter(e => dependencies.matchesSearch(suche, k, e.text, e.datum, e.betrag))
-                    .sort((a,b) => dependencies.datumZeitwert(b.datum) - dependencies.datumZeitwert(a.datum));
+                    .sort(dependencies.compareEntriesNewest);
                 if (suche && !dependencies.matchesSearch(suche, k) && gefilterteEintraege.length === 0) continue;
 
                 let sum = alleEintraege
@@ -629,6 +635,7 @@ Kostentracker.module({
                         <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.fx ? e.fx.amount : e.betrag)}" placeholder="Betrag in ${e.fx ? e.fx.currency : 'EUR'}" enterkeyhint="next">
                         <input id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || "")}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                         <input id="editDatum-${e.id}" type="date" value="${e.datum || ""}">
+                        ${dependencies.renderEntryTimeInput(`editReiseUhrzeit-${e.id}`,e)}
 
                         <div class="actions">
                             <button onclick="saveEditReise(${e.id})">💾</button>
@@ -645,7 +652,7 @@ Kostentracker.module({
                             sub.innerHTML = `
                         <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                             <div class="reise-entry-heading" onclick="toggleReiseDetails('${e.id}')">
-                                <span class="reise-entry-label">${dependencies.escapeHtml(e.text || k)}</span>
+                                <span class="reise-entry-label">${dependencies.escapeHtml(e.text || k)}${dependencies.renderEntryTime(e)}</span>
                                 <div class="reise-entry-amounts"><strong class="reise-entry-amount">${dependencies.formatBetrag(e.betrag)}</strong>${entryFxDetails(e)}</div>
                             </div>
                             <div class="reise-entry-controls">
@@ -845,6 +852,8 @@ Kostentracker.module({
 
                 if (eintrag) {
 
+                    const zeit=dependencies.readEntryTime("editReiseUhrzeit-"+id,datum,eintrag);if(zeit===null)return;
+                    Object.assign(eintrag,zeit);
                     eintrag.text = text;
                     if (eintrag.fx) {
                         eintrag.fx = {...eintrag.fx, amount: betrag};

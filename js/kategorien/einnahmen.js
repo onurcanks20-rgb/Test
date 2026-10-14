@@ -24,7 +24,11 @@ Kostentracker.module({
     "readReminderControl",
     "renderHomeUebersicht",
     "speichern",
-    "startOfToday"
+    "startOfToday",
+    "readEntryTime",
+    "renderEntryTime",
+    "renderEntryTimeInput",
+    "compareEntriesNewest"
   ],
   "session": [
     "state"
@@ -49,8 +53,9 @@ Kostentracker.module({
             const wiederholung = document.getElementById("einnahmenWiederholung")?.value === "monatlich" ? "monatlich" : "einmalig";
 
             if (!text || isNaN(betrag) || betrag <= 0 || !datum) return;
+            const zeit=wiederholung==='monatlich'?{}:dependencies.readEntryTime("einnahmenUhrzeit",datum);if(zeit===null)return;
             context.repository.view.Einnahmen ??= [];
-            context.repository.view.Einnahmen.push({ id: dependencies.generateId(), text, betrag, von, datum, wiederholung, ...dependencies.readReminderControl("add:einnahmen") });
+            context.repository.view.Einnahmen.push({ id: dependencies.generateId(), text, betrag, von, datum, wiederholung, ...zeit, ...dependencies.readReminderControl("add:einnahmen") });
             if (dependencies.speichern() === false) return;
 
             document.getElementById("einnahmenText").value = "";
@@ -78,7 +83,7 @@ Kostentracker.module({
                 .filter(e => dependencies.matchesSearch(suche, e.text, e.von, e.wiederholung, e.datum, e.betrag));
             const einmalig = sichtbar.filter(e => e.wiederholung !== "monatlich" && (
                 dependencies.istInLetztenTagen(e.datum, 7) || dependencies.parseISODate(e.datum) > dependencies.startOfToday() || String(context.session.state.editEinnahmeId) === String(e.id)
-            )).sort((a,b) => String(b.datum).localeCompare(String(a.datum)));
+            )).sort(dependencies.compareEntriesNewest);
             const monatlich = sichtbar.filter(e => e.wiederholung === "monatlich")
                 .sort((a,b) => (dependencies.parseISODate(a.datum)?.getDate() || 0) - (dependencies.parseISODate(b.datum)?.getDate() || 0) || String(a.text || '').localeCompare(String(b.text || ''),'de'));
             const z = dependencies.getGehaltszeitraum();
@@ -141,7 +146,8 @@ Kostentracker.module({
                         <input id="editEinnahmenBetrag-${e.id}" type="text" inputmode="decimal" min="0" step="0.01" value="${dependencies.formatInputBetrag(e.betrag)}">
                         <input id="editEinnahmenVon-${e.id}" value="${dependencies.escapeHtml(e.von || '')}" placeholder="Von wem? (optional)" autocapitalize="words">
                         <input id="editEinnahmenDatum-${e.id}" type="date" value="${e.datum || ''}">
-                        <select id="editEinnahmenWiederholung-${e.id}"><option value="einmalig" ${e.wiederholung !== 'monatlich' ? 'selected' : ''}>Einmalig</option><option value="monatlich" ${e.wiederholung === 'monatlich' ? 'selected' : ''}>Monatlich</option></select>
+                        ${dependencies.renderEntryTimeInput(`editEinnahmenUhrzeit-${e.id}`,e,e.wiederholung==='monatlich')}
+                        <select id="editEinnahmenWiederholung-${e.id}" onchange="toggleIncomeTime('editEinnahmenWiederholung-${e.id}','editEinnahmenUhrzeit-${e.id}Wrap')"><option value="einmalig" ${e.wiederholung !== 'monatlich' ? 'selected' : ''}>Einmalig</option><option value="monatlich" ${e.wiederholung === 'monatlich' ? 'selected' : ''}>Monatlich</option></select>
                         <div style="display:flex; gap:10px;"><button onclick="saveEditEinnahme('${e.id}')">💾 Speichern</button><button onclick="cancelEditEinnahme()">❌ Abbrechen</button></div>
                     </div>`;
                 } else {
@@ -150,7 +156,7 @@ Kostentracker.module({
                     html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div class="compact-alltag-content">
                             <div class="compact-alltag-main" onclick="toggleEinnahmeDetails('${e.id}')" style="cursor:pointer;">
-                                <span class="compact-alltag-title">${dependencies.escapeHtml(e.text || 'Einnahme')}</span>
+                                <span class="compact-alltag-title">${dependencies.escapeHtml(e.text || 'Einnahme')}${recurring?'':dependencies.renderEntryTime(e)}</span>
                                 ${e.von ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(e.von)}</span>` : ''}
                                 ${recurring ? `<span class="compact-alltag-sub">Monatlich am ${dependencies.parseISODate(e.datum)?.getDate() || '-'}.${dependencies.parseISODate(e.datum) > dependencies.startOfToday() ? ' · ab '+dependencies.formatDatum(e.datum) : ''}</span>` : ''}
                             </div>
@@ -192,7 +198,8 @@ Kostentracker.module({
             const datum = document.getElementById(`editEinnahmenDatum-${id}`)?.value;
             const wiederholung = document.getElementById(`editEinnahmenWiederholung-${id}`)?.value === "monatlich" ? "monatlich" : "einmalig";
             if (!text || isNaN(betrag) || betrag <= 0 || !datum) return;
-            context.repository.view.Einnahmen[index] = { ...context.repository.view.Einnahmen[index], text, betrag, von, datum, wiederholung, ...dependencies.readReminderControl(`edit:einnahmen:${id}`) };
+            const zeit=wiederholung==='monatlich'?{uhrzeit:"",zeitpunkt:"",zeitzone:"",utcOffset:null}:dependencies.readEntryTime(`editEinnahmenUhrzeit-${id}`,datum,context.repository.view.Einnahmen[index]);if(zeit===null)return;
+            context.repository.view.Einnahmen[index] = { ...context.repository.view.Einnahmen[index], ...zeit, text, betrag, von, datum, wiederholung, ...dependencies.readReminderControl(`edit:einnahmen:${id}`) };
             if (dependencies.speichern() === false) return;
             context.session.state.editEinnahmeId = null;
             renderEinnahmen();

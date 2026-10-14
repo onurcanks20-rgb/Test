@@ -15,7 +15,8 @@ Kostentracker.module({
     "renderBereichWocheninfo",
     "renderHomeUebersicht",
     "renderRecentAusgaben",
-    "speichern"
+    "speichern",
+    "readEntryTime"
   ],
   "session": [
     "state"
@@ -41,9 +42,10 @@ Kostentracker.module({
             if (isNaN(betrag) || !datum) return;
             if (!text) text = kategorie;
 
+            const zeit=dependencies.readEntryTime("freizeitUhrzeit",datum);if(zeit===null)return;
             let monat = new Date(datum).getMonth() + 1;
             context.repository.view.Freizeit[monat] ??= [];
-            context.repository.view.Freizeit[monat].push({ id: dependencies.generateId(), text, betrag, datum, kategorie, ...dependencies.readReminderControl("add:freizeit") });
+            context.repository.view.Freizeit[monat].push({ id: dependencies.generateId(), text, betrag, datum, kategorie, ...zeit, ...dependencies.readReminderControl("add:freizeit") });
             dependencies.merkeLetzteKategorie("freizeit", kategorie);
             if (dependencies.speichern() === false) return;
 
@@ -95,9 +97,10 @@ Kostentracker.module({
             let found=null, oldMonat=null, oldIndex=-1;
             for(const monat in context.repository.view.Freizeit){ const liste=context.repository.view.Freizeit[monat]; if(!Array.isArray(liste)) continue; const i=liste.findIndex(e=>String(e.id)===String(id)); if(i!==-1){found=liste[i];oldMonat=monat;oldIndex=i;break;} }
             if(!found) return;
+            const zeit=dependencies.readEntryTime("editFreizeitUhrzeit-"+id,datum,found);if(zeit===null)return;
             context.repository.view.Freizeit[oldMonat].splice(oldIndex,1);
             const neuerMonat=new Date(datum).getMonth()+1; context.repository.view.Freizeit[neuerMonat]??=[];
-            context.repository.view.Freizeit[neuerMonat].push({...found,id:found.id,text:dependencies.formatText(text),betrag,datum,kategorie:found.kategorie || "Sonstiges",...dependencies.readReminderControl(`edit:freizeit:${id}`)});
+            context.repository.view.Freizeit[neuerMonat].push({...found,...zeit,id:found.id,text:dependencies.formatText(text),betrag,datum,kategorie:found.kategorie || "Sonstiges",...dependencies.readReminderControl(`edit:freizeit:${id}`)});
             if (dependencies.speichern() === false) return;
             context.session.state.editFreizeitId=null; renderFreizeit();
         }
