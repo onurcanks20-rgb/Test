@@ -85,6 +85,7 @@ Kostentracker.module({
                 "settingsWarningsView",
                 "settingsDesignView",
                 "settingsGesturesView",
+                "settingsMerchantView",
                 "settingsBackupView",
                 "serverSettingsView"
             ];

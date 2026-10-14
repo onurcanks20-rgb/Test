@@ -14,7 +14,7 @@ Kostentracker.module({
         // Interactive edge navigation. Visual copies live in a shadow root so
         // duplicate form IDs never affect the app's renderers or saved inputs.
         (() => {
-            const viewIds = ['home','reisen','land','haushaltView','freizeitView','ausgabenArchivView','globalArchivView','geplanteAusgabenView','sparenInvestierenView','einnahmenView','kostenView','versicherungenView','uebersichtView','grafikView','settingsView','settingsBudgetView','settingsQuickAddView','settingsWarningsView','settingsDesignView','settingsGesturesView','settingsBackupView'];
+            const viewIds = ['home','reisen','land','haushaltView','freizeitView','ausgabenArchivView','globalArchivView','geplanteAusgabenView','sparenInvestierenView','einnahmenView','kostenView','versicherungenView','uebersichtView','grafikView','settingsView','settingsBudgetView','settingsQuickAddView','settingsWarningsView','settingsDesignView','settingsGesturesView','settingsMerchantView','settingsBackupView'];
             const cache = new Map();
             const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
             const overlay = document.createElement('div');

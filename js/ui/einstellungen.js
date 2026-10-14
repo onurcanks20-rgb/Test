@@ -181,6 +181,10 @@ Kostentracker.module({
         }
 
         const HELP_CONTENT = {
+  "settingsMerchantView": {
+    "title":"Händlerzuordnung",
+    "html":"<p>Bekannte Händler werden automatisch erkannt. Unbekannte Zahlungen bleiben in der Prüfung, bis du Bereich und Kategorie auswählst.</p><p>Mit „Für diesen Händler merken“ gilt deine Auswahl auch für kommende Zahlungen mit demselben Händlernamen. Groß-/Kleinschreibung und Satzzeichen werden vereinheitlicht. Deine eigenen Regeln haben Vorrang vor den mitgelieferten Zuordnungen.</p><p>Hier kannst du eigene Regeln ergänzen, bearbeiten oder löschen. Bereits gespeicherte Buchungen werden dadurch nicht verschoben. Die Regeln sind Teil deiner Datensicherung.</p><p>Die Reiseprüfung und die Prüfung von Fixkosten bleiben erhalten. Eine Händlerregel legt kein dauerhaftes Reiseland fest. Im eindeutigen Reisezeitraum wird die passende Reisekategorie verwendet. Auf Reisezahlungen lassen sich Regeln nicht direkt speichern; lege dafür hier eine Alltagszuordnung an.</p>"
+  },
   "settingsView": {
     "title": "Einstellungen",
     "html": "<p>Aktuelles und nächstes Gehalt, Gehaltstag</p><p>Bereiche auswählen und Reihenfolge anpassen</p><p>Große Ausgaben und Hinweise auf der Startseite</p><p>Alle gespeicherten Einträge durchsuchen und exportieren</p><p>Persönlicher Zugang, Sicherung und Benachrichtigungen</p><p>Daten sichern oder wiederherstellen</p>"
