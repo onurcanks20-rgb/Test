@@ -2,6 +2,8 @@ Kostentracker.module({
   "id": "js/server/synchronisierung.js",
   "dependencies": [
     "addDays",
+    "openAccessibleDialog",
+    "closeAccessibleDialog",
     "appendReiseExternalExpense",
     "refreshReiseImportedViews",
     "validateImportedPayment",
@@ -89,11 +91,34 @@ var testServerConfig = (() => { try {return JSON.parse(localStorage.getItem('kos
 var testServerBoundUser = (() => {try {return localStorage.getItem('kostenApp_test_user')||testServerConfig.userId||(testServerConfig.token?'person1':null);} catch {return testServerConfig.token?'person1':null;}})();
 var testServerBusy = false, testServerTimer = null, testServerPending = false;
 const TEST_SERVER_URL = 'https://kostentracker-test.onurcanks20.workers.dev';
-function serverStatus(message) {const node=document.getElementById('testServerStatus');if(node) node.textContent=message;}
+var serverBackupRequired=false, serverRestorePromptSeen=false, serverLastStatus='';
+function updateServerLoginControls() {
+  const token=document.getElementById('testServerToken'),button=document.getElementById('serverLoginButton');
+  if(button){button.textContent=testServerConfig.token&&token?.value.trim()===testServerConfig.token?'Jetzt synchronisieren':'Anmelden';button.disabled=testServerBusy;}
+  if(token)token.disabled=testServerBusy;
+  document.getElementById('serverRestoreNotice')?.classList.toggle('hidden',!serverBackupRequired);
+  document.getElementById('serverAccountActions')?.classList.toggle('hidden',!testServerConfig.token);
+  const dialog=document.getElementById('serverRestoreDialog');if(dialog)dialog.dataset.busy=testServerBusy?'true':'false';
+  for(const id of ['serverRestoreConfirm','serverRestoreLater']){const node=document.getElementById(id);if(node)node.disabled=testServerBusy;}
+}
+function showServerRestorePrompt(force=false) {
+  if(serverRestorePromptSeen&&!force)return;
+  const title=document.getElementById('serverRestoreTitle'),description=document.getElementById('serverRestoreDescription');
+  if(title)title.textContent=serverBackupRequired?'Deine gespeicherten Daten sind da':'Daten wiederherstellen';
+  if(description)description.textContent=serverBackupRequired?'Stelle deine bisherigen Einträge auf diesem Gerät wieder her. Danach werden neue Zahlungen automatisch übernommen.':'Lade deine gespeicherte Sicherung auf dieses Gerät.';
+  const error=document.getElementById('serverRestoreError');if(error)error.textContent='';
+  updateServerLoginControls();
+  if(dependencies.openAccessibleDialog('serverRestoreDialog','serverRestoreTitle'))serverRestorePromptSeen=true;
+}
+function closeServerRestorePrompt() {
+  if(testServerBusy)return;
+  dependencies.closeAccessibleDialog('serverRestoreDialog');
+}
+function serverStatus(message) {serverLastStatus=message;const node=document.getElementById('testServerStatus');if(node)node.textContent=message;updateServerLoginControls();}
 function renderTestServerSettings() {
   renderServerPaymentReview();
-  const node=document.getElementById('testServerToken');if(node) node.value=testServerConfig.token||'';
-  serverStatus(testServerConfig.token?'Persönlicher Code gespeichert. Die App öffnet sich weiterhin direkt.':'Persönlichen Code einmal eintragen.');
+  const node=document.getElementById('testServerToken');if(node)node.value=testServerConfig.token||'';
+  serverStatus(serverBackupRequired?'Bitte deine Daten wiederherstellen, um neue Zahlungen zu übernehmen.':serverLastStatus||(testServerConfig.token?'Du bist angemeldet.':'Noch nicht angemeldet.'));
 }
 function bindTestServerUser(config) {
   if(!config.userId||!/^[-a-zA-Z0-9_]{1,40}$/.test(config.userId)) throw new Error('Bitte zuerst den neuen Worker für getrennte Zugänge deployen.');
@@ -103,7 +128,7 @@ function bindTestServerUser(config) {
 }
 async function saveTestServerSettings() {
   const token=document.getElementById('testServerToken').value.trim();
-  if(token.length<32) throw new Error('Bitte den vollständigen Zugangsschlüssel eintragen.');
+  if(token.length<32) throw new Error('Bitte deinen vollständigen persönlichen Zugangscode eingeben.');
   const remote=await testServerRequest('/api/config',undefined,token);
   bindTestServerUser(remote);
   const config={token,userId:remote.userId};localStorage.setItem('kostenApp_test_server',JSON.stringify(config));testServerConfig=config;
@@ -301,16 +326,17 @@ function importTestServerPayments(payments) {
 async function syncTestServer(saveSettings=false) {
   if(testServerBusy) {testServerPending=true;return;}
   try {
-    testServerBusy=true;serverStatus('Verbindung wird geprüft …');
+    testServerBusy=true;serverStatus(saveSettings?'Anmeldung wird geprüft …':'Daten werden synchronisiert …');
     if(saveSettings) await saveTestServerSettings();else {
-      if(!testServerConfig?.token) return;
+      if(!testServerConfig?.token){serverStatus('Noch nicht angemeldet.');return;}
       bindTestServerUser(await testServerRequest('/api/config'));
     }
     // A fresh device must not overwrite an existing personal server backup.
     if(localStorage.getItem('kostenApp_test_backup_check')===testServerBoundUser) {
       const saved=await testServerRequest('/api/backup');
-      if(saved.data) {serverStatus('Für deinen Zugang gibt es bereits ein Serverbackup. Bitte „Serverbackup wiederherstellen“ verwenden. Deine lokalen Daten bleiben bis dahin erhalten.');return;}
+      if(saved.data) {serverBackupRequired=true;serverStatus('Bitte deine Daten wiederherstellen, um neue Zahlungen zu übernehmen.');showServerRestorePrompt(saveSettings);return;}
       localStorage.removeItem('kostenApp_test_backup_check');
+      serverBackupRequired=false;serverRestorePromptSeen=false;updateServerLoginControls();
     }
     let count=0;for(let page=0;page<10;page++) {
       const result=await testServerRequest('/api/payments');
@@ -321,9 +347,9 @@ async function syncTestServer(saveSettings=false) {
     }
     dependencies.renderHomeUebersicht();
     await testServerRequest('/api/backup',{data:context.repository.view});
-    serverStatus('Verbunden. '+count+' zusätzliche Ausgabe'+(count===1?'':'n')+' übernommen. '+(context.repository.view.Einstellungen?.serverPendingReview?.length||0)+' zur Prüfung. Serverbackup aktualisiert.');
+    serverStatus('Du bist angemeldet. Deine Daten sind aktuell.'+(count?' '+count+' neue Ausgabe'+(count===1?'':'n')+' übernommen.':'')+((context.repository.view.Einstellungen?.serverPendingReview?.length||0)?' Zahlungen zur Prüfung offen.':''));
   } catch(error) {serverStatus('Noch nicht synchronisiert: '+(error.name==='AbortError'?'Zeitüberschreitung. Später erneut verbinden.':error.message));}
-  finally {testServerBusy=false;if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
+  finally {testServerBusy=false;updateServerLoginControls();if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
 }
 function pushKeyBytes(value) {return Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4)),c=>c.charCodeAt(0));}
 async function activateTestServerPush() {
@@ -348,21 +374,28 @@ async function activateTestServerPush() {
     await testServerRequest('/api/subscribe',sub.toJSON());serverStatus('Dieses Gerät ist für echte Server-Push-Nachrichten angemeldet.');
     await renderPushTestStatus();
   } catch(error) {serverStatus(error.message);}
-  finally {testServerBusy=false;if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
+  finally {testServerBusy=false;updateServerLoginControls();if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
 }
 function toggleTestServerCode() {const node=document.getElementById('testServerToken'),button=document.getElementById('testServerReveal');if(!node)return;node.type=node.type==='password'?'text':'password';if(button)button.textContent=node.type==='text'?'Code verbergen':'Code anzeigen';}
-async function restoreTestServerBackup() {
-  if(testServerBusy) {serverStatus('Bitte den laufenden Vorgang kurz abwarten.');return;}
-  testServerBusy=true;
+async function restoreTestServerBackup(confirmed=false) {
+  if(testServerBusy){serverStatus('Bitte den laufenden Vorgang kurz abwarten.');return;}
+  if(!confirmed||!document.getElementById('serverRestoreDialog')?.open){showServerRestorePrompt(true);return;}
+  testServerBusy=true;serverStatus('Deine Daten werden wiederhergestellt …');
+  const errorNode=document.getElementById('serverRestoreError');if(errorNode)errorNode.textContent='';
   try {
     await saveTestServerSettings();
-    const saved=await testServerRequest('/api/backup');if(!saved.data) throw new Error('Für deinen Zugang gibt es noch kein Serverbackup.');
-    if(!saved.data.Haushalt||typeof saved.data.Haushalt!=='object'||!saved.data.Einstellungen||typeof saved.data.Einstellungen!=='object') throw new Error('Das Serverbackup ist nicht gültig.');
-    if(!confirm('Deine lokalen Daten durch dein Serverbackup ersetzen? Vorher bei Bedarf deine lokalen Daten in den Backup-Einstellungen exportieren.')) return;
+    const saved=await testServerRequest('/api/backup');
+    if(!saved.data)throw new Error('Für diesen Zugang gibt es noch keine gespeicherte Sicherung.');
+    if(!saved.data.Haushalt||typeof saved.data.Haushalt!=='object'||!saved.data.Einstellungen||typeof saved.data.Einstellungen!=='object')throw new Error('Die gespeicherte Sicherung ist nicht gültig. Deine aktuellen Daten bleiben erhalten.');
     context.storage.setItem(context.storage.key,JSON.stringify(saved.data));
-    localStorage.removeItem('kostenApp_test_backup_check');location.reload();
-  } catch(error) {serverStatus(error.message);}
-  finally {testServerBusy=false;}
+    localStorage.removeItem('kostenApp_test_backup_check');
+    serverBackupRequired=false;testServerBusy=false;updateServerLoginControls();
+    dependencies.closeAccessibleDialog('serverRestoreDialog');
+    location.reload();
+  } catch(error) {
+    const message='Daten konnten nicht wiederhergestellt werden: '+(error.name==='AbortError'?'Zeitüberschreitung. Bitte erneut versuchen.':error.message);
+    if(errorNode)errorNode.textContent=message;serverStatus(message);
+  } finally {testServerBusy=false;updateServerLoginControls();}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initializePaymentReviewGate,{once:true});else initializePaymentReviewGate();
 window.addEventListener('online',()=>syncTestServer(false));
@@ -370,5 +403,5 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 window.addEventListener('load',()=>{renderTestServerSettings();if(testServerConfig.token) syncTestServer(false);});
 
 
-return { pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+return { updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
 });
