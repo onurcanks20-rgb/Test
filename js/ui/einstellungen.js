@@ -198,8 +198,8 @@ Kostentracker.module({
     "html": "<p>Lege fest, was unter „Abrechnung hinzufügen“ erscheint und in welcher Reihenfolge.</p><p>Diese vier Beträge erscheinen bei Haushalt, Freizeit und Reisen in der Schnelleingabe.</p>"
   },
   "settingsWarningsView": {
-    "title": "Erinnerungen",
-    "html": "<p>Automatische Hinweise nutzen Schwellwert und Warnzeit. Manuell markierte Einträge werden unabhängig vom Schwellwert angezeigt.</p>"
+    "title": "Erinnerung",
+    "html": "<p>Automatische Hinweise nutzen Schwellwert und Erinnerungszeit. Manuell markierte Einträge werden unabhängig vom Schwellwert angezeigt.</p>"
   },
   "settingsGesturesView": {
     "title": "Gesten",
