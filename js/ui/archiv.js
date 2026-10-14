@@ -15,7 +15,10 @@ Kostentracker.module({
     "parseBetrag",
     "parseISODate",
     "show",
-    "speichern"
+    "speichern",
+    "entryClock",
+    "renderEntryTime",
+    "compareEntriesNewest"
   ],
   "session": [
     "state"
@@ -113,7 +116,7 @@ Kostentracker.module({
                     const diff = dependencies.datumZeitwert(b.datum) - dependencies.datumZeitwert(a.datum);
                     if (diff !== 0) return diff;
                     return Number(b.id || 0) - Number(a.id || 0);
-                });
+                }).sort(dependencies.compareEntriesNewest);
         }
 
         function filterGlobalArchivRecords(records) {
@@ -171,12 +174,12 @@ Kostentracker.module({
             }
 
             const basis = archivExportBasisName(records);
-            const header = ["Datum","Bereich","Kategorie / Details","Beschreibung","Betrag","Reise"];
+            const header = ["Datum","Uhrzeit","Bereich","Kategorie / Details","Beschreibung","Betrag","Reise"];
             const rows = records.map(r => {
                 const raw = r.eintrag || {};
                 const reise = r.bereich === "reisen" ? (r.target?.land || "") : "";
                 const kategorie = r.bereich === "reisen" ? (r.target?.kategorie || "") : (raw.kategorie || r.meta || "");
-                return [r.datum, globalArchivBereichLabel(r.bereich).replace(/^\S+\s*/, ""), kategorie, r.titel, Number(r.betrag || 0).toFixed(2).replace(".", ","), reise];
+                return [r.datum, dependencies.entryClock(raw), globalArchivBereichLabel(r.bereich).replace(/^\S+\s*/, ""), kategorie, r.titel, Number(r.betrag || 0).toFixed(2).replace(".", ","), reise];
             });
             const csv = "\ufeff" + [header, ...rows].map(row => row.map(csvCell).join(";")).join("\r\n");
             const payload = {
@@ -211,6 +214,7 @@ Kostentracker.module({
             const e = eintrag || {};
             if (e.id !== undefined && e.id !== null && e.id !== "") return `${bereich}|id|${String(e.id)}`;
             const basis = [bereich, e.datum || "", e.betrag ?? "", e.text || e.name || "", e.kategorie || "", e.von || "", e.wiederholung || "", e.intervall || "", target.land || "", target.kategorie || ""];
+            if(dependencies.entryClock(e))basis.push(dependencies.entryClock(e));
             return basis.join("|").toLocaleLowerCase("de");
         }
 
@@ -311,23 +315,23 @@ Kostentracker.module({
 
             Object.values(context.repository.view.Haushalt || {}).forEach(liste => {
                 if (!Array.isArray(liste)) return;
-                liste.forEach(e => push("haushalt", e.text || e.kategorie || "Haushalt", e.betrag, e.datum, e.kategorie || "", { id:e.id }));
+                liste.forEach(e => push("haushalt", e.text || e.kategorie || "Haushalt", e.betrag, e.datum, e.kategorie || "", { id:e.id, eintrag:e }));
             });
             Object.values(context.repository.view.Freizeit || {}).forEach(liste => {
                 if (!Array.isArray(liste)) return;
-                liste.forEach(e => push("freizeit", e.text || e.kategorie || "Freizeit", e.betrag, e.datum, e.kategorie || "", { id:e.id }));
+                liste.forEach(e => push("freizeit", e.text || e.kategorie || "Freizeit", e.betrag, e.datum, e.kategorie || "", { id:e.id, eintrag:e }));
             });
-            (context.repository.view["Laufende Kosten"]?.fix || []).forEach(e => push("fixkosten", e.text || e.name || "Fixkosten", e.betrag, e.datum, "Monatlich", { id:e.id }));
-            (context.repository.view.Versicherungen || []).forEach(e => push("versicherungen", e.name || "Versicherung", e.betrag, e.datum, e.intervall || "", { id:e.id }));
-            (context.repository.view.Einnahmen || []).forEach(e => push("einnahmen", e.text || "Einnahme", e.betrag, e.datum, [e.von, e.wiederholung].filter(Boolean).join(" · "), { positiv:true, id:e.id }));
+            (context.repository.view["Laufende Kosten"]?.fix || []).forEach(e => push("fixkosten", e.text || e.name || "Fixkosten", e.betrag, e.datum, "Monatlich", { id:e.id, eintrag:e }));
+            (context.repository.view.Versicherungen || []).forEach(e => push("versicherungen", e.name || "Versicherung", e.betrag, e.datum, e.intervall || "", { id:e.id, eintrag:e }));
+            (context.repository.view.Einnahmen || []).forEach(e => push("einnahmen", e.text || "Einnahme", e.betrag, e.datum, [e.von, e.wiederholung].filter(Boolean).join(" · "), { positiv:true, id:e.id, eintrag:e }));
             Object.entries(context.repository.view.Reisen || {}).forEach(([land, reise]) => {
                 if (!reise || typeof reise !== "object") return;
                 Object.entries(reise).forEach(([kategorie, liste]) => {
                     if (!Array.isArray(liste)) return;
-                    liste.forEach(e => push("reisen", e.text || kategorie || "Reiseausgabe", e.betrag, e.datum, `${land} · ${kategorie}`, { id:e.id, land, kategorie }));
+                    liste.forEach(e => push("reisen", e.text || kategorie || "Reiseausgabe", e.betrag, e.datum, `${land} · ${kategorie}`, { id:e.id, land, kategorie, eintrag:e }));
                 });
             });
-            return out.sort((a,b) => dependencies.datumZeitwert(b.datum) - dependencies.datumZeitwert(a.datum));
+            return out.sort(dependencies.compareEntriesNewest);
         }
 
         function globalArchivBereichLabel(bereich) {
@@ -377,7 +381,7 @@ Kostentracker.module({
                     html += `<div class="archive-month"><div class="archive-month-head" onclick="toggleGlobalArchivMonat('${key}')"><div class="archive-month-title">${offen?'▾':'▸'} ${dependencies.getMonatName(parseInt(m))}</div><div class="archive-month-sum">${sumText}</div></div>`;
                     if (offen) {
                         entries.forEach(e => {
-                            html += `<div class="archive-entry"><div class="archive-entry-main"><div class="archive-entry-type">${globalArchivBereichLabel(e.bereich)}${e.ausgeblendet ? ' · 👁️‍🗨️ Ausgeblendet' : ''}</div><div class="archive-entry-title">${dependencies.escapeHtml(e.titel)}</div><div class="archive-entry-meta">${dependencies.formatDatum(e.datum)}${e.meta ? ' · '+dependencies.escapeHtml(e.meta) : ''}</div>${e.ausgeblendet && e.id != null ? `<button type="button" onclick="event.stopPropagation(); eintragEinblenden('${e.bereich}','${e.id}')" style="width:auto;margin:8px 0 0;padding:7px 10px;background:#3a3a3c;font-size:12px;">👁️ Einblenden</button>` : ''}</div><div class="archive-entry-amount">${e.positiv?'+':''}${dependencies.formatBetrag(e.betrag)}</div></div>`;
+                            html += `<div class="archive-entry"><div class="archive-entry-main"><div class="archive-entry-type">${globalArchivBereichLabel(e.bereich)}${e.ausgeblendet ? ' · 👁️‍🗨️ Ausgeblendet' : ''}</div><div class="archive-entry-title">${dependencies.escapeHtml(e.titel)}${dependencies.renderEntryTime(e)}</div><div class="archive-entry-meta">${dependencies.formatDatum(e.datum)}${e.meta ? ' · '+dependencies.escapeHtml(e.meta) : ''}</div>${e.ausgeblendet && e.id != null ? `<button type="button" onclick="event.stopPropagation(); eintragEinblenden('${e.bereich}','${e.id}')" style="width:auto;margin:8px 0 0;padding:7px 10px;background:#3a3a3c;font-size:12px;">👁️ Einblenden</button>` : ''}</div><div class="archive-entry-amount">${e.positiv?'+':''}${dependencies.formatBetrag(e.betrag)}</div></div>`;
                         });
                     }
                     html += `</div>`;

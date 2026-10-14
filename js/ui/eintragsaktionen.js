@@ -18,7 +18,9 @@ Kostentracker.module({
     "renderVersicherungen",
     "show",
     "speichern",
-    "speichernOhneHomeRender"
+    "speichernOhneHomeRender",
+    "timeFields",
+    "localClock"
   ],
   "session": [],
   "read": [
@@ -154,6 +156,8 @@ Kostentracker.module({
             const copy = context.clone(gefunden.eintrag);
             copy.id = dependencies.generateId();
             copy.datum = dependencies.heuteISO();
+            for(const key of ["uhrzeit","zeitpunkt","zeitzone","utcOffset","_notificationDate","_serverPaymentId"])delete copy[key];
+            Object.assign(copy,dependencies.timeFields(dependencies.localClock(),copy.datum));
             if (type === "haushalt" || type === "freizeit") {
                 const store = type === "haushalt" ? context.repository.view.Haushalt : context.repository.view.Freizeit;
                 const monat = dependencies.parseISODate(copy.datum).getMonth() + 1;

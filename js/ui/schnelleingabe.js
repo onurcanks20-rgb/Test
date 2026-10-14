@@ -17,7 +17,8 @@ Kostentracker.module({
     "setupQuickAddEnterFlow",
     "setupUniversalAddEnterFlow",
     "speichern",
-    "updateDropdown"
+    "updateDropdown",
+    "prepareEntryTime"
   ],
   "session": [
     "QUICK_ADD_DEFAULT",
@@ -178,6 +179,7 @@ Kostentracker.module({
         }
 
         function prepareStartQuickAdd(panelId) {
+            dependencies.prepareEntryTime(panelId);
             const today = dependencies.heuteISO();
             const dateIds = {
                 hausAddPanel: "hausDatum",

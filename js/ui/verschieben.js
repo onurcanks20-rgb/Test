@@ -16,7 +16,8 @@ Kostentracker.module({
     "renderListe",
     "renderVersicherungen",
     "speichern",
-    "tagAusDatum"
+    "tagAusDatum",
+    "entryTimeSnapshot"
   ],
   "session": [
     "aktuellesLand",
@@ -163,12 +164,12 @@ Kostentracker.module({
                 context.repository.view.Haushalt ??= {};
                 const monat = (dependencies.parseISODate(datum)?.getMonth() ?? new Date().getMonth()) + 1;
                 context.repository.view.Haushalt[monat] ??= [];
-                context.repository.view.Haushalt[monat].push({id:neueId,text,betrag,datum,kategorie:e.kategorie || "Sonstiges"});
+                context.repository.view.Haushalt[monat].push({...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum,kategorie:e.kategorie || "Sonstiges"});
             } else if (ziel === "freizeit") {
                 context.repository.view.Freizeit ??= {};
                 const monat = (dependencies.parseISODate(datum)?.getMonth() ?? new Date().getMonth()) + 1;
                 context.repository.view.Freizeit[monat] ??= [];
-                context.repository.view.Freizeit[monat].push({id:neueId,text,betrag,datum,kategorie:e.kategorie || "Sonstiges"});
+                context.repository.view.Freizeit[monat].push({...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum,kategorie:e.kategorie || "Sonstiges"});
             } else if (ziel === "fixkosten") {
                 context.repository.view["Laufende Kosten"] ??= {fix:[]};
                 context.repository.view["Laufende Kosten"].fix ??= [];
@@ -182,12 +183,12 @@ Kostentracker.module({
             } else if (ziel === "einnahmen") {
                 context.repository.view.Einnahmen ??= [];
                 const wiederholung=e.wiederholung || ((quelle==="fixkosten" || (quelle==="versicherungen" && e.intervall==="monatlich")) ? "monatlich" : "einmalig");
-                context.repository.view.Einnahmen.push({id:neueId,text,betrag,von:e.von||"",datum,wiederholung});
+                context.repository.view.Einnahmen.push({...(wiederholung==='monatlich'?{}:dependencies.entryTimeSnapshot(e)),id:neueId,text,betrag,von:e.von||"",datum,wiederholung});
             } else if (ziel === "reisen") {
                 const {land,kategorie="Sonstiges"}=extra;
                 if(!land || !context.repository.view.Reisen?.[land]) return;
                 context.repository.view.Reisen[land][kategorie] ??= [];
-                context.repository.view.Reisen[land][kategorie].push({id:neueId,text,betrag,datum});
+                context.repository.view.Reisen[land][kategorie].push({...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum});
             }
 
             gefunden.entfernen();

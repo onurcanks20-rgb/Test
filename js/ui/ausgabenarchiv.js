@@ -19,7 +19,12 @@ Kostentracker.module({
     "matchesSearch",
     "parseBetrag",
     "parseISODate",
-    "speichern"
+    "speichern",
+    "readEntryTime",
+    "entryClock",
+    "renderEntryTime",
+    "renderEntryTimeInput",
+    "compareEntriesNewest"
   ],
   "session": [
     "state"
@@ -86,10 +91,12 @@ Kostentracker.module({
             }
             if (!found) return;
 
+            const zeit=dependencies.readEntryTime(`editArchivUhrzeit-${id}`,datum,found);if(zeit===null)return;
             const parsed = dependencies.parseISODate(datum);
             const neuerMonat = (parsed ? parsed.getMonth() : new Date().getMonth()) + 1;
             const updated = {
                 ...found,
+                ...zeit,
                 text: dependencies.formatText(textEl.value.trim()),
                 betrag,
                 datum
@@ -128,7 +135,7 @@ Kostentracker.module({
                     // In „Alle Einträge“ bleiben auch ausgeblendete Buchungen sichtbar,
                     // damit sie hier direkt erkannt und wieder eingeblendet werden können.
                     .filter(e => dependencies.matchesSearch(suche, e.text, e.name, e.kategorie, e.datum, e.betrag))
-                    .sort((a,b) => dependencies.datumZeitwert(b.datum) - dependencies.datumZeitwert(a.datum));
+                    .sort(dependencies.compareEntriesNewest);
                 if (!data[j][m].length) delete data[j][m];
             }));
             Object.keys(data).forEach(j => { if (!Object.keys(data[j]).length) delete data[j]; });
@@ -156,7 +163,7 @@ Kostentracker.module({
                 Object.keys(data[jahr]).sort((a,b)=>b-a).forEach(monat => {
                     const key = jahr + "-" + monat;
                     const monatOffen = !!monatsState[key];
-                    const liste = data[jahr][monat];
+                    const liste = [...data[jahr][monat]].sort(dependencies.compareEntriesNewest);
                     const summe = liste.reduce((a,b)=>a+(dependencies.parseBetrag(b.betrag)||0),0);
                     const monatItem = dependencies.createItem(`<div style="display:flex; justify-content:space-between; width:100%; align-items:center; cursor:pointer;">
                         <div><span class="toggle-btn">${monatOffen ? '▲' : '▼'}</span> 📂 ${dependencies.getMonatName(parseInt(monat))}</div><strong>${dependencies.formatBetrag(summe)}</strong>
@@ -174,6 +181,7 @@ Kostentracker.module({
                                 <input id="editArchivBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
                                 <input id="editArchivText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                                 <input id="editArchivDatum-${e.id}" type="date" value="${e.datum || ''}">
+                                ${dependencies.renderEntryTimeInput(`editArchivUhrzeit-${e.id}`,e)}
                                 <div style="display:flex; gap:10px;">
                                     <button onclick="event.stopPropagation(); saveEditAusgabenArchiv('${typ}','${e.id}')">💾 Speichern</button>
                                     <button onclick="event.stopPropagation(); cancelEditAusgabenArchiv()">❌ Abbrechen</button>
@@ -186,7 +194,7 @@ Kostentracker.module({
                                 <div class="compact-alltag-main">
                                     <span class="compact-alltag-title">${dependencies.escapeHtml(e.kategorie || 'Sonstiges')}</span>
                                     ${istAusgeblendet ? `<span class="compact-alltag-sub" style="opacity:.9;">👁️‍🗨️ Ausgeblendet</span>` : ''}
-                                    ${zusatz ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(zusatz)}</span>` : ''}
+                                    ${zusatz || dependencies.entryClock(e) ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(zusatz)}${dependencies.renderEntryTime(e,!!zusatz)}</span>` : ''}
                                     ${e.datum ? `<span class="compact-alltag-sub">${dependencies.formatDatum(e.datum)}</span>` : ''}
                                 </div>
                                 <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
