@@ -1,51 +1,52 @@
-const WORKER_VERSION = "test-merchant-rules-v1";
+const WORKER_VERSION = "test-cache-update-v1";
 const APP_SCOPE = new URL(self.registration.scope);
 const CACHE_PREFIX = `kostentracker-test:${encodeURIComponent(APP_SCOPE.pathname)}:`;
 const CACHE_NAME = `${CACHE_PREFIX}${WORKER_VERSION}`;
 const APP_URL = new URL("index.html", APP_SCOPE).href;
 const CODE_ASSETS = [
-  "./js/core/dateninitialisierung.js?v=test-merchant-rules-v1",
-  "./js/core/dienste.js?v=test-merchant-rules-v1",
-  "./js/core/speicherung-backup.js?v=test-merchant-rules-v1",
-  "./js/ui/rueckgaengig.js?v=test-merchant-rules-v1",
-  "./js/ui/erinnerungen.js?v=test-merchant-rules-v1",
-  "./js/core/formatierung.js?v=test-merchant-rules-v1",
-  "./js/budget/gehalt.js?v=test-merchant-rules-v1",
-  "./js/ui/navigation.js?v=test-merchant-rules-v1",
-  "./js/ui/eintragsaktionen.js?v=test-merchant-rules-v1",
-  "./js/ui/einstellungen.js?v=test-merchant-rules-v1",
-  "./js/ui/archiv.js?v=test-merchant-rules-v1",
-  "./js/budget/wochenbudget.js?v=test-merchant-rules-v1",
-  "./js/ui/schnelleingabe.js?v=test-merchant-rules-v1",
-  "./js/kategorien/geplante-ausgaben.js?v=test-merchant-rules-v1",
-  "./js/kategorien/sparen-investieren.js?v=test-merchant-rules-v1",
-  "./js/kategorien/reise-waehrung.js?v=test-merchant-rules-v1",
-  "./js/kategorien/reise-budget-kurs.js?v=test-merchant-rules-v1",
-  "./js/kategorien/reisen.js?v=test-merchant-rules-v1",
-  "./js/kategorien/fixkosten.js?v=test-merchant-rules-v1",
-  "./js/ui/listen.js?v=test-merchant-rules-v1",
-  "./js/kategorien/versicherungen.js?v=test-merchant-rules-v1",
-  "./js/budget/berechnungen.js?v=test-merchant-rules-v1",
-  "./js/ui/verschieben.js?v=test-merchant-rules-v1",
-  "./js/kategorien/einnahmen.js?v=test-merchant-rules-v1",
-  "./js/kategorien/haushalt.js?v=test-merchant-rules-v1",
-  "./js/kategorien/freizeit.js?v=test-merchant-rules-v1",
-  "./js/ui/formulare.js?v=test-merchant-rules-v1",
-  "./js/kategorien/alltag-gemeinsam.js?v=test-merchant-rules-v1",
-  "./js/ui/ausgabenarchiv.js?v=test-merchant-rules-v1",
-  "./js/budget/faelligkeiten.js?v=test-merchant-rules-v1",
-  "./js/budget/zeitraeume.js?v=test-merchant-rules-v1",
-  "./js/budget/uebersicht.js?v=test-merchant-rules-v1",
-  "./js/grafik/diagramme.js?v=test-merchant-rules-v1",
-  "./js/app/design-start.js?v=test-merchant-rules-v1",
-  "./js/app/start.js?v=test-merchant-rules-v1",
-  "./js/ui/wischgesten.js?v=test-merchant-rules-v1",
-  "./js/ui/zurueckwischen.js?v=test-merchant-rules-v1",
-  "./js/server/haendler.js?v=test-merchant-rules-v1",
-  "./js/server/reise-zahlungen.js?v=test-merchant-rules-v1",
-  "./js/server/synchronisierung.js?v=test-merchant-rules-v1",
-  "./css/app.css?v=test-merchant-rules-v1",
-  "./css/bedienung.css?v=test-merchant-rules-v1"
+  "./js/core/dateninitialisierung.js?v=test-cache-update-v1",
+  "./js/core/dienste.js?v=test-cache-update-v1",
+  "./js/core/speicherung-backup.js?v=test-cache-update-v1",
+  "./js/ui/rueckgaengig.js?v=test-cache-update-v1",
+  "./js/ui/erinnerungen.js?v=test-cache-update-v1",
+  "./js/core/formatierung.js?v=test-cache-update-v1",
+  "./js/budget/gehalt.js?v=test-cache-update-v1",
+  "./js/ui/navigation.js?v=test-cache-update-v1",
+  "./js/ui/eintragsaktionen.js?v=test-cache-update-v1",
+  "./js/ui/einstellungen.js?v=test-cache-update-v1",
+  "./js/ui/archiv.js?v=test-cache-update-v1",
+  "./js/budget/wochenbudget.js?v=test-cache-update-v1",
+  "./js/ui/schnelleingabe.js?v=test-cache-update-v1",
+  "./js/kategorien/geplante-ausgaben.js?v=test-cache-update-v1",
+  "./js/kategorien/sparen-investieren.js?v=test-cache-update-v1",
+  "./js/kategorien/reise-waehrung.js?v=test-cache-update-v1",
+  "./js/kategorien/reise-budget-kurs.js?v=test-cache-update-v1",
+  "./js/kategorien/reisen.js?v=test-cache-update-v1",
+  "./js/kategorien/fixkosten.js?v=test-cache-update-v1",
+  "./js/ui/listen.js?v=test-cache-update-v1",
+  "./js/kategorien/versicherungen.js?v=test-cache-update-v1",
+  "./js/budget/berechnungen.js?v=test-cache-update-v1",
+  "./js/ui/verschieben.js?v=test-cache-update-v1",
+  "./js/kategorien/einnahmen.js?v=test-cache-update-v1",
+  "./js/kategorien/haushalt.js?v=test-cache-update-v1",
+  "./js/kategorien/freizeit.js?v=test-cache-update-v1",
+  "./js/ui/formulare.js?v=test-cache-update-v1",
+  "./js/kategorien/alltag-gemeinsam.js?v=test-cache-update-v1",
+  "./js/ui/ausgabenarchiv.js?v=test-cache-update-v1",
+  "./js/budget/faelligkeiten.js?v=test-cache-update-v1",
+  "./js/budget/zeitraeume.js?v=test-cache-update-v1",
+  "./js/budget/uebersicht.js?v=test-cache-update-v1",
+  "./js/grafik/diagramme.js?v=test-cache-update-v1",
+  "./js/app/design-start.js?v=test-cache-update-v1",
+  "./js/app/aktualisierung.js?v=test-cache-update-v1",
+  "./js/app/start.js?v=test-cache-update-v1",
+  "./js/ui/wischgesten.js?v=test-cache-update-v1",
+  "./js/ui/zurueckwischen.js?v=test-cache-update-v1",
+  "./js/server/haendler.js?v=test-cache-update-v1",
+  "./js/server/reise-zahlungen.js?v=test-cache-update-v1",
+  "./js/server/synchronisierung.js?v=test-cache-update-v1",
+  "./css/app.css?v=test-cache-update-v1",
+  "./css/bedienung.css?v=test-cache-update-v1"
 ].map(path => new URL(path, APP_SCOPE).href);
 const STATIC_ASSETS = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"]
   .map(path => new URL(path, APP_SCOPE).href).concat(CODE_ASSETS);
@@ -71,13 +72,26 @@ function isAppPageUrl(value) {
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    // The app is required; an unavailable icon must not block notification delivery.
-    // Install the complete code revision together. A missing script rejects the update.
-    try { await cache.addAll([APP_URL, ...CODE_ASSETS]); }
-    catch (error) { await caches.delete(CACHE_NAME); throw error; }
-    await Promise.all(STATIC_ASSETS.filter(url => url !== APP_URL && !CODE_ASSETS.includes(url)).map(url =>
-      cache.add(url).catch(() => console.warn("Optionale App-Datei konnte nicht gecacht werden:", url))
-    ));
+    // Fetch a complete revision without reusing a stale HTTP cache entry.
+    try {
+      const page=await fetch(new Request(APP_URL,{cache:'reload'}));
+      if(!page.ok||!(page.headers.get('Content-Type')||'').includes('text/html'))throw Error('App-Seite fehlt');
+      const html=await page.clone().text();
+      if(!html.includes('<meta name="app-version" content="'+WORKER_VERSION+'">'))throw Error('HTML und Service Worker haben unterschiedliche Versionen');
+      const references=new Set(Array.from(html.matchAll(/(?:src|href)="([^"]+)"/g),m=>new URL(m[1],APP_URL).href));
+      if(CODE_ASSETS.some(url=>!references.has(url)))throw Error('App-Dateien und HTML passen nicht zusammen');
+      for(const reference of references){const url=new URL(reference);if(isAppUrl(reference)&&/\.(?:js|css)$/.test(url.pathname)&&!CODE_ASSETS.includes(reference))throw Error('App-Datei fehlt im Offline-Paket');}
+      await cache.put(APP_URL,page);
+      await Promise.all(CODE_ASSETS.map(async url=>{
+        const response=await fetch(new Request(url,{cache:'reload'}));
+        if(!response.ok||(response.headers.get('Content-Type')||'').includes('text/html'))throw Error('App-Datei fehlt: '+url);
+        await cache.put(url,response);
+      }));
+    }catch(error){await caches.delete(CACHE_NAME);throw error;}
+    await Promise.all(STATIC_ASSETS.filter(url=>url!==APP_URL&&!CODE_ASSETS.includes(url)).map(async url=>{
+      try{const response=await fetch(new Request(url,{cache:'reload'}));if(response.ok)await cache.put(url,response);}
+      catch(_){console.warn('Optionale App-Datei konnte nicht gecacht werden:',url);}
+    }));
     await self.skipWaiting();
   })());
 });
@@ -85,7 +99,9 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME).map(key => caches.delete(key)));
+    const previous=keys.filter(key=>key.startsWith(CACHE_PREFIX)&&key!==CACHE_NAME);
+    const retained=previous.at(-1);
+    await Promise.all(previous.filter(key=>key!==retained).map(key=>caches.delete(key)));
     await self.clients.claim();
   })());
 });
@@ -128,6 +144,15 @@ self.addEventListener("fetch", event => {
       }
     })());
     return;
+  }
+
+  // An already open page may still request its previous versioned asset.
+  if(!CODE_ASSETS.includes(url.href)&&CODE_ASSETS.some(asset=>new URL(asset).pathname===url.pathname)){
+    event.respondWith((async()=>{
+      const names=(await caches.keys()).filter(name=>name.startsWith(CACHE_PREFIX));
+      for(const name of names.reverse()){const saved=await caches.match(event.request,{cacheName:name});if(saved)return saved;}
+      try{return await fetch(event.request);}catch(_){return offlineResponse();}
+    })());return;
   }
 
   // Cache only this app's files, leaving future server/API calls to the network.
