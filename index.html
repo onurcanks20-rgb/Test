@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <meta name="app-version" content="test-cache-update-v1">
+    <meta name="app-version" content="test-splash-v1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kostentracker">
@@ -18,13 +18,30 @@
 
     <title>Kostentracker Test</title>
 
-    <script src="./js/core/dienste.js?v=test-cache-update-v1"></script>
-    <script src="./js/app/design-start.js?v=test-cache-update-v1"></script>
+    <script src="./js/core/dienste.js?v=test-splash-v1"></script>
+    <script src="./js/app/design-start.js?v=test-splash-v1"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=test-cache-update-v1">
+    <link rel="stylesheet" href="./css/app.css?v=test-splash-v1">
+
+    <style id="bootSplashStyle">
+      .boot-splash {position:fixed;inset:0;z-index:30000;display:grid;place-items:center;background:#000;opacity:1;transition:opacity 120ms ease-out;}
+      :root[data-theme="light"] .boot-splash {background:#f2f2f7;}
+      .boot-splash-logo {display:grid;place-items:center;width:104px;height:104px;}
+      .boot-splash img {display:block;width:104px;height:104px;object-fit:contain;border-radius:24px;}
+      .boot-splash [hidden] {display:none;}
+      .boot-splash-fallback {font-size:72px;line-height:1;}
+      .boot-splash-leaving {opacity:0;pointer-events:none;}
+      @media(prefers-reduced-motion:reduce){.boot-splash {transition:none;}}
+    </style>
+    <noscript><style>.boot-splash {display:none;}</style></noscript>
 </head>
 
 <body>
+<div id="bootSplash" class="boot-splash" role="status" aria-label="Kostentracker wird geladen">
+  <div class="boot-splash-logo"><img src="icon-192.png" alt="" width="104" height="104" hidden onload="this.hidden=false;this.nextElementSibling.hidden=true" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="boot-splash-fallback" aria-hidden="true">💸</span></div>
+</div>
+<script src="./js/app/ladebildschirm.js?v=test-splash-v1"></script>
+
 
     <!-- ===================== HOME ===================== -->
     <div id="home">
@@ -1080,40 +1097,40 @@
     </div>
 
 
-    <script src="./js/core/dateninitialisierung.js?v=test-cache-update-v1"></script>
-    <script src="./js/core/speicherung-backup.js?v=test-cache-update-v1"></script>
-<script src="./js/ui/rueckgaengig.js?v=test-cache-update-v1"></script>
-<script src="./js/ui/erinnerungen.js?v=test-cache-update-v1"></script>
-<script src="./js/core/formatierung.js?v=test-cache-update-v1"></script>
-<script src="./js/budget/gehalt.js?v=test-cache-update-v1"></script>
-<script src="./js/ui/navigation.js?v=test-cache-update-v1"></script>
-<script src="./js/ui/eintragsaktionen.js?v=test-cache-update-v1"></script>
-<script src="./js/ui/einstellungen.js?v=test-cache-update-v1"></script>
-<script src="./js/ui/archiv.js?v=test-cache-update-v1"></script>
-<script src="./js/budget/wochenbudget.js?v=test-cache-update-v1"></script>
-<script src="./js/ui/schnelleingabe.js?v=test-cache-update-v1"></script>
-<script src="./js/kategorien/geplante-ausgaben.js?v=test-cache-update-v1"></script>
-<script src="./js/kategorien/sparen-investieren.js?v=test-cache-update-v1"></script>
-<script src="./js/kategorien/reise-waehrung.js?v=test-cache-update-v1"></script>
-<script src="./js/kategorien/reise-budget-kurs.js?v=test-cache-update-v1"></script>
-<script src="./js/kategorien/reisen.js?v=test-cache-update-v1"></script>
-<script src="./js/kategorien/fixkosten.js?v=test-cache-update-v1"></script>
-<script src="./js/ui/listen.js?v=test-cache-update-v1"></script>
-<script src="./js/kategorien/versicherungen.js?v=test-cache-update-v1"></script>
-<script src="./js/budget/berechnungen.js?v=test-cache-update-v1"></script>
-<script src="./js/ui/verschieben.js?v=test-cache-update-v1"></script>
-<script src="./js/kategorien/einnahmen.js?v=test-cache-update-v1"></script>
-<script src="./js/kategorien/haushalt.js?v=test-cache-update-v1"></script>
-<script src="./js/kategorien/freizeit.js?v=test-cache-update-v1"></script>
-<script src="./js/ui/formulare.js?v=test-cache-update-v1"></script>
-<script src="./js/kategorien/alltag-gemeinsam.js?v=test-cache-update-v1"></script>
-<script src="./js/ui/ausgabenarchiv.js?v=test-cache-update-v1"></script>
-<script src="./js/budget/faelligkeiten.js?v=test-cache-update-v1"></script>
-<script src="./js/budget/zeitraeume.js?v=test-cache-update-v1"></script>
-<script src="./js/budget/uebersicht.js?v=test-cache-update-v1"></script>
-<script src="./js/grafik/diagramme.js?v=test-cache-update-v1"></script>
-<script src="./js/app/aktualisierung.js?v=test-cache-update-v1"></script>
-<script src="./js/app/start.js?v=test-cache-update-v1"></script>
+    <script src="./js/core/dateninitialisierung.js?v=test-splash-v1"></script>
+    <script src="./js/core/speicherung-backup.js?v=test-splash-v1"></script>
+<script src="./js/ui/rueckgaengig.js?v=test-splash-v1"></script>
+<script src="./js/ui/erinnerungen.js?v=test-splash-v1"></script>
+<script src="./js/core/formatierung.js?v=test-splash-v1"></script>
+<script src="./js/budget/gehalt.js?v=test-splash-v1"></script>
+<script src="./js/ui/navigation.js?v=test-splash-v1"></script>
+<script src="./js/ui/eintragsaktionen.js?v=test-splash-v1"></script>
+<script src="./js/ui/einstellungen.js?v=test-splash-v1"></script>
+<script src="./js/ui/archiv.js?v=test-splash-v1"></script>
+<script src="./js/budget/wochenbudget.js?v=test-splash-v1"></script>
+<script src="./js/ui/schnelleingabe.js?v=test-splash-v1"></script>
+<script src="./js/kategorien/geplante-ausgaben.js?v=test-splash-v1"></script>
+<script src="./js/kategorien/sparen-investieren.js?v=test-splash-v1"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=test-splash-v1"></script>
+<script src="./js/kategorien/reise-budget-kurs.js?v=test-splash-v1"></script>
+<script src="./js/kategorien/reisen.js?v=test-splash-v1"></script>
+<script src="./js/kategorien/fixkosten.js?v=test-splash-v1"></script>
+<script src="./js/ui/listen.js?v=test-splash-v1"></script>
+<script src="./js/kategorien/versicherungen.js?v=test-splash-v1"></script>
+<script src="./js/budget/berechnungen.js?v=test-splash-v1"></script>
+<script src="./js/ui/verschieben.js?v=test-splash-v1"></script>
+<script src="./js/kategorien/einnahmen.js?v=test-splash-v1"></script>
+<script src="./js/kategorien/haushalt.js?v=test-splash-v1"></script>
+<script src="./js/kategorien/freizeit.js?v=test-splash-v1"></script>
+<script src="./js/ui/formulare.js?v=test-splash-v1"></script>
+<script src="./js/kategorien/alltag-gemeinsam.js?v=test-splash-v1"></script>
+<script src="./js/ui/ausgabenarchiv.js?v=test-splash-v1"></script>
+<script src="./js/budget/faelligkeiten.js?v=test-splash-v1"></script>
+<script src="./js/budget/zeitraeume.js?v=test-splash-v1"></script>
+<script src="./js/budget/uebersicht.js?v=test-splash-v1"></script>
+<script src="./js/grafik/diagramme.js?v=test-splash-v1"></script>
+<script src="./js/app/aktualisierung.js?v=test-splash-v1"></script>
+<script src="./js/app/start.js?v=test-splash-v1"></script>
 
 
     <div id="undoToast" class="undo-toast hidden" role="status" aria-live="polite">
@@ -1137,10 +1154,10 @@
 </dialog>
 
     <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
-    <link rel="stylesheet" href="./css/bedienung.css?v=test-cache-update-v1">
-    <script src="./js/ui/wischgesten.js?v=test-cache-update-v1"></script>
+    <link rel="stylesheet" href="./css/bedienung.css?v=test-splash-v1">
+    <script src="./js/ui/wischgesten.js?v=test-splash-v1"></script>
 
-    <script src="./js/ui/zurueckwischen.js?v=test-cache-update-v1"></script>
+    <script src="./js/ui/zurueckwischen.js?v=test-splash-v1"></script>
 
 <dialog id="paymentReviewDialog" class="payment-review-dialog" aria-labelledby="paymentReviewHeading" aria-describedby="paymentReviewRemaining" aria-modal="true" closedby="none">
   <h2 id="paymentReviewHeading" tabindex="-1">Zahlungen prüfen</h2>
@@ -1148,9 +1165,9 @@
   <div id="paymentReviewError" role="alert" class="payment-review-error"></div>
   <div id="serverPaymentReview"></div>
 </dialog>
-<script src="./js/server/haendler.js?v=test-cache-update-v1"></script>
-<script src="./js/server/reise-zahlungen.js?v=test-cache-update-v1"></script>
-<script src="./js/server/synchronisierung.js?v=test-cache-update-v1"></script>
+<script src="./js/server/haendler.js?v=test-splash-v1"></script>
+<script src="./js/server/reise-zahlungen.js?v=test-splash-v1"></script>
+<script src="./js/server/synchronisierung.js?v=test-splash-v1"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
     <!-- Gemeinsame Navigation in Kategorien (aus der Übersicht) -->
     <nav id="categoryBottomNav" class="bottom-nav hidden" aria-label="Hauptnavigation in Kategorien">
