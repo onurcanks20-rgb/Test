@@ -2,7 +2,7 @@
 (() => {
   const splash=document.getElementById('bootSplash');if(!splash)return;
   const started=performance.now(),duration=500;
-  const fade=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?0:120;
+  const fade=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?0:280;
   let finished=false,closeTimer=null,removeTimer=null;
   const remove=()=>{finished=true;splash.remove();clearTimeout(closeTimer);clearTimeout(removeTimer);clearTimeout(fallback);};
   const fallback=setTimeout(remove,8000);
