@@ -17,7 +17,9 @@ Kostentracker.module({
     "renderVersicherungen",
     "speichern",
     "tagAusDatum",
-    "entryTimeSnapshot"
+    "entryTimeSnapshot",
+    "merchantCategories",
+    "rememberMerchantRule"
   ],
   "session": [
     "aktuellesLand",
@@ -84,6 +86,29 @@ Kostentracker.module({
             return null;
         }
 
+        function moveMerchant(entry) {
+            return entry?._serverPaymentId ? String(entry._serverMerchant || entry.text || "").trim() : "";
+        }
+
+        function renderMoveAlltagKategorien(ziel) {
+            if (!context.session.moveContext || !["haushalt","freizeit"].includes(ziel)) return;
+            const area=ziel==="haushalt"?"Haushalt":"Freizeit";
+            const categories=dependencies.merchantCategories(area);
+            context.session.moveContext.zielBereich=ziel;
+            context.session.moveContext.zielKategorien=categories;
+            document.getElementById("moveSheetTitle").textContent=area+": Kategorie wählen";
+            document.getElementById("moveSheetChoices").innerHTML=
+                '<label class="merchant-remember"><input id="moveRememberMerchant" type="checkbox"><span>Für diesen Händler merken</span></label>'+
+                categories.map((category,index)=>`<button class="add-choice" onclick="moveEintragInAlltagKategorie(${index})">${dependencies.escapeHtml(category)}</button>`).join("")+
+                '<button class="add-choice" onclick="renderMoveBereiche()">← Zurück</button>';
+        }
+
+        function moveEintragInAlltagKategorie(index) {
+            const move=context.session.moveContext,category=move?.zielKategorien?.[index];
+            if (!category) return;
+            moveEintragJetzt(move.zielBereich,{kategorie:category,remember:document.getElementById("moveRememberMerchant")?.checked===true});
+        }
+
         function moveLabel(key) {
             return ({haushalt:"🛒 Haushalt",freizeit:"🎉 Freizeit",fixkosten:"📌 Fixkosten",versicherungen:"🛡️ Versicherungen",einnahmen:"💰 Einnahmen",reisen:"✈️ Reisen"})[key] || key;
         }
@@ -106,13 +131,14 @@ Kostentracker.module({
             const e = context.session.moveContext.gefunden.eintrag;
             document.getElementById("moveSheetTitle").textContent = `„${e.text || e.name || "Eintrag"}“ verschieben nach …`;
             const ziele = ["haushalt","freizeit","fixkosten","versicherungen","einnahmen","reisen"]
-                .filter(z => z !== context.session.moveContext.quelle || z === "reisen");
+                .filter(z => z !== context.session.moveContext.quelle || z === "reisen" || (moveMerchant(e) && ["haushalt","freizeit"].includes(z)));
             document.getElementById("moveSheetChoices").innerHTML = ziele.map(z => `<button class="add-choice" onclick="selectMoveBereich('${z}')">${moveLabel(z)}</button>`).join("");
         }
 
         function selectMoveBereich(ziel) {
             if (!context.session.moveContext) return;
             if (ziel === "reisen") return renderMoveReisen();
+            if (["haushalt","freizeit"].includes(ziel) && moveMerchant(context.session.moveContext.gefunden.eintrag)) return renderMoveAlltagKategorien(ziel);
             moveEintragJetzt(ziel);
         }
 
@@ -153,8 +179,21 @@ Kostentracker.module({
 
         function moveEintragJetzt(ziel, extra={}) {
             if (!context.session.moveContext) return;
-            const { quelle, gefunden } = context.session.moveContext;
+            const { quelle, id } = context.session.moveContext;
+            if (!["haushalt","freizeit","fixkosten","versicherungen","einnahmen","reisen"].includes(ziel)) return;
+            // Resolve again after a failed save: persistence restores the repository snapshot.
+            const gefunden=findeAusgabeZumVerschieben(quelle,id);
+            if (!gefunden) { closeMoveSheet(); return; }
             const e = gefunden.eintrag;
+            const merchant=moveMerchant(e),area=ziel==="haushalt"?"Haushalt":ziel==="freizeit"?"Freizeit":null;
+            if (merchant && area && extra.kategorie && !dependencies.merchantCategories(area).includes(extra.kategorie)) return;
+            if (ziel==="reisen" && (!extra.land || !context.repository.view.Reisen?.[extra.land])) return;
+            if (extra.remember) {
+                if (!merchant || !area || !dependencies.merchantCategories(area).includes(extra.kategorie)) return;
+                try { dependencies.rememberMerchantRule(merchant,area,extra.kategorie); }
+                catch(error) { alert(error.message); return; }
+            }
+            const imported=merchant?{...e,_serverMerchant:merchant}:{};
             const datum = e.datum || dependencies.heuteISO();
             const betrag = dependencies.parseBetrag(e.betrag) || 0;
             const text = e.text || e.name || "Eintrag";
@@ -164,12 +203,12 @@ Kostentracker.module({
                 context.repository.view.Haushalt ??= {};
                 const monat = (dependencies.parseISODate(datum)?.getMonth() ?? new Date().getMonth()) + 1;
                 context.repository.view.Haushalt[monat] ??= [];
-                context.repository.view.Haushalt[monat].push({...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum,kategorie:e.kategorie || "Sonstiges"});
+                context.repository.view.Haushalt[monat].push({...imported,...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum,kategorie:(merchant && area ? extra.kategorie : null) || e.kategorie || "Sonstiges"});
             } else if (ziel === "freizeit") {
                 context.repository.view.Freizeit ??= {};
                 const monat = (dependencies.parseISODate(datum)?.getMonth() ?? new Date().getMonth()) + 1;
                 context.repository.view.Freizeit[monat] ??= [];
-                context.repository.view.Freizeit[monat].push({...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum,kategorie:e.kategorie || "Sonstiges"});
+                context.repository.view.Freizeit[monat].push({...imported,...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum,kategorie:(merchant && area ? extra.kategorie : null) || e.kategorie || "Sonstiges"});
             } else if (ziel === "fixkosten") {
                 context.repository.view["Laufende Kosten"] ??= {fix:[]};
                 context.repository.view["Laufende Kosten"].fix ??= [];
@@ -188,7 +227,7 @@ Kostentracker.module({
                 const {land,kategorie="Sonstiges"}=extra;
                 if(!land || !context.repository.view.Reisen?.[land]) return;
                 context.repository.view.Reisen[land][kategorie] ??= [];
-                context.repository.view.Reisen[land][kategorie].push({...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum});
+                context.repository.view.Reisen[land][kategorie].push({...imported,...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum});
             }
 
             gefunden.entfernen();
@@ -199,5 +238,5 @@ Kostentracker.module({
             if (!document.getElementById("ausgabenArchivView")?.classList.contains("hidden")) dependencies.renderAusgabenArchiv();
         }
 
-return { findeAusgabeZumVerschieben, moveLabel, closeMoveSheet, moveAusgabe, renderMoveBereiche, selectMoveBereich, renderMoveReisen, renderMoveReiseKategorien, moveEintragInReiseKategorie, moveEintragJetzt };
+return { moveMerchant, renderMoveAlltagKategorien, moveEintragInAlltagKategorie, findeAusgabeZumVerschieben, moveLabel, closeMoveSheet, moveAusgabe, renderMoveBereiche, selectMoveBereich, renderMoveReisen, renderMoveReiseKategorien, moveEintragInReiseKategorie, moveEintragJetzt };
 });
