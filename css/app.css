@@ -2144,3 +2144,7 @@ button:disabled { opacity:.5; cursor:default; }
 .app-update-actions button:first-child {background:transparent;color:var(--text);}
 #appUpdateStatus:empty {display:none;}
 #appUpdateStatus {margin:8px 12px 12px;}
+
+/* Compact status for the existing server connection. */
+.home-sync-status {display:block;width:auto;margin:-8px 0 10px auto;padding:2px 0;border:0;background:transparent;color:var(--text);opacity:.65;font-size:12px;font-weight:400;text-align:right;}
+.home-sync-status[data-state="error"],.home-sync-status[data-state="restore"] {color:var(--danger);opacity:1;}
