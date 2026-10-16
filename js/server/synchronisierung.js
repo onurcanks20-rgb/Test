@@ -97,6 +97,7 @@ var testServerBoundUser = (() => {try {return localStorage.getItem('kostenApp_te
 var testServerBusy = false, testServerTimer = null, testServerPending = false;
 const TEST_SERVER_URL = 'https://kostentracker-test.onurcanks20.workers.dev';
 var serverBackupRequired=false, serverRestorePromptSeen=false, serverLastStatus='';
+let serverSyncRevision=0,serverSyncedRevision=-1,serverSyncConfirmed=false,serverSyncError=false;
 function updateServerLoginControls() {
   const token=document.getElementById('testServerToken'),button=document.getElementById('serverLoginButton');
   if(button){button.textContent=testServerConfig.token&&token?.value.trim()===testServerConfig.token?'Jetzt synchronisieren':'Anmelden';button.disabled=testServerBusy;}
@@ -119,7 +120,22 @@ function closeServerRestorePrompt() {
   if(testServerBusy)return;
   dependencies.closeAccessibleDialog('serverRestoreDialog');
 }
-function serverStatus(message) {serverLastStatus=message;const node=document.getElementById('testServerStatus');if(node)node.textContent=message;updateServerLoginControls();}
+function renderHomeSyncStatus() {
+  const node=document.getElementById('homeSyncStatus');if(!node)return;
+  let state='local',text='Nur auf diesem Gerät';
+  if(testServerConfig?.token){
+    const reviews=pendingPaymentCount();
+    if(serverBackupRequired){state='restore';text='Daten wiederherstellen';}
+    else if(navigator.onLine===false){state='offline';text='Offline · Synchronisierung folgt';}
+    else if(testServerBusy){state='busy';text='Wird synchronisiert …';}
+    else if(serverSyncError){state='error';text='Noch nicht synchronisiert';}
+    else if(serverSyncedRevision<serverSyncRevision||!serverSyncConfirmed){state='pending';text=serverSyncConfirmed?'Übertragung ausstehend':'Verbindung wird geprüft';}
+    else if(reviews){state='review';text=reviews===1?'Eine Zahlung prüfen':reviews+' Zahlungen prüfen';}
+    else{state='synced';text='Alles synchronisiert';}
+  }
+  node.textContent=text;node.dataset.state=state;node.setAttribute('aria-label',text+' – Anmeldung öffnen');
+}
+function serverStatus(message) {serverLastStatus=message;const node=document.getElementById('testServerStatus');if(node)node.textContent=message;updateServerLoginControls();renderHomeSyncStatus();}
 function renderTestServerSettings() {
   renderServerPaymentReview();
   const node=document.getElementById('testServerToken');if(node)node.value=testServerConfig.token||'';
@@ -150,6 +166,7 @@ async function testServerRequest(path,value,token=testServerConfig?.token) {
   } finally {clearTimeout(timer);}
 }
 function scheduleTestServerSync() {
+  serverSyncRevision++;renderHomeSyncStatus();
   if(!testServerConfig?.token) return;
   clearTimeout(testServerTimer);testServerTimer=setTimeout(()=>syncTestServer(false),1800);
 }
@@ -373,10 +390,12 @@ async function syncTestServer(saveSettings=false) {
       if(result.payments.length<100) break;
     }
     dependencies.renderHomeUebersicht();
+    const uploadRevision=serverSyncRevision;
     await testServerRequest('/api/backup',{data:context.repository.view});
+    serverSyncedRevision=uploadRevision;serverSyncConfirmed=true;serverSyncError=false;
     serverStatus('Du bist angemeldet. Deine Daten sind aktuell.'+(count?' '+count+' neue Ausgabe'+(count===1?'':'n')+' übernommen.':'')+((context.repository.view.Einstellungen?.serverPendingReview?.length||0)?' Zahlungen zur Prüfung offen.':''));
-  } catch(error) {serverStatus('Noch nicht synchronisiert: '+(error.name==='AbortError'?'Zeitüberschreitung. Später erneut verbinden.':error.message));}
-  finally {testServerBusy=false;updateServerLoginControls();if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
+  } catch(error) {serverSyncError=true;serverStatus('Noch nicht synchronisiert: '+(error.name==='AbortError'?'Zeitüberschreitung. Später erneut verbinden.':error.message));}
+  finally {testServerBusy=false;updateServerLoginControls();renderHomeSyncStatus();if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
 }
 function pushKeyBytes(value) {return Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4)),c=>c.charCodeAt(0));}
 async function activateTestServerPush() {
@@ -401,7 +420,7 @@ async function activateTestServerPush() {
     await testServerRequest('/api/subscribe',sub.toJSON());serverStatus('Dieses Gerät ist für echte Server-Push-Nachrichten angemeldet.');
     await renderPushTestStatus();
   } catch(error) {serverStatus(error.message);}
-  finally {testServerBusy=false;updateServerLoginControls();if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
+  finally {testServerBusy=false;updateServerLoginControls();renderHomeSyncStatus();if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
 }
 function toggleTestServerCode() {const node=document.getElementById('testServerToken'),button=document.getElementById('testServerReveal');if(!node)return;node.type=node.type==='password'?'text':'password';if(button)button.textContent=node.type==='text'?'Code verbergen':'Code anzeigen';}
 async function restoreTestServerBackup(confirmed=false) {
@@ -422,15 +441,16 @@ async function restoreTestServerBackup(confirmed=false) {
   } catch(error) {
     const message='Daten konnten nicht wiederhergestellt werden: '+(error.name==='AbortError'?'Zeitüberschreitung. Bitte erneut versuchen.':error.message);
     if(errorNode)errorNode.textContent=message;serverStatus(message);
-  } finally {testServerBusy=false;updateServerLoginControls();}
+  } finally {testServerBusy=false;updateServerLoginControls();renderHomeSyncStatus();}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initializePaymentReviewGate,{once:true});else initializePaymentReviewGate();
-window.addEventListener('online',()=>syncTestServer(false));
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){renderServerPaymentReview();syncTestServer(false);}});
+window.addEventListener('offline',renderHomeSyncStatus);
+window.addEventListener('online',()=>{renderHomeSyncStatus();syncTestServer(false);});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){renderHomeSyncStatus();renderServerPaymentReview();syncTestServer(false);}});
 const startServerConnection=()=>{renderTestServerSettings();if(testServerConfig.token) syncTestServer(false);};
 if(document.readyState==='complete')startServerConnection();else window.addEventListener('load',startServerConnection,{once:true});
 document.addEventListener('kostentracker:boot-complete',syncPaymentReviewGate);
 
 
-return { updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+return { renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
 });
