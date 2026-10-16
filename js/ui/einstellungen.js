@@ -207,7 +207,7 @@ Kostentracker.module({
   },
   "settingsGesturesView": {
     "title": "Gesten",
-    "html": "<p>Ein Rechts-Swipe führt die gewählte Aktion aus. „Kopieren“ ist für Haushalt, Freizeit und Reisen verfügbar. Es öffnet ein vorausgefülltes Formular mit aktuellem Datum und aktueller Uhrzeit. Prüfe oder ändere die Angaben und speichere erst mit „Hinzufügen“.</p><p>Ausgeblendete Einträge bleiben in Summen und Budgets enthalten. Du kannst sie jederzeit im Archiv wieder einblenden.</p>"
+    "html": "<p>Ein Rechts-Swipe führt die gewählte Aktion aus. „Kopieren“ ist in allen Buchungsbereichen verfügbar. Es öffnet ein vorausgefülltes Formular mit aktuellem Datum und aktueller Uhrzeit. Prüfe oder ändere die Angaben und bestätige erst über die Speichertaste des jeweiligen Formulars.</p><p>Ausgeblendete Einträge bleiben in Summen und Budgets enthalten. Du kannst sie jederzeit im Archiv wieder einblenden.</p>"
   },
   "settingsDesignView": {
     "title": "Design",

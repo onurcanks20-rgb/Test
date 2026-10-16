@@ -25,14 +25,19 @@ Kostentracker.module({
     "toggleReiseInputCurrency",
     "updateReiseAmountPreview",
     "formatInputBetrag",
-    "resetAddReminderForPanel"
+    "resetAddReminderForPanel",
+    "toggleIncomeTime",
+    "updateGeplantBereichUI",
+    "updateGeplantKategorieSelect"
   ],
   "session": [],
   "read": [
     "Einstellungen",
     "Haushalt",
     "Freizeit",
-    "Reisen"
+    "Reisen",
+    "Geplante Ausgaben",
+    "Sparen & Investieren"
   ],
   "write": [
     "Einstellungen",
@@ -155,10 +160,34 @@ Kostentracker.module({
 
         function erneutBuchenEintrag(type, id) {
             // Keep the stored gesture key and public handler compatible; copying is now a draft.
-            if (!["haushalt", "freizeit", "reisen"].includes(type)) return;
-            const gefunden=dependencies.findeAusgabeZumVerschieben(type,id);
+            if (!["haushalt", "freizeit", "reisen", "fixkosten", "versicherungen", "einnahmen", "geplant", "sparen"].includes(type)) return;
+            const list=type==="geplant"?context.repository.view["Geplante Ausgaben"]:type==="sparen"?context.repository.view["Sparen & Investieren"]:null;
+            const gefunden=list?{eintrag:list.find(entry=>String(entry.id)===String(id))}:dependencies.findeAusgabeZumVerschieben(type,id);
             if (!gefunden?.eintrag) return;
             const entry=gefunden.eintrag;
+            const template={
+                fixkosten:{panel:'kostenAddPanel',focus:'costText',date:'costDatum',fields:{costText:entry.text||entry.name||'',costBetrag:dependencies.formatInputBetrag(entry.betrag),costInfo:entry.info||'',costHaendler:entry.haendler||'',costZuordnungTage:entry.zuordnungTage??5}},
+                versicherungen:{panel:'versAddPanel',focus:'versName',date:'versDatum',fields:{versName:entry.name||entry.text||'',versBetrag:dependencies.formatInputBetrag(entry.betrag),versAnbieter:entry.anbieter||'',versNummer:entry.versicherungsnummer||'',versIntervall:entry.intervall||'monatlich',versMonat:entry.monat||1}},
+                einnahmen:{panel:'einnahmenAddPanel',focus:'einnahmenText',date:'einnahmenDatum',fields:{einnahmenText:entry.text||'',einnahmenBetrag:dependencies.formatInputBetrag(entry.betrag),einnahmenVon:entry.von||'',einnahmenWiederholung:entry.wiederholung==='monatlich'?'monatlich':'einmalig'}},
+                geplant:{panel:'geplantAddPanel',focus:'geplantText',date:'geplantDatum',fields:{geplantText:entry.text||'',geplantBetrag:dependencies.formatInputBetrag(entry.betrag),geplantWiederholung:['monatlich','jaehrlich'].includes(entry.wiederholung)?entry.wiederholung:'einmalig',geplantBereich:['haushalt','freizeit','reisen'].includes(entry.bereich)?entry.bereich:'haushalt',geplantBudgetWirksam:entry.budgetWirksam===false?'nein':'ja'}},
+                sparen:{panel:'sparenInvestierenAddPanel',focus:'sparenInvestierenBetrag',date:'sparenInvestierenDatum',fields:{sparenInvestierenTyp:entry.typ==='sparen'?'sparen':'investieren',sparenInvestierenText:entry.text||'',sparenInvestierenBetrag:dependencies.formatInputBetrag(entry.betrag)}}
+            }[type];
+            if(template){
+                dependencies.openStartQuickAdd(template.panel,template.focus);
+                dependencies.resetAddReminderForPanel(template.panel);
+                for(const [key,value] of Object.entries(template.fields)){const input=document.getElementById(key);if(input)input.value=String(value);}
+                document.getElementById(template.date).value=dependencies.heuteISO();
+                if(type==='einnahmen')dependencies.toggleIncomeTime('einnahmenWiederholung','einnahmenUhrzeitWrap');
+                if(type==='geplant'){
+                    dependencies.updateGeplantBereichUI(false);
+                    const country=document.getElementById('geplantReise');
+                    if(entry.bereich==='reisen'&&country){country.value=context.repository.view.Reisen?.[entry.land]?entry.land:'';}
+                    dependencies.updateGeplantKategorieSelect();
+                    const category=document.getElementById('geplantKategorie');
+                    if(category&&Array.from(category.options).some(option=>option.value===entry.kategorie))category.value=entry.kategorie;
+                }
+                return;
+            }
             const panelId=type==="haushalt"?"hausAddPanel":type==="freizeit"?"freizeitAddPanel":"reiseAddPanel";
             if (type==="reisen") dependencies.openLand(gefunden.land);
             const amountId=type==="haushalt"?"hausBetrag":type==="freizeit"?"freizeitBetrag":"betrag";

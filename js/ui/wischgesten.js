@@ -16,6 +16,15 @@ Kostentracker.module({
 }, (context, dependencies) => {
 "use strict";
 
+function swipeEntryMeta(shell) {
+    const move=shell?.querySelector(':scope > .swipe-action-rail button[onclick*="moveAusgabe("]');
+    const match=(move?.getAttribute('onclick')||'').match(/moveAusgabe\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)/);
+    if(match)return {type:match[1],id:match[2]};
+    const edit=shell?.querySelector(':scope > .swipe-action-rail .edit');
+    const extra=(edit?.getAttribute('onclick')||'').match(/startEdit(GeplanteAusgabe|SparenInvestieren)\(\s*['"]([^'"]+)['"]\s*\)/);
+    return extra?{type:extra[1]==='GeplanteAusgabe'?'geplant':'sparen',id:extra[2]}:null;
+}
+
         (() => {
             const touchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
             if (!touchDevice) return;
@@ -349,24 +358,18 @@ Kostentracker.module({
                 }, 400);
             }
 
-            function shellEntryMeta(shell) {
-                const btn = shell?.querySelector(':scope > .swipe-action-rail button[onclick*="moveAusgabe("]');
-                const code = btn?.getAttribute('onclick') || '';
-                const match = code.match(/moveAusgabe\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)/);
-                return match ? { type: match[1], id: match[2] } : null;
-            }
-
             function rightSwipeConfigFor(shell) {
                 let action = typeof dependencies.getRightSwipeAction === 'function' ? dependencies.getRightSwipeAction() : 'aus';
                 if (action === 'aus') return null;
-                const meta = shellEntryMeta(shell);
+                const meta = swipeEntryMeta(shell);
                 if (!meta) return null;
                 // Ist ein Eintrag bereits ausgeblendet, wird die eingestellte Aktion
                 // „Ausblenden“ automatisch zur passenden Rückgängig-Aktion.
                 if (action === 'ausblenden' && typeof dependencies.istEintragAusgeblendet === 'function' && dependencies.istEintragAusgeblendet(meta.type, meta.id)) {
                     action = 'einblenden';
                 }
-                if (action === 'erneut' && !['haushalt','freizeit','reisen'].includes(meta.type)) return null;
+                if (action === 'erneut' && !['haushalt','freizeit','reisen','fixkosten','versicherungen','einnahmen','geplant','sparen'].includes(meta.type)) return null;
+                if (['geplant','sparen'].includes(meta.type) && !['erneut','bearbeiten'].includes(action)) return null;
                 if (action === 'bearbeiten' && !shell.querySelector(':scope > .item .actions .edit')) return null;
                 return { action, meta };
             }
@@ -772,5 +775,5 @@ Kostentracker.module({
             }
         })();
     
-return {  };
+return { swipeEntryMeta };
 });
