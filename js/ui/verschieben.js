@@ -19,7 +19,9 @@ Kostentracker.module({
     "tagAusDatum",
     "entryTimeSnapshot",
     "merchantCategories",
-    "rememberMerchantRule"
+    "rememberMerchantRule",
+    "beginUndoDelete",
+    "finishUndoDelete"
   ],
   "session": [
     "aktuellesLand",
@@ -188,6 +190,8 @@ Kostentracker.module({
             const merchant=moveMerchant(e),area=ziel==="haushalt"?"Haushalt":ziel==="freizeit"?"Freizeit":null;
             if (merchant && area && extra.kategorie && !dependencies.merchantCategories(area).includes(extra.kategorie)) return;
             if (ziel==="reisen" && (!extra.land || !context.repository.view.Reisen?.[extra.land])) return;
+            if (extra.remember && (!merchant || !area || !dependencies.merchantCategories(area).includes(extra.kategorie))) return;
+            dependencies.beginUndoDelete("Eintrag verschoben");
             if (extra.remember) {
                 if (!merchant || !area || !dependencies.merchantCategories(area).includes(extra.kategorie)) return;
                 try { dependencies.rememberMerchantRule(merchant,area,extra.kategorie); }
@@ -232,6 +236,7 @@ Kostentracker.module({
 
             gefunden.entfernen();
             if (dependencies.speichern() === false) return;
+            dependencies.finishUndoDelete("Eintrag verschoben");
             closeMoveSheet();
             dependencies.renderHomeUebersicht(); dependencies.renderHaushalt(); dependencies.renderFreizeit(); dependencies.renderLaufendeKosten(); dependencies.renderVersicherungen(); dependencies.renderEinnahmen(); dependencies.renderLaender();
             if (context.session.aktuellesLand) dependencies.renderListe();

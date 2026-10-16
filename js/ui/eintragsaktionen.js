@@ -4,9 +4,7 @@ Kostentracker.module({
     "beginUndoDelete",
     "findeAusgabeZumVerschieben",
     "finishUndoDelete",
-    "generateId",
     "heuteISO",
-    "parseISODate",
     "populateGlobalArchivJahre",
     "renderAusgabenArchiv",
     "renderEinnahmen",
@@ -19,8 +17,15 @@ Kostentracker.module({
     "show",
     "speichern",
     "speichernOhneHomeRender",
-    "timeFields",
-    "localClock"
+    "openStartQuickAdd",
+    "setQuickCategory",
+    "setReiseKategorie",
+    "openLand",
+    "getReiseInputCurrency",
+    "toggleReiseInputCurrency",
+    "updateReiseAmountPreview",
+    "formatInputBetrag",
+    "resetAddReminderForPanel"
   ],
   "session": [],
   "read": [
@@ -48,7 +53,7 @@ Kostentracker.module({
         }
 
         function rightSwipeActionLabel(value = getRightSwipeAction()) {
-            return ({ aus:"Aus", erneut:"Erneut buchen", ausblenden:"Ausblenden", bearbeiten:"Bearbeiten", verschieben:"Verschieben" })[value] || "Aus";
+            return ({ aus:"Aus", erneut:"Kopieren", ausblenden:"Ausblenden", bearbeiten:"Bearbeiten", verschieben:"Verschieben" })[value] || "Aus";
         }
 
         function renderGestureSettings() {
@@ -149,27 +154,38 @@ Kostentracker.module({
         }
 
         function erneutBuchenEintrag(type, id) {
+            // Keep the stored gesture key and public handler compatible; copying is now a draft.
             if (!["haushalt", "freizeit", "reisen"].includes(type)) return;
-            const gefunden = dependencies.findeAusgabeZumVerschieben(type, id);
+            const gefunden=dependencies.findeAusgabeZumVerschieben(type,id);
             if (!gefunden?.eintrag) return;
-            dependencies.beginUndoDelete("Eintrag erneut gebucht");
-            const copy = context.clone(gefunden.eintrag);
-            copy.id = dependencies.generateId();
-            copy.datum = dependencies.heuteISO();
-            for(const key of ["uhrzeit","zeitpunkt","zeitzone","utcOffset","_notificationDate","_serverPaymentId"])delete copy[key];
-            Object.assign(copy,dependencies.timeFields(dependencies.localClock(),copy.datum));
-            if (type === "haushalt" || type === "freizeit") {
-                const store = type === "haushalt" ? context.repository.view.Haushalt : context.repository.view.Freizeit;
-                const monat = dependencies.parseISODate(copy.datum).getMonth() + 1;
-                store[monat] ??= [];
-                store[monat].push(copy);
-            } else if (type === "reisen" && gefunden.land && gefunden.kategorie) {
-                context.repository.view.Reisen[gefunden.land][gefunden.kategorie] ??= [];
-                context.repository.view.Reisen[gefunden.land][gefunden.kategorie].push(copy);
+            const entry=gefunden.eintrag;
+            const panelId=type==="haushalt"?"hausAddPanel":type==="freizeit"?"freizeitAddPanel":"reiseAddPanel";
+            if (type==="reisen") dependencies.openLand(gefunden.land);
+            const amountId=type==="haushalt"?"hausBetrag":type==="freizeit"?"freizeitBetrag":"betrag";
+            const textId=type==="haushalt"?"hausText":type==="freizeit"?"freizeitText":"text";
+            const dateId=type==="haushalt"?"hausDatum":type==="freizeit"?"freizeitDatum":"datum";
+            dependencies.openStartQuickAdd(panelId,amountId);
+            dependencies.resetAddReminderForPanel(panelId);
+            document.getElementById(dateId).value=dependencies.heuteISO();
+            document.getElementById(textId).value=entry.text || entry.name || "";
+            const amount=document.getElementById(amountId);
+            if (type==="reisen") {
+                // Prefer the original foreign amount only when it matches this journey's input currency.
+                const local=dependencies.getReiseInputCurrency();
+                const useOriginal=entry.fx?.currency===local && local!=="EUR" && Number.isFinite(entry.fx.amount) && entry.fx.amount>0;
+                if (!useOriginal && local!=="EUR") { amount.value=""; dependencies.toggleReiseInputCurrency(); }
+                amount.value=dependencies.formatInputBetrag(useOriginal?entry.fx.amount:entry.betrag);
+                const category=gefunden.kategorie;
+                const button=document.querySelector(`#reiseKategorieGrid [data-category="${CSS.escape(category)}"]`);
+                dependencies.setReiseKategorie(category,button,false);
+                dependencies.updateReiseAmountPreview();
+            } else {
+                amount.value=dependencies.formatInputBetrag(entry.betrag);
+                const category=entry.kategorie || "Sonstiges",prefix=type==="haushalt"?"haus":"freizeit";
+                const button=document.querySelector(`#${prefix}KategorieGrid [data-category="${CSS.escape(category)}"]`);
+                dependencies.setQuickCategory(prefix,category,button);
             }
-            if (dependencies.speichern() === false) return;
-            renderNachEintragsAktion(type);
-            dependencies.finishUndoDelete("Eintrag erneut gebucht");
+            // No ID, import/transaction marker, reminder or old exchange rate is copied to storage.
         }
 
         function openHiddenArchive() {

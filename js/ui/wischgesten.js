@@ -375,7 +375,7 @@ Kostentracker.module({
                 shell?.querySelector(':scope > .swipe-right-action-rail')?.remove();
                 const cfg = rightSwipeConfigFor(shell);
                 if (!cfg) return;
-                const labels = { erneut:'↻ Erneut', ausblenden:'👁️‍🗨️ Ausblenden', einblenden:'👁️ Einblenden', bearbeiten:'✏️ Bearbeiten', verschieben:'↪️ Verschieben' };
+                const labels = { erneut:'⧉ Kopieren', ausblenden:'👁️‍🗨️ Ausblenden', einblenden:'👁️ Einblenden', bearbeiten:'✏️ Bearbeiten', verschieben:'↪️ Verschieben' };
                 const rail = document.createElement('div');
                 rail.className = 'swipe-right-action-rail';
                 rail.dataset.action = cfg.action;
