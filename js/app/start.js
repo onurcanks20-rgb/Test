@@ -103,7 +103,7 @@ Kostentracker.module({
 
         context.session.WARN_KATEGORIEN = [["haushalt","Haushalt"],["freizeit","Freizeit"],["fixkosten","Fixkosten"],["versicherungen","Versicherungen"],["reisen","Reisen"],["geplant","Geplante Ausgaben"],["sparen","Sparen & Investieren"]];
 
-        document.addEventListener('DOMContentLoaded', () => {
+        const setupStartupReminders = () => {
             dependencies.decorateReminderControls();
             dependencies.renderWarnSettings();
             dependencies.renderHomeWarnings();
@@ -116,7 +116,8 @@ Kostentracker.module({
                 }));
                 roots.forEach(root => dependencies.decorateReminderControls(root));
             }).observe(document.body, { childList: true, subtree: true });
-        });
+        };
+        if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupStartupReminders,{once:true});else setupStartupReminders();
 
         context.storage.lastSaved = JSON.stringify(context.repository.view);
 
