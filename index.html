@@ -5,43 +5,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <meta name="app-version" content="test-splash-stable-v1">
+    <meta name="app-version" content="test-logo-flow-v1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kostentracker">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Kostentracker">
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="preload" href="icon-192.png" as="image">
+    <link rel="preload" href="icon-192.png" as="image" fetchpriority="high">
+    <link rel="preload" href="./js/app/ladebildschirm.js?v=test-logo-flow-v1" as="script">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
     <title>Kostentracker Test</title>
 
-    <script src="./js/core/dienste.js?v=test-splash-stable-v1"></script>
-    <script src="./js/app/design-start.js?v=test-splash-stable-v1"></script>
+    <script src="./js/core/dienste.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+    <script src="./js/app/design-start.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=test-splash-stable-v1">
+    <link rel="stylesheet" href="./css/app.css?v=test-logo-flow-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
 
     <style id="bootSplashStyle">
       .boot-splash {position:fixed;inset:0;z-index:30000;display:grid;place-items:center;background:#000;opacity:1;transition:opacity 280ms cubic-bezier(.4,0,.2,1);will-change:opacity;transform:translateZ(0);backface-visibility:hidden;}
       :root[data-theme="light"] .boot-splash {background:#f2f2f7;}
-      .boot-splash-logo {position:absolute;left:50%;top:var(--boot-logo-center,50%);transform:translate(-50%,-50%);display:grid;place-items:center;width:104px;height:104px;}
+      .boot-splash-logo {position:absolute;left:50%;top:var(--boot-logo-center,50%);transform:translate(-50%,-50%);display:grid;place-items:center;width:104px;height:104px;opacity:0;will-change:opacity;transition:opacity 160ms ease-out;}
+      .boot-splash-logo.boot-logo-visible {opacity:1;}
+      .boot-covering body > :not(#bootSplash):not(script) {visibility:hidden;}
+      .boot-splash-error {position:absolute;left:20px;right:20px;top:calc(var(--boot-logo-center,50%) + 84px);text-align:center;color:#fff;font:16px -apple-system,BlinkMacSystemFont,sans-serif;}
+      :root[data-theme="light"] .boot-splash-error {color:#111;}
+      .boot-splash-error button {padding:12px 20px;border:0;border-radius:12px;background:#3498db;color:#fff;font-size:16px;}
       .boot-splash img {display:block;width:104px;height:104px;object-fit:contain;border-radius:24px;}
       .boot-splash [hidden] {display:none;}
       .boot-splash-fallback {font-size:72px;line-height:1;}
       .boot-splash-leaving {opacity:0;pointer-events:none;}
-      @media(prefers-reduced-motion:reduce){.boot-splash {transition:none;}}
+      @media(prefers-reduced-motion:reduce){.boot-splash,.boot-splash-logo {transition:none;}}
     </style>
     <noscript><style>.boot-splash {display:none;}</style></noscript>
 </head>
 
 <body>
 <div id="bootSplash" class="boot-splash" role="status" aria-label="Kostentracker wird geladen">
-  <div class="boot-splash-logo"><img src="icon-192.png" alt="" width="104" height="104" decoding="async" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="boot-splash-fallback" hidden aria-hidden="true">💸</span></div>
+  <div id="bootSplashLogo" class="boot-splash-logo"><img id="bootSplashIcon" src="icon-192.png" alt="" width="104" height="104" decoding="async" fetchpriority="high" hidden><span id="bootSplashFallback" class="boot-splash-fallback" hidden aria-hidden="true">💸</span></div>
+  <div id="bootSplashError" class="boot-splash-error" hidden><p>App konnte nicht gestartet werden.</p><button type="button" onclick="location.reload()">Erneut laden</button></div>
 </div>
-<script src="./js/app/ladebildschirm.js?v=test-splash-stable-v1"></script>
+<script src="./js/app/ladebildschirm.js?v=test-logo-flow-v1"></script>
 
 
     <!-- ===================== HOME ===================== -->
@@ -1098,40 +1105,40 @@
     </div>
 
 
-    <script src="./js/core/dateninitialisierung.js?v=test-splash-stable-v1"></script>
-    <script src="./js/core/speicherung-backup.js?v=test-splash-stable-v1"></script>
-<script src="./js/ui/rueckgaengig.js?v=test-splash-stable-v1"></script>
-<script src="./js/ui/erinnerungen.js?v=test-splash-stable-v1"></script>
-<script src="./js/core/formatierung.js?v=test-splash-stable-v1"></script>
-<script src="./js/budget/gehalt.js?v=test-splash-stable-v1"></script>
-<script src="./js/ui/navigation.js?v=test-splash-stable-v1"></script>
-<script src="./js/ui/eintragsaktionen.js?v=test-splash-stable-v1"></script>
-<script src="./js/ui/einstellungen.js?v=test-splash-stable-v1"></script>
-<script src="./js/ui/archiv.js?v=test-splash-stable-v1"></script>
-<script src="./js/budget/wochenbudget.js?v=test-splash-stable-v1"></script>
-<script src="./js/ui/schnelleingabe.js?v=test-splash-stable-v1"></script>
-<script src="./js/kategorien/geplante-ausgaben.js?v=test-splash-stable-v1"></script>
-<script src="./js/kategorien/sparen-investieren.js?v=test-splash-stable-v1"></script>
-<script src="./js/kategorien/reise-waehrung.js?v=test-splash-stable-v1"></script>
-<script src="./js/kategorien/reise-budget-kurs.js?v=test-splash-stable-v1"></script>
-<script src="./js/kategorien/reisen.js?v=test-splash-stable-v1"></script>
-<script src="./js/kategorien/fixkosten.js?v=test-splash-stable-v1"></script>
-<script src="./js/ui/listen.js?v=test-splash-stable-v1"></script>
-<script src="./js/kategorien/versicherungen.js?v=test-splash-stable-v1"></script>
-<script src="./js/budget/berechnungen.js?v=test-splash-stable-v1"></script>
-<script src="./js/ui/verschieben.js?v=test-splash-stable-v1"></script>
-<script src="./js/kategorien/einnahmen.js?v=test-splash-stable-v1"></script>
-<script src="./js/kategorien/haushalt.js?v=test-splash-stable-v1"></script>
-<script src="./js/kategorien/freizeit.js?v=test-splash-stable-v1"></script>
-<script src="./js/ui/formulare.js?v=test-splash-stable-v1"></script>
-<script src="./js/kategorien/alltag-gemeinsam.js?v=test-splash-stable-v1"></script>
-<script src="./js/ui/ausgabenarchiv.js?v=test-splash-stable-v1"></script>
-<script src="./js/budget/faelligkeiten.js?v=test-splash-stable-v1"></script>
-<script src="./js/budget/zeitraeume.js?v=test-splash-stable-v1"></script>
-<script src="./js/budget/uebersicht.js?v=test-splash-stable-v1"></script>
-<script src="./js/grafik/diagramme.js?v=test-splash-stable-v1"></script>
-<script src="./js/app/aktualisierung.js?v=test-splash-stable-v1"></script>
-<script src="./js/app/start.js?v=test-splash-stable-v1"></script>
+    <script src="./js/core/dateninitialisierung.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/speicherung-backup.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/rueckgaengig.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/erinnerungen.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/core/formatierung.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/gehalt.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/navigation.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/eintragsaktionen.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/einstellungen.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/archiv.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/wochenbudget.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/schnelleingabe.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/geplante-ausgaben.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/sparen-investieren.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reise-budget-kurs.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reisen.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/fixkosten.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/listen.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/versicherungen.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/berechnungen.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/verschieben.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/einnahmen.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/haushalt.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/freizeit.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/formulare.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/alltag-gemeinsam.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/ausgabenarchiv.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/faelligkeiten.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/zeitraeume.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/uebersicht.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/grafik/diagramme.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/app/aktualisierung.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/app/start.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
 
 
     <div id="undoToast" class="undo-toast hidden" role="status" aria-live="polite">
@@ -1155,10 +1162,10 @@
 </dialog>
 
     <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
-    <link rel="stylesheet" href="./css/bedienung.css?v=test-splash-stable-v1">
-    <script src="./js/ui/wischgesten.js?v=test-splash-stable-v1"></script>
+    <link rel="stylesheet" href="./css/bedienung.css?v=test-logo-flow-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
+    <script src="./js/ui/wischgesten.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
 
-    <script src="./js/ui/zurueckwischen.js?v=test-splash-stable-v1"></script>
+    <script src="./js/ui/zurueckwischen.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
 
 <dialog id="paymentReviewDialog" class="payment-review-dialog" aria-labelledby="paymentReviewHeading" aria-describedby="paymentReviewRemaining" aria-modal="true" closedby="none">
   <h2 id="paymentReviewHeading" tabindex="-1">Zahlungen prüfen</h2>
@@ -1166,9 +1173,9 @@
   <div id="paymentReviewError" role="alert" class="payment-review-error"></div>
   <div id="serverPaymentReview"></div>
 </dialog>
-<script src="./js/server/haendler.js?v=test-splash-stable-v1"></script>
-<script src="./js/server/reise-zahlungen.js?v=test-splash-stable-v1"></script>
-<script src="./js/server/synchronisierung.js?v=test-splash-stable-v1"></script>
+<script src="./js/server/haendler.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/reise-zahlungen.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/synchronisierung.js?v=test-logo-flow-v1" type="application/x-kostentracker"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
     <!-- Gemeinsame Navigation in Kategorien (aus der Übersicht) -->
     <nav id="categoryBottomNav" class="bottom-nav hidden" aria-label="Hauptnavigation in Kategorien">
