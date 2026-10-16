@@ -2,6 +2,7 @@ Kostentracker.module({
   "id": "js/kategorien/geplante-ausgaben.js",
   "dependencies": [
     "beginUndoDelete",
+    "closeStartQuickAdd",
     "bookFreizeitPlannedOccurrence",
     "bookHaushaltPlannedOccurrence",
     "bookReisePlannedOccurrence",
@@ -163,6 +164,7 @@ Kostentracker.module({
             if (document.getElementById("geplantBudgetWirksam")) document.getElementById("geplantBudgetWirksam").value = "ja";
             updateGeplantBereichUI(false);
             document.getElementById("geplantAddPanel")?.classList.add("hidden");
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) dependencies.closeStartQuickAdd();
             verarbeiteFaelligeGeplanteAusgaben();
             renderGeplanteAusgaben();
             dependencies.renderUebersicht();

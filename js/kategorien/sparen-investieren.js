@@ -3,6 +3,7 @@ Kostentracker.module({
   "dependencies": [
     "alltagImZeitraum",
     "beginUndoDelete",
+    "closeStartQuickAdd",
     "einnahmenZahlungenImZeitraum",
     "escapeHtml",
     "finishUndoDelete",
@@ -83,6 +84,7 @@ Kostentracker.module({
             document.getElementById("sparenInvestierenBetrag").value = "";
             document.getElementById("sparenInvestierenText").value = "";
             document.getElementById("sparenInvestierenAddPanel")?.classList.add("hidden");
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) dependencies.closeStartQuickAdd();
             renderSparenInvestieren();
             dependencies.renderUebersicht();
         }
