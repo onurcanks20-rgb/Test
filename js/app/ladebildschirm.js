@@ -6,7 +6,7 @@
   const root=document.documentElement,logo=document.getElementById('bootSplashLogo'),image=document.getElementById('bootSplashIcon'),fallback=document.getElementById('bootSplashFallback');
   root.classList.add('boot-starting','boot-covering');
   // Match the saved theme without waiting for the rest of the application.
-  try{const mode=JSON.parse(localStorage.getItem('kostenApp_test')||'null')?.Einstellungen?.designModus;const dark=mode==='dunkel'||(!['hell','dunkel'].includes(mode)&&window.matchMedia?.('(prefers-color-scheme: dark)').matches);root.dataset.theme=dark?'dark':'light';}catch(_){}
+  try{const mode=JSON.parse(localStorage.getItem('kostenApp')||'null')?.Einstellungen?.designModus;const dark=mode==='dunkel'||(!['hell','dunkel'].includes(mode)&&window.matchMedia?.('(prefers-color-scheme: dark)').matches);root.dataset.theme=dark?'dark':'light';}catch(_){}
   const height=window.visualViewport?.height||window.innerHeight,offset=window.visualViewport?.offsetTop||0;
   if(Number.isFinite(height)&&height>0)splash.style.setProperty('--boot-logo-center',Math.round(offset+height/2)+'px');
   const reduced=!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
