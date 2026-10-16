@@ -215,6 +215,7 @@ let reviewGateOverflow=null,reviewGateFallback=false;
 const reviewGateInert=new Map();
 function pendingPaymentCount() {return (context.repository.view.Einstellungen?.serverPendingReview||[]).length;}
 function syncPaymentReviewGate() {
+  if(document.documentElement.classList.contains('boot-starting'))return;
   const dialog=document.getElementById('paymentReviewDialog');if(!dialog)return;
   const count=pendingPaymentCount(),remaining=document.getElementById('paymentReviewRemaining');
   if(remaining)remaining.textContent=count===1?'Eine Zahlung ist offen. Bitte entscheiden.':`${count} Zahlungen sind offen. Bitte alle entscheiden.`;
@@ -426,7 +427,9 @@ async function restoreTestServerBackup(confirmed=false) {
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initializePaymentReviewGate,{once:true});else initializePaymentReviewGate();
 window.addEventListener('online',()=>syncTestServer(false));
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){renderServerPaymentReview();syncTestServer(false);}});
-window.addEventListener('load',()=>{renderTestServerSettings();if(testServerConfig.token) syncTestServer(false);});
+const startServerConnection=()=>{renderTestServerSettings();if(testServerConfig.token) syncTestServer(false);};
+if(document.readyState==='complete')startServerConnection();else window.addEventListener('load',startServerConnection,{once:true});
+document.addEventListener('kostentracker:boot-complete',syncPaymentReviewGate);
 
 
 return { updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
