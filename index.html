@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <meta name="app-version" content="test-logo-canvas-v2">
+    <meta name="app-version" content="main-start-auto-v1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kostentracker">
@@ -13,18 +13,17 @@
     <meta name="application-name" content="Kostentracker">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="preload" href="icon-192.png" as="image" fetchpriority="high">
-    <link rel="preload" href="./js/app/ladebildschirm.js?v=test-logo-canvas-v2" as="script">
+    <link rel="preload" href="./js/app/ladebildschirm.js?v=main-start-auto-v1" as="script">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
-    <title>Kostentracker Test</title>
+    <title>Kostentracker</title>
 
-    <script src="./js/core/dienste.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-    <script src="./js/app/design-start.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
+    <script src="./js/core/dienste.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+    <script src="./js/app/design-start.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=test-logo-canvas-v2" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
-
+    <link rel="stylesheet" href="./css/app.css?v=main-start-auto-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
     <style id="bootSplashStyle">
       /* Paint the page canvas and safe-area background before app.css loads. */
       :root {--boot-canvas:#000;color-scheme:dark;}
@@ -56,7 +55,8 @@
   <div id="bootSplashLogo" class="boot-splash-logo"><img id="bootSplashIcon" src="icon-192.png" alt="" width="104" height="104" decoding="async" fetchpriority="high" hidden><span id="bootSplashFallback" class="boot-splash-fallback" hidden aria-hidden="true">💸</span></div>
   <div id="bootSplashError" class="boot-splash-error" hidden><p>App konnte nicht gestartet werden.</p><button type="button" onclick="location.reload()">Erneut laden</button></div>
 </div>
-<script src="./js/app/ladebildschirm.js?v=test-logo-canvas-v2"></script>
+<script src="./js/app/ladebildschirm.js?v=main-start-auto-v1"></script>
+
 
 
     <!-- ===================== HOME ===================== -->
@@ -280,11 +280,6 @@
 
             <div class="settings-section-head">Allgemein</div>
             <div class="settings-menu">
-                <button id="appUpdateCheckButton" class="settings-menu-item" type="button" onclick="checkAppUpdate(true)">
-                    <span class="settings-menu-icon">↻</span><span class="settings-menu-main"><span class="settings-menu-title">App aktualisieren</span><span class="settings-menu-sub">Nach einer neuen Version suchen</span></span><span class="settings-menu-chevron">›</span>
-                </button>
-                <div id="appUpdateStatus" class="settings-note" role="status" aria-live="polite"></div>
-
                 <button class="settings-menu-item" type="button" onclick="openSettingsBudget()">
                     <span class="settings-menu-icon">💶</span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Budget & Gehalt</span><span class="settings-menu-sub">Aktuelles und nächstes Gehalt, Gehaltstag</span></span>
@@ -334,7 +329,9 @@
                     <span class="settings-menu-main"><span class="settings-menu-title">Backup</span><span class="settings-menu-sub">Daten in einer Datei sichern oder wiederherstellen</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
-            </div>
+<button id="appUpdateCheckButton" class="settings-menu-item" type="button" onclick="checkAppUpdate(true)"><span class="settings-menu-icon">↻</span><span class="settings-menu-main"><span class="settings-menu-title">App aktualisieren</span><span class="settings-menu-sub">Updates werden automatisch beim Öffnen übernommen</span></span><span class="settings-menu-chevron">›</span></button>
+                </div>
+                <div id="appUpdateStatus" class="settings-note" role="status" aria-live="polite"></div>
         </div>
     </div>
 
@@ -365,17 +362,6 @@
                 <p>Stelle deine bisherigen Einträge wieder her, um neue Zahlungen zu übernehmen.</p>
                 <button type="button" onclick="showServerRestorePrompt(true)">Daten wiederherstellen</button>
             </section>
-            <div class="settings-page-card" id="travelPaymentTests">
-                <h3>Reisezahlungen testen</h3>
-                <div class="test-mode-label">Nur Testversion</div>
-                <label for="travelPaymentTestLand">Testreise</label><select id="travelPaymentTestLand" onchange="updateTravelPaymentTestDate()"><option value="">Reise auswählen</option></select>
-                <label for="travelPaymentTestDate">Zahlungsdatum</label><input id="travelPaymentTestDate" type="date">
-                <button onclick="simulateTravelPayment('eur')">Nur Eurobetrag testen</button>
-                <button onclick="simulateTravelPayment('both')">Euro + Landeswährung testen</button>
-                <button onclick="simulateTravelPayment('foreign')">Nur Landeswährung testen</button>
-                <button onclick="removeTravelPaymentTests()" style="background:#3a3a3c">Diese Testzahlungen entfernen</button>
-                <div id="travelPaymentTestStatus" class="settings-note" role="status"></div>
-            </div>
             
         </div>
     </div>
@@ -1113,40 +1099,39 @@
     </div>
 
 
-    <script src="./js/core/dateninitialisierung.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-    <script src="./js/core/speicherung-backup.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/ui/rueckgaengig.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/ui/erinnerungen.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/core/formatierung.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/budget/gehalt.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/ui/navigation.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/ui/eintragsaktionen.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/ui/einstellungen.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/ui/archiv.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/budget/wochenbudget.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/ui/schnelleingabe.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/geplante-ausgaben.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/sparen-investieren.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/reise-waehrung.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/reise-budget-kurs.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/reisen.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/fixkosten.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/ui/listen.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/versicherungen.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/budget/berechnungen.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/ui/verschieben.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/einnahmen.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/haushalt.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/freizeit.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/ui/formulare.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/alltag-gemeinsam.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/ui/ausgabenarchiv.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/budget/faelligkeiten.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/budget/zeitraeume.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/budget/uebersicht.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/grafik/diagramme.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/app/aktualisierung.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/app/start.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
+    <script src="./js/core/dateninitialisierung.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/speicherung-backup.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/rueckgaengig.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/erinnerungen.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/core/formatierung.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/gehalt.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/navigation.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/eintragsaktionen.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/einstellungen.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/archiv.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/wochenbudget.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/schnelleingabe.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/geplante-ausgaben.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/sparen-investieren.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reise-budget-kurs.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reisen.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/fixkosten.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/listen.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/versicherungen.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/berechnungen.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/verschieben.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/einnahmen.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/haushalt.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/freizeit.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/formulare.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/alltag-gemeinsam.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/ausgabenarchiv.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/faelligkeiten.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/zeitraeume.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/uebersicht.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/grafik/diagramme.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/app/start.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
 
 
     <div id="undoToast" class="undo-toast hidden" role="status" aria-live="polite">
@@ -1170,10 +1155,10 @@
 </dialog>
 
     <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
-    <link rel="stylesheet" href="./css/bedienung.css?v=test-logo-canvas-v2" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
-    <script src="./js/ui/wischgesten.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
+    <link rel="stylesheet" href="./css/bedienung.css?v=main-start-auto-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
+    <script src="./js/ui/wischgesten.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
 
-    <script src="./js/ui/zurueckwischen.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
+    <script src="./js/ui/zurueckwischen.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
 
 <dialog id="paymentReviewDialog" class="payment-review-dialog" aria-labelledby="paymentReviewHeading" aria-describedby="paymentReviewRemaining" aria-modal="true" closedby="none">
   <h2 id="paymentReviewHeading" tabindex="-1">Zahlungen prüfen</h2>
@@ -1181,9 +1166,9 @@
   <div id="paymentReviewError" role="alert" class="payment-review-error"></div>
   <div id="serverPaymentReview"></div>
 </dialog>
-<script src="./js/server/haendler.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/server/reise-zahlungen.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
-<script src="./js/server/synchronisierung.js?v=test-logo-canvas-v2" type="application/x-kostentracker"></script>
+<script src="./js/server/haendler.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/reise-zahlungen.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/synchronisierung.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
     <!-- Gemeinsame Navigation in Kategorien (aus der Übersicht) -->
     <nav id="categoryBottomNav" class="bottom-nav hidden" aria-label="Hauptnavigation in Kategorien">
@@ -1191,10 +1176,7 @@
         <button type="button" class="active" aria-current="page" onclick="openUebersicht()"><span class="nav-icon">📋</span>Übersicht</button>
         <button type="button" onclick="openGrafik()"><span class="nav-icon">📊</span>Grafik</button>
     </nav>
-<div id="appUpdateNotice" class="app-update-notice hidden" role="status" aria-live="polite">
-  <div><strong>Neue Version bereit</strong><span>Eingaben bitte vorher speichern.</span></div>
-  <div class="app-update-actions"><button type="button" onclick="dismissAppUpdate()">Später</button><button type="button" onclick="applyAppUpdate()">Jetzt neu laden</button></div>
-</div>
+<script src="./js/app/aktualisierung.js?v=main-start-auto-v1" type="application/x-kostentracker"></script>
 </body>
 
 </html>
