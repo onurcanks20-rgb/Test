@@ -14,6 +14,7 @@ Kostentracker.module({
     "routeTravelPayment",
     "travelPaymentCategory",
     "importedForeignFx",
+    "setupTravelPaymentTests",
     "appendFreizeitExternalExpense",
     "appendHaushaltExternalExpense",
     "formatBetragText",
@@ -82,7 +83,7 @@ Kostentracker.module({
         }
 
 
-function openServerSettings() {dependencies.show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();}
+function openServerSettings() {dependencies.show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();dependencies.setupTravelPaymentTests();}
 async function renderPushTestStatus() {
   const node=document.getElementById('serverNotificationStatus');if(!node)return;
   if(!('Notification' in window)){node.textContent='Für Benachrichtigungen die App über ihr Home-Bildschirm-Icon öffnen.';return;}
@@ -90,11 +91,11 @@ async function renderPushTestStatus() {
 }
 
 // Main app integration; credentials are never in a data backup.
-var testServerConfig = (() => { try {return JSON.parse(localStorage.getItem('kostenApp_server'))||{};} catch {return {};} })();
+var testServerConfig = (() => { try {return JSON.parse(localStorage.getItem('kostenApp_test_server'))||{};} catch {return {};} })();
 // Legacy saved credentials belong to the existing primary account.
-var testServerBoundUser = (() => {try {return localStorage.getItem('kostenApp_user')||testServerConfig.userId||(testServerConfig.token?'person1':null);} catch {return testServerConfig.token?'person1':null;}})();
+var testServerBoundUser = (() => {try {return localStorage.getItem('kostenApp_test_user')||testServerConfig.userId||(testServerConfig.token?'person1':null);} catch {return testServerConfig.token?'person1':null;}})();
 var testServerBusy = false, testServerTimer = null, testServerPending = false;
-const TEST_SERVER_URL = 'https://kostentracker.onurcanks20.workers.dev';
+const TEST_SERVER_URL = 'https://kostentracker-test.onurcanks20.workers.dev';
 var serverBackupRequired=false, serverRestorePromptSeen=false, serverLastStatus='';
 function updateServerLoginControls() {
   const token=document.getElementById('testServerToken'),button=document.getElementById('serverLoginButton');
@@ -127,15 +128,15 @@ function renderTestServerSettings() {
 function bindTestServerUser(config) {
   if(!config.userId||!/^[-a-zA-Z0-9_]{1,40}$/.test(config.userId)) throw new Error('Bitte zuerst den neuen Worker für getrennte Zugänge deployen.');
   if(testServerBoundUser&&testServerBoundUser!==config.userId) throw new Error('Dieser Code gehört zu einer anderen Person. Dieses App-Profil bleibt bei deinem bisherigen Zugang. Für die zweite Person deren eigenes Handy verwenden.');
-  if(!testServerBoundUser) localStorage.setItem('kostenApp_backup_check',config.userId);
-  localStorage.setItem('kostenApp_user',config.userId);testServerBoundUser=config.userId;
+  if(!testServerBoundUser) localStorage.setItem('kostenApp_test_backup_check',config.userId);
+  localStorage.setItem('kostenApp_test_user',config.userId);testServerBoundUser=config.userId;
 }
 async function saveTestServerSettings() {
   const token=document.getElementById('testServerToken').value.trim();
   if(token.length<32) throw new Error('Bitte deinen vollständigen persönlichen Zugangscode eingeben.');
   const remote=await testServerRequest('/api/config',undefined,token);
   bindTestServerUser(remote);
-  const config={token,userId:remote.userId};localStorage.setItem('kostenApp_server',JSON.stringify(config));testServerConfig=config;
+  const config={token,userId:remote.userId};localStorage.setItem('kostenApp_test_server',JSON.stringify(config));testServerConfig=config;
   return remote;
 }
 async function testServerRequest(path,value,token=testServerConfig?.token) {
@@ -358,10 +359,10 @@ async function syncTestServer(saveSettings=false) {
       bindTestServerUser(await testServerRequest('/api/config'));
     }
     // A fresh device must not overwrite an existing personal server backup.
-    if(localStorage.getItem('kostenApp_backup_check')===testServerBoundUser) {
+    if(localStorage.getItem('kostenApp_test_backup_check')===testServerBoundUser) {
       const saved=await testServerRequest('/api/backup');
       if(saved.data) {serverBackupRequired=true;serverStatus('Bitte deine Daten wiederherstellen, um neue Zahlungen zu übernehmen.');showServerRestorePrompt(saveSettings);return;}
-      localStorage.removeItem('kostenApp_backup_check');
+      localStorage.removeItem('kostenApp_test_backup_check');
       serverBackupRequired=false;serverRestorePromptSeen=false;updateServerLoginControls();
     }
     let count=0;for(let page=0;page<10;page++) {
@@ -414,7 +415,7 @@ async function restoreTestServerBackup(confirmed=false) {
     if(!saved.data)throw new Error('Für diesen Zugang gibt es noch keine gespeicherte Sicherung.');
     if(!saved.data.Haushalt||typeof saved.data.Haushalt!=='object'||!saved.data.Einstellungen||typeof saved.data.Einstellungen!=='object')throw new Error('Die gespeicherte Sicherung ist nicht gültig. Deine aktuellen Daten bleiben erhalten.');
     context.storage.setItem(context.storage.key,JSON.stringify(saved.data));
-    localStorage.removeItem('kostenApp_backup_check');
+    localStorage.removeItem('kostenApp_test_backup_check');
     serverBackupRequired=false;testServerBusy=false;updateServerLoginControls();
     dependencies.closeAccessibleDialog('serverRestoreDialog');
     location.reload();
