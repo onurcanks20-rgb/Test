@@ -4,6 +4,7 @@ Kostentracker.module({
     "addItem",
     "appendDateGroupHeader",
     "applyLetzteReiseKategorie",
+    "isTravelMode", "activeHomeTrips", "openTravelOverview",
     "beginUndoDelete",
     "closeStartQuickAdd",
     "datumZeitwert",
@@ -234,6 +235,9 @@ Kostentracker.module({
         }
 
         function openLand(l) {
+            if (dependencies.isTravelMode?.() && !dependencies.activeHomeTrips().includes(l)) {
+                dependencies.openTravelOverview(); return;
+            }
 
             // 🔥 WICHTIG: alten Zustand sauber zurücksetzen
             context.session.state.editLandName = null;
