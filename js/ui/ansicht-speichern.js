@@ -1,6 +1,6 @@
 Kostentracker.module({
   "id": "js/ui/ansicht-speichern.js",
-  "dependencies": ["isTravelMode", "openTravelOverview", "goHome", "openUebersicht", "openGrafik", "openReisen", "openHaushalt", "openFreizeit", "openEinnahmen", "openKosten", "openVersicherungen", "openGeplanteAusgaben", "openSparenInvestieren", "openAusgabenArchiv", "openGlobalArchiv", "openSettings", "openSettingsBudget", "openSettingsQuickAdd", "openSettingsWarnings", "openSettingsDesign", "openSettingsGestures", "openMerchantSettings", "openSettingsBackup", "openServerSettings"],
+  "dependencies": ["goHome", "openUebersicht", "openGrafik", "openReisen", "openHaushalt", "openFreizeit", "openEinnahmen", "openKosten", "openVersicherungen", "openGeplanteAusgaben", "openSparenInvestieren", "openAusgabenArchiv", "openGlobalArchiv", "openSettings", "openSettingsBudget", "openSettingsQuickAdd", "openSettingsWarnings", "openSettingsDesign", "openSettingsGestures", "openMerchantSettings", "openSettingsBackup", "openServerSettings"],
   "session": ["state"], "read": [], "write": [], "replace": false
 }, (context, dependencies) => {
 "use strict";
@@ -15,10 +15,10 @@ const routes = {
 };
 let currentView = 'home', restoring = false, lastWritten = '', navigationObserved = false;
 function snapshotCurrentView(id) {
-    // Land bewusst nicht merken: in der Reiseansicht entscheidet das heutige Datum.
-    const view = id === 'land' || id === 'travelOverviewView' ? (dependencies.isTravelMode() ? 'uebersichtView' : 'reisen') : id;
+    // Kein einzelnes Land merken: Reiseeinträge kehren zur normalen Reiseliste zurück.
+    const view = id === 'land' || id === 'travelOverviewView' ? 'reisen' : id;
     if (!Object.hasOwn(routes, view) && view !== 'ausgabenArchivView') return null;
-    return {version:1, view, travelMode:dependencies.isTravelMode(), archive:context.session.state?.ausgabenArchivTyp === 'freizeit' ? 'freizeit' : 'haushalt'};
+    return {version:1, view, archive:context.session.state?.ausgabenArchivTyp === 'freizeit' ? 'freizeit' : 'haushalt'};
 }
 function rememberCurrentView(id) {
     if (id) { currentView = id; navigationObserved = true; }
@@ -35,8 +35,7 @@ function restoreCurrentView() {
     if (!saved || saved.version !== 1 || typeof saved.view !== 'string') { rememberCurrentView('home'); return; }
     restoring = true;
     try {
-        if (saved.travelMode && !dependencies.isTravelMode()) dependencies.goHome();
-        else if (saved.view === 'ausgabenArchivView') dependencies.openAusgabenArchiv(saved.archive === 'freizeit' ? 'freizeit' : 'haushalt');
+        if (saved.view === 'ausgabenArchivView') dependencies.openAusgabenArchiv(saved.archive === 'freizeit' ? 'freizeit' : 'haushalt');
         else if (Object.hasOwn(routes,saved.view)) dependencies[routes[saved.view]]();
         else dependencies.goHome();
     } catch (_) { dependencies.goHome(); }

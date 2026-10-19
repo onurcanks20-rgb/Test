@@ -2,7 +2,7 @@ Kostentracker.module({
   "id": "js/ui/navigation.js",
   "dependencies": [
     "applyLetzteAlltagsKategorie",
-    "travelModeRoute", "isTravelMode", "openTravelOverview", "refreshTravelMode", "rememberCurrentView",
+    "rememberCurrentView",
     "closeAddSheet",
     "closeCategoryAddPanels",
     "getAktuellerMonat",
@@ -63,14 +63,11 @@ Kostentracker.module({
         }
 
         function show(id) {
-            dependencies.refreshTravelMode?.();
-            id = dependencies.travelModeRoute?.(id) || id;
             context.session.kostentrackerRememberView?.(id);
             dependencies.rememberCurrentView?.(id);
 
             const views = [
                 "home",
-                "travelOverviewView",
                 "reisen",
                 "land",
                 "haushaltView",
@@ -105,7 +102,7 @@ Kostentracker.module({
 
             // Kategorien behalten die Übersicht-Navigation; Einstellungen bleiben unverändert.
             const categoryViews = [
-                "travelOverviewView", "reisen", "land", "haushaltView", "freizeitView",
+                "reisen", "land", "haushaltView", "freizeitView",
                 "ausgabenArchivView", "globalArchivView", "geplanteAusgabenView",
                 "sparenInvestierenView", "einnahmenView", "kostenView",
                 "versicherungenView"
@@ -135,7 +132,6 @@ Kostentracker.module({
         }
 
         function openUebersicht() {
-            if (dependencies.isTravelMode?.()) { dependencies.openTravelOverview(); return; }
             dependencies.verarbeiteFaelligeGeplanteAusgaben();
             show("uebersichtView");
             dependencies.renderUebersicht();
@@ -207,7 +203,6 @@ Kostentracker.module({
         }
 
         function openReisen() {
-            if (dependencies.isTravelMode?.()) { dependencies.openTravelOverview(); return; }
             show("reisen");
             dependencies.closeCategoryAddPanels();
 
