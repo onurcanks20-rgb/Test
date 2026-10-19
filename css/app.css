@@ -2148,3 +2148,34 @@ button:disabled { opacity:.5; cursor:default; }
 /* Compact status for the existing server connection. */
 .home-sync-status {display:block;width:auto;margin:-8px 0 10px auto;padding:2px 0;border:0;background:transparent;color:var(--text);opacity:.65;font-size:12px;font-weight:400;text-align:right;}
 .home-sync-status[data-state="error"],.home-sync-status[data-state="restore"] {color:var(--danger);opacity:1;}
+
+/* Reiseansicht: ausschließlich aktive Reisen, Alltag rechnet im Hintergrund weiter. */
+.travel-mode-toggle {width:100%;min-height:44px;margin:4px 0 12px;padding:10px 16px;border-radius:16px;background:var(--card);color:var(--primary);font-size:16px;font-weight:600;text-align:left;}
+.travel-mode-bar {display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:600px;margin:0 auto;padding:10px 20px;color:var(--text);font-size:14px;}
+.travel-mode-bar button {width:auto;min-height:44px;margin:0;padding:8px 12px;background:var(--card);color:var(--primary);font-size:14px;border-radius:14px;}
+#home.travel-mode .hero-card,#home.travel-mode #homeActiveTrips,#home.travel-mode .week-summary-card,#home.travel-mode .salary-row,#home.travel-mode #homeWarnings,#home.travel-mode .primary-add {display:none!important;}
+#grafikView.travel-mode > .container > :not(.topbar):not(#travelModeGraphic) {display:none!important;}
+.travel-mode-card,#travelModeGraphic {padding:20px;margin:12px 0 18px;border-radius:24px;background:var(--card);color:var(--text);border:1px solid var(--border,transparent);}
+.travel-mode-card h2 {margin:8px 0 4px;}
+.travel-mode-eyebrow {font-size:12px;letter-spacing:.08em;color:var(--primary);}
+.travel-mode-muted {color:var(--muted,var(--text));opacity:.75;font-size:14px;}
+.travel-mode-remaining {display:block;font-size:clamp(30px,8vw,42px);line-height:1.2;margin:8px 0 22px;overflow-wrap:anywhere;}
+.travel-mode-facts {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0;}
+.travel-mode-facts span,.travel-mode-facts strong {display:block;overflow-wrap:anywhere;}
+.travel-mode-facts strong {font-size:16px;margin-top:6px;}
+.travel-mode-action {width:100%;min-height:48px;margin:8px 0;padding:12px;border-radius:16px;background:var(--primary);color:#fff;font-size:17px;font-weight:600;}
+.travel-mode-link {display:block;width:100%;min-height:44px;margin:0;padding:8px;background:transparent;color:var(--primary);font-size:16px;}
+.travel-mode-country {display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:72px;margin:12px 0;padding:16px;background:var(--card);color:var(--text);border-radius:18px;text-align:left;}
+.travel-mode-country strong {font-size:20px;overflow-wrap:anywhere;}
+.travel-mode-chips {display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 24px;}
+.travel-mode-chip {width:auto;min-height:44px;margin:0;padding:10px 16px;border-radius:22px;font-size:16px;border:2px solid var(--primary);background:transparent;color:var(--text);}
+.travel-mode-chip[aria-pressed="true"] {background:var(--primary);color:#fff;}
+.travel-mode-chart-row {margin:20px 0;}
+.travel-mode-chart-label {display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin:12px 0;font-size:16px;}
+.travel-mode-chart-label span {overflow-wrap:anywhere;min-width:0;}
+.travel-mode-chart-label strong {flex-shrink:0;}
+.travel-mode-chart-track {height:10px;border-radius:6px;background:var(--bg);overflow:hidden;}
+.travel-mode-chart-fill {height:100%;border-radius:6px;background:var(--primary);}
+.travel-mode-empty {padding:20px 0;color:var(--text);opacity:.7;}
+@media (max-width:350px) {.travel-mode-facts {gap:6px;}.travel-mode-facts strong {font-size:14px;}.travel-mode-country {flex-direction:column;align-items:flex-start;}}
+.travel-mode-bar.hidden,.travel-mode-toggle.hidden {display:none;}
