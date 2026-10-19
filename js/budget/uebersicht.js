@@ -2,7 +2,6 @@ Kostentracker.module({
   "id": "js/budget/uebersicht.js",
   "dependencies": [
     "berechneNochFaelligBisGehalt",
-    "refreshTravelMode",
     "berechneSparBudgetStatus",
     "einnahmenZahlungenImZeitraum",
     "escapeHtml",
@@ -227,7 +226,6 @@ Kostentracker.module({
         }
 
         function renderHomeTrips() {
-            dependencies.refreshTravelMode?.();
             const host = document.getElementById('homeActiveTrips');
             if (!host) return;
             const trips = activeHomeTrips();
