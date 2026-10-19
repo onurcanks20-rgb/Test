@@ -2,7 +2,7 @@ Kostentracker.module({
   "id": "js/ui/navigation.js",
   "dependencies": [
     "applyLetzteAlltagsKategorie",
-    "travelModeRoute", "isTravelMode", "openTravelOverview", "refreshTravelMode",
+    "travelModeRoute", "isTravelMode", "openTravelOverview", "refreshTravelMode", "rememberCurrentView",
     "closeAddSheet",
     "closeCategoryAddPanels",
     "getAktuellerMonat",
@@ -66,6 +66,7 @@ Kostentracker.module({
             dependencies.refreshTravelMode?.();
             id = dependencies.travelModeRoute?.(id) || id;
             context.session.kostentrackerRememberView?.(id);
+            dependencies.rememberCurrentView?.(id);
 
             const views = [
                 "home",

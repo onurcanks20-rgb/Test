@@ -8,12 +8,16 @@ Kostentracker.module({
 // Ein reiner Ansichtsmodus: keine Buchungen, Budgets oder Zuordnungen verändern.
 const preferenceKey = 'kostenApp_test_reiseansicht';
 let enabled = false;
-try { enabled = sessionStorage.getItem(preferenceKey) === '1'; } catch (_) {}
+try {
+    const saved = localStorage.getItem(preferenceKey);
+    enabled = saved === null ? sessionStorage.getItem(preferenceKey) === '1' : saved === '1';
+    if (saved === null && enabled) localStorage.setItem(preferenceKey, '1');
+} catch (_) {}
 let signature = '', selectedCountries = new Set(), refreshing = false, lastMode = false;
 const el = id => document.getElementById(id);
 const visible = id => el(id) && !el(id).classList.contains('hidden');
 function rememberMode() {
-    try { sessionStorage.setItem(preferenceKey, enabled ? '1' : '0'); } catch (_) {}
+    try { localStorage.setItem(preferenceKey, enabled ? '1' : '0'); } catch (_) {}
 }
 function isTravelMode() {
     if (enabled && dependencies.activeHomeTrips().length === 0) {
