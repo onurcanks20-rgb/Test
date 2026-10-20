@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/budget/uebersicht.js",
   "dependencies": [
+    "resumePaymentImportedNotice",
     "berechneNochFaelligBisGehalt",
     "berechneSparBudgetStatus",
     "einnahmenZahlungenImZeitraum",
@@ -64,6 +65,7 @@ Kostentracker.module({
         }
 
         function renderHomeUebersicht() {
+            dependencies.resumePaymentImportedNotice?.();
             renderHomeTrips();
 
             const zeitraum = dependencies.getGehaltszeitraum();
