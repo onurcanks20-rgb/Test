@@ -19,7 +19,7 @@ Kostentracker.module({
     if(document.getElementById('homeSyncStatus')?.dataset.state==='busy')return false;
     const active=document.activeElement;
     if(active&&visible(active)&&(/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)||active.isContentEditable))return false;
-    const blockers='input:not([type="hidden"]),textarea,select,[contenteditable="true"],dialog[open],.sheet-backdrop:not(.hidden),.category-add-panel:not(.hidden),#undoToast:not(.hidden)';
+    const blockers='input:not([type="hidden"]),textarea,select,[contenteditable="true"],dialog[open],.sheet-backdrop:not(.hidden),.category-add-panel:not(.hidden),#undoToast:not(.hidden),#paymentImportedNotice.is-visible';
     return !Array.from(document.querySelectorAll?.(blockers)||[]).some(visible);
   }
   function dismissAppUpdate(){document.getElementById('appUpdateNotice')?.classList.add('hidden');}
