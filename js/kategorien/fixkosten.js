@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/fixkosten.js",
   "dependencies": [
+    "appendEmptyAction",
     "addItem",
     "appendDateGroupHeader",
     "beginUndoDelete",
@@ -58,6 +59,7 @@ Kostentracker.module({
 
             if (context.repository.view["Laufende Kosten"].fix.length === 0) {
                 div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📌</div><div class="empty-state-title">Noch keine Fixkosten</div><div class="empty-state-text">Regelmäßige monatliche Kosten erscheinen hier, sobald du sie anlegst.</div></div>`;
+                if(!dependencies.getSearchTerm('fixkostenSuche'))dependencies.appendEmptyAction(div,'fixkosten');
             }
 
             let summe = 0;

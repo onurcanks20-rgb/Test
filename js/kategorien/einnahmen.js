@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/einnahmen.js",
   "dependencies": [
+    "appendEmptyAction",
     "appendDateGroupHeader",
     "beginUndoDelete",
     "closeStartQuickAdd",
@@ -127,6 +128,7 @@ Kostentracker.module({
                 empty.className = "empty-state";
                 empty.innerHTML = `<div class="empty-state-icon">💰</div><div class="empty-state-title">${suche ? 'Keine passenden einmaligen Einnahmen' : 'Keine aktuellen einmaligen Einnahmen'}</div><div class="empty-state-text">Neue Einnahmen erscheinen hier.</div>`;
                 container.appendChild(empty);
+                if(!suche)dependencies.appendEmptyAction(empty,'einnahmen');
             }
             renderRows(container,einmalig,false);
 

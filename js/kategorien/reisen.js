@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/reisen.js",
   "dependencies": [
+    "appendEmptyAction",
     "addItem",
     "appendDateGroupHeader",
     "applyLetzteReiseKategorie",
@@ -120,6 +121,14 @@ Kostentracker.module({
                     dependencies.matchesSearch(suche, kat) || (Array.isArray(liste) && liste.some(e => dependencies.matchesSearch(suche, e.text, e.datum, e.betrag)))
                 );
             }).sort((a,b) => a.localeCompare(b, "de"));
+
+            if (!laender.length) {
+                const empty=document.createElement('div');empty.className='empty-state';
+                const title=document.createElement('div');title.className='empty-state-title';title.textContent=suche?'Keine passende Reise':'Noch keine Reisen';empty.appendChild(title);
+                div.appendChild(empty);
+                if(!suche)dependencies.appendEmptyAction(empty,'reisen');
+                return;
+            }
 
             for (const land of laender) {
 

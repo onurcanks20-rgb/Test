@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/geplante-ausgaben.js",
   "dependencies": [
+    "appendEmptyAction",
     "beginUndoDelete",
     "closeStartQuickAdd",
     "bookFreizeitPlannedOccurrence",
@@ -326,6 +327,7 @@ Kostentracker.module({
             document.getElementById("geplantDeleteAllBtn")?.classList.toggle("hidden", !items.length);
             if (!items.length) {
                 listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🗓️</div><div class="empty-state-title">Keine geplanten Ausgaben</div><div class="empty-state-text">Plane größere oder kommende Ausgaben vorab. Am Folgetag werden sie automatisch in den gewählten Bereich übernommen.</div></div>`;
+                dependencies.appendEmptyAction(listeEl,'geplant');
                 return;
             }
             let letzteGeplantGruppe = null;

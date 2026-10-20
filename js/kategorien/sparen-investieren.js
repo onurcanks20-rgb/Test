@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/sparen-investieren.js",
   "dependencies": [
+    "appendEmptyAction",
     "alltagImZeitraum",
     "beginUndoDelete",
     "closeStartQuickAdd",
@@ -161,6 +162,7 @@ Kostentracker.module({
             document.getElementById("sparenInvestierenDeleteAllBtn")?.classList.toggle("hidden", !items.length);
             if (!items.length) {
                 listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-title">Noch nichts festgelegt</div><div class="empty-state-text">Lege deinen festen Investitionsbetrag und deine Rücklage pro Gehaltsperiode fest.</div></div>`;
+                dependencies.appendEmptyAction(listeEl,'sparen');
                 return;
             }
             let letzteSparGruppe = null;

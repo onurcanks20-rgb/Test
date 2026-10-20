@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/alltag-gemeinsam.js",
   "dependencies": [
+    "appendEmptyAction",
     "appendDateGroupHeader",
     "createItem",
     "datumAlsLokalenTag",
@@ -100,7 +101,8 @@ Kostentracker.module({
                 .sort(dependencies.compareEntriesNewest);
 
             if (!liste.length) {
-                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${istFreizeit ? '🎉' : '🛒'}</div><div class="empty-state-title">Keine Ausgaben in den letzten 7 Tagen</div><div class="empty-state-text">${istFreizeit ? 'Deine neuen Freizeit-Ausgaben erscheinen hier.' : 'Deine neuen Haushalts-Ausgaben erscheinen hier.'}</div></div>`;
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${istFreizeit ? '🎉' : '🛒'}</div><div class="empty-state-title">${suche ? 'Keine passenden Ausgaben' : 'Keine Ausgaben in den letzten 7 Tagen'}</div><div class="empty-state-text">${istFreizeit ? 'Deine neuen Freizeit-Ausgaben erscheinen hier.' : 'Deine neuen Haushalts-Ausgaben erscheinen hier.'}</div></div>`;
+                if (!suche) dependencies.appendEmptyAction(container,typ);
                 return;
             }
 
