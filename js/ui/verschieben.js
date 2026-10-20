@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/ui/verschieben.js",
   "dependencies": [
+    "resumePaymentImportedNotice",
     "escapeHtml",
     "generateId",
     "heuteISO",
@@ -118,6 +119,7 @@ Kostentracker.module({
         function closeMoveSheet() {
             document.getElementById("moveSheet")?.classList.add("hidden");
             context.session.moveContext = null;
+            dependencies.resumePaymentImportedNotice?.();
         }
 
         function moveAusgabe(quelle, id) {
