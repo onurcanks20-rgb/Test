@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/server/synchronisierung.js",
   "dependencies": [
+    "showDetailedPaymentNotice", "resumePaymentImportedNotice",
     "merchantDestination",
     "merchantCategories",
     "validMerchantDestination",
@@ -171,16 +172,17 @@ function scheduleTestServerSync() {
   clearTimeout(testServerTimer);testServerTimer=setTimeout(()=>syncTestServer(false),1800);
 }
 function normalizedProvider(value) {return String(value||'').normalize('NFKC').toLocaleLowerCase('de-DE').replace(/\s+/g,' ').trim();}
-function showPaymentImportedNotice(success=true) {
-  const node=document.getElementById('paymentImportedNotice');if(!node)return;
-  clearTimeout(showPaymentImportedNotice.hideTimer);
-  node.textContent=success?'✅ Zahlung übernommen':'❌ Zahlung fehlgeschlagen';
-  node.classList.toggle('is-error',!success);
-  node.classList.add('is-visible');
-  showPaymentImportedNotice.hideTimer=setTimeout(()=>{
-    node.classList.remove('is-visible');
-    showPaymentImportedNotice.hideTimer=null;
-  },3000);
+function showPaymentImportedNotice(success=true,paymentIds=[]) {
+  dependencies.showDetailedPaymentNotice(success,paymentIds);
+}
+function simulatePaymentConfirmation() {
+  const payment={id:'payment-demo-'+dependencies.generateId(),merchant:'Wolt',amountCents:123,date:dependencies.isoAusDate(new Date()),source:'bank-push',category:'Einkauf',testOnly:true};
+  const status=document.getElementById('paymentConfirmationTestStatus');
+  try {
+    const count=importTestServerPayments([payment]);dependencies.renderHomeUebersicht();
+    if(status)status.textContent=count?'Lokale Testbuchung über 1,23 € erstellt. Über Ändern die Zuordnung prüfen.':'Die Testzahlung wartet auf deine Zuordnung in der Zahlungsprüfung.';
+  } catch(error) {if(status)status.textContent='Testzahlung konnte nicht gespeichert werden. Bitte erneut versuchen.';}
+
 }
 
 function classifyPushPayment(payment) {
@@ -305,7 +307,7 @@ function renderServerPaymentReview() {
     host.appendChild(row);reviewCategories(payment.id);
     if(route.destination&&known)category.value=route.destination.category;
   }
-  syncPaymentReviewGate();
+  syncPaymentReviewGate();dependencies.resumePaymentImportedNotice();
 }
 function resolveServerPaymentReview(id,book,target=null,euroValue=null,category=null,remember=false) {
   const pending=context.repository.view.Einstellungen?.serverPendingReview||[],payment=pending.find(p=>p.id===id);if(!payment)return;
@@ -334,7 +336,7 @@ function resolveServerPaymentReview(id,book,target=null,euroValue=null,category=
     context.repository.view.Einstellungen.serverPendingReview=pending.filter(p=>p.id!==id);
     context.storage.setItem(context.storage.key,JSON.stringify(context.repository.view));context.storage.lastSaved=JSON.stringify(context.repository.view);
   } catch(error) {context.repository.view=before;showPaymentImportedNotice(false);serverStatus('Entscheidung konnte nicht gespeichert werden. Ziel prüfen und erneut versuchen.');const status=document.getElementById('paymentReviewError');if(status)status.textContent='Entscheidung konnte nicht gespeichert werden. Die Zahlung bleibt offen. Ziel prüfen und erneut versuchen.';syncPaymentReviewGate();return;}
-  if(book)showPaymentImportedNotice();renderServerPaymentReview();dependencies.refreshReiseImportedViews();dependencies.renderHomeUebersicht();dependencies.renderRecentAusgaben('haushalt');dependencies.renderRecentAusgaben('freizeit');scheduleTestServerSync();
+  if(book)showPaymentImportedNotice(true,[resolved.id]);renderServerPaymentReview();dependencies.refreshReiseImportedViews();dependencies.renderHomeUebersicht();dependencies.renderRecentAusgaben('haushalt');dependencies.renderRecentAusgaben('freizeit');scheduleTestServerSync();
 }
 
 function importTestServerPayments(payments) {
@@ -342,7 +344,7 @@ function importTestServerPayments(payments) {
   const ids=new Set(context.repository.view.Einstellungen?.serverImportIds||[]);
   for(const area of ['Haushalt','Freizeit']) Object.values(context.repository.view[area]||{}).forEach(list=>Array.isArray(list)&&list.forEach(e=>{if(e._serverPaymentId)ids.add(e._serverPaymentId);}));
   for(const trip of Object.values(context.repository.view.Reisen||{}))Object.values(trip||{}).forEach(list=>Array.isArray(list)&&list.forEach(e=>{if(e._serverPaymentId)ids.add(e._serverPaymentId);}));
-  const before=context.clone(context.repository.view);let count=0;
+  const before=context.clone(context.repository.view);let count=0;const noticeIds=[];
   try {
     for(const payment of payments) {
       dependencies.validateImportedPayment(payment);
@@ -355,7 +357,7 @@ function importTestServerPayments(payments) {
       } else if(classification.recurring) {
         context.repository.view.Einstellungen.serverRecurringMatches??={};
         context.repository.view.Einstellungen.serverRecurringMatches[classification.recurring.key]={paymentId:payment.id,date:payment.date,merchant:payment.merchant};
-      } else {appendImportedPayment(payment);count++;}
+      } else {appendImportedPayment(payment);count++;noticeIds.push(payment.id);}
       if(payment.testOnly){context.repository.view.Einstellungen.serverTravelDemoIds??=[];context.repository.view.Einstellungen.serverTravelDemoIds.push(payment.id);}
       ids.add(payment.id);
     }
@@ -363,7 +365,7 @@ function importTestServerPayments(payments) {
     // Save before acknowledgment: after a crash/retry the IDs prevent duplication.
     context.storage.setItem(context.storage.key,JSON.stringify(context.repository.view));context.storage.lastSaved=JSON.stringify(context.repository.view);
   } catch(error) {context.repository.view=before;showPaymentImportedNotice(false);throw error;}
-  if(count>0) showPaymentImportedNotice();
+  if(count>0) showPaymentImportedNotice(true,noticeIds);
   renderServerPaymentReview();dependencies.refreshReiseImportedViews();
   return count;
 }
@@ -452,5 +454,5 @@ if(document.readyState==='complete')startServerConnection();else window.addEvent
 document.addEventListener('kostentracker:boot-complete',syncPaymentReviewGate);
 
 
-return { renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+return { simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
 });
