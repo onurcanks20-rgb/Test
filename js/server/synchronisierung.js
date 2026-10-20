@@ -176,7 +176,7 @@ function showPaymentImportedNotice(success=true,paymentIds=[]) {
   dependencies.showDetailedPaymentNotice(success,paymentIds);
 }
 function simulatePaymentConfirmation() {
-  const payment={id:'payment-demo-'+dependencies.generateId(),merchant:'Wolt',amountCents:123,date:dependencies.isoAusDate(new Date()),source:'bank-push',category:'Einkauf',testOnly:true};
+  const payment={id:'payment-demo-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12),merchant:'Wolt',amountCents:123,date:dependencies.isoAusDate(new Date()),source:'bank-push',category:'Einkauf',testOnly:true};
   const status=document.getElementById('paymentConfirmationTestStatus');
   try {
     const count=importTestServerPayments([payment]);dependencies.renderHomeUebersicht();
