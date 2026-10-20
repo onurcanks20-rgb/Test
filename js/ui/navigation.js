@@ -63,6 +63,7 @@ Kostentracker.module({
         }
 
         function show(id) {
+            const changingView = document.getElementById(id)?.classList.contains("hidden");
             context.session.kostentrackerRememberView?.(id);
             dependencies.rememberCurrentView?.(id);
 
@@ -123,6 +124,9 @@ Kostentracker.module({
                 const datum = document.getElementById("datum");
                 if (datum) datum.value = "";
             }
+            // Erst den Ausgangszustand für Zurückwischen merken, dann oben öffnen.
+            // Die Geste stellt ihre gespeicherte Position nach dem Wechsel selbst wieder her.
+            if (changingView) window.scrollTo(0, 0);
         }
 
         function goHome() {
