@@ -2156,3 +2156,15 @@ button:disabled { opacity:.5; cursor:default; }
 .merchant-suggestion span {min-width:0;overflow-wrap:anywhere;}
 .merchant-suggestion small {font-size:12px;opacity:.7;text-align:right;}
 .empty-state-add {display:block;width:auto;max-width:100%;min-height:44px;margin:18px auto 0;padding:12px 18px;border-radius:14px;background:var(--primary);color:#fff;font-size:16px;font-weight:600;}
+
+/* Lesbare Buchungsbestätigung mit direkter Zuordnungskorrektur. */
+#paymentImportedNotice {width:min(440px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:min(50dvh,420px);overflow:auto;white-space:normal;font-size:15px;padding:12px 14px;}
+#paymentImportedNotice.is-visible {pointer-events:auto;}
+.payment-notice-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.payment-notice-heading strong {font-size:15px;}
+.payment-notice-close {width:44px;min-height:44px;flex-shrink:0;margin:0;padding:4px;background:transparent;color:var(--text);font-size:26px;}
+.payment-notice-item {display:flex;align-items:center;gap:12px;margin-top:6px;padding-top:10px;border-top:1px solid var(--secondary);}
+.payment-notice-content {min-width:0;flex:1;}
+.payment-notice-merchant {font-weight:650;overflow-wrap:anywhere;}
+.payment-notice-target {font-size:13px;font-weight:400;opacity:.75;line-height:1.4;margin-top:4px;overflow-wrap:anywhere;}
+.payment-notice-edit {width:auto;min-height:44px;flex-shrink:0;margin:0;padding:10px 12px;border-radius:12px;background:var(--primary);color:#fff;font-size:14px;font-weight:600;}
