@@ -2,7 +2,6 @@ Kostentracker.module({
   "id": "js/ui/navigation.js",
   "dependencies": [
     "applyLetzteAlltagsKategorie",
-    "rememberCurrentView",
     "closeAddSheet",
     "closeCategoryAddPanels",
     "getAktuellerMonat",
@@ -65,7 +64,6 @@ Kostentracker.module({
         function show(id) {
             const changingView = document.getElementById(id)?.classList.contains("hidden");
             context.session.kostentrackerRememberView?.(id);
-            dependencies.rememberCurrentView?.(id);
 
             const views = [
                 "home",
