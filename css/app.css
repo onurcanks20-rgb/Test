@@ -2148,3 +2148,11 @@ button:disabled { opacity:.5; cursor:default; }
 /* Compact status for the existing server connection. */
 .home-sync-status {display:block;width:auto;margin:-8px 0 10px auto;padding:2px 0;border:0;background:transparent;color:var(--text);opacity:.65;font-size:12px;font-weight:400;text-align:right;}
 .home-sync-status[data-state="error"],.home-sync-status[data-state="restore"] {color:var(--danger);opacity:1;}
+
+/* Eingabehilfen: echte Händler auswählen, leere Listen direkt befüllen. */
+.merchant-suggestions {display:grid;gap:6px;margin:-2px 0 12px;}
+.merchant-suggestions.hidden {display:none;}
+.merchant-suggestion {display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;margin:0;padding:10px 12px;border-radius:12px;background:var(--secondary);color:var(--text);text-align:left;font-size:15px;}
+.merchant-suggestion span {min-width:0;overflow-wrap:anywhere;}
+.merchant-suggestion small {font-size:12px;opacity:.7;text-align:right;}
+.empty-state-add {display:block;width:auto;max-width:100%;min-height:44px;margin:18px auto 0;padding:12px 18px;border-radius:14px;background:var(--primary);color:#fff;font-size:16px;font-weight:600;}
