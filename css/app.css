@@ -2261,3 +2261,6 @@ button:disabled { opacity:.5; cursor:default; }
 .quick-entry-mode label[for="freizeitText"],
 .quick-entry-mode label[for="text"] { display:none; }
 .quick-entry-mode .quick-amount-row { margin:12px 0; }
+
+/* Die Start-Schnelleingabe hat bereits einen eigenen Abbrechen-Button. */
+#reiseAddPanel.quick-entry-mode .reise-add-cancel { display:none; }
