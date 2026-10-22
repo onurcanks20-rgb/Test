@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <meta name="app-version" content="test-start-home-v1">
+    <meta name="app-version" content="test-form-labels-v1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kostentracker">
@@ -13,17 +13,17 @@
     <meta name="application-name" content="Kostentracker">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="preload" href="icon-192.png" as="image" fetchpriority="high">
-    <link rel="preload" href="./js/app/ladebildschirm.js?v=test-start-home-v1" as="script">
+    <link rel="preload" href="./js/app/ladebildschirm.js?v=test-form-labels-v1" as="script">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
     <title>Kostentracker Test</title>
 
-    <script src="./js/core/dienste.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-    <script src="./js/app/design-start.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/dienste.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+    <script src="./js/app/design-start.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=test-start-home-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
+    <link rel="stylesheet" href="./css/app.css?v=test-form-labels-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
 
     <style id="bootSplashStyle">
       /* Paint the page canvas and safe-area background before app.css loads. */
@@ -56,7 +56,7 @@
   <div id="bootSplashLogo" class="boot-splash-logo"><img id="bootSplashIcon" src="icon-192.png" alt="" width="104" height="104" decoding="async" fetchpriority="high" hidden><span id="bootSplashFallback" class="boot-splash-fallback" hidden aria-hidden="true">💸</span></div>
   <div id="bootSplashError" class="boot-splash-error" hidden><p>App konnte nicht gestartet werden.</p><button type="button" onclick="location.reload()">Erneut laden</button></div>
 </div>
-<script src="./js/app/ladebildschirm.js?v=test-start-home-v1"></script>
+<script src="./js/app/ladebildschirm.js?v=test-form-labels-v1"></script>
 
 
     <!-- ===================== HOME ===================== -->
@@ -714,14 +714,17 @@
 
             <div id="sparenInvestierenAddPanel" class="category-add-panel hidden">
                 <h3>Betrag festlegen</h3>
-                <select id="sparenInvestierenTyp">
+                <label class="booking-field-label" for="sparenInvestierenTyp">Art</label>
+<select class="booking-control" id="sparenInvestierenTyp">
                     <option value="investieren">📈 Investieren</option>
                     <option value="sparen">💰 Rücklage / Sparen</option>
                 </select>
-                <input id="sparenInvestierenBetrag" type="text" inputmode="decimal" placeholder="Betrag pro Gehaltsperiode" enterkeyhint="next">
-                <input id="sparenInvestierenText" autocapitalize="words" placeholder="Beschreibung (optional)" enterkeyhint="next">
-                <label for="sparenInvestierenDatum" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Gültig ab</label>
-                <input id="sparenInvestierenDatum" type="date">
+                <label class="booking-field-label" for="sparenInvestierenBetrag">Betrag pro Gehaltsperiode (€)</label>
+<input class="booking-control" id="sparenInvestierenBetrag" type="text" inputmode="decimal" placeholder="Betrag pro Gehaltsperiode" enterkeyhint="next">
+                <label class="booking-field-label" for="sparenInvestierenText">Beschreibung (optional)</label>
+<input class="booking-control" id="sparenInvestierenText" autocapitalize="words" placeholder="Beschreibung (optional)" enterkeyhint="next">
+                <label class="booking-field-label" for="sparenInvestierenDatum">Gültig ab</label>
+<input class="booking-control" id="sparenInvestierenDatum" type="date">
                 <div class="info-text">Der Betrag wird ab dieser Gehaltsperiode bei jedem neuen Gehaltszeitraum berücksichtigt. Investitionen bleiben geschützt. Rücklagen dienen als Puffer, wenn dein Frei verfügbar aufgebraucht ist.</div>
                 <button onclick="addSparenInvestieren()" class="btn btn-primary">Speichern</button>
             </div>
@@ -745,30 +748,32 @@
 
             <div id="geplantAddPanel" class="category-add-panel hidden">
                 <h3>Ausgabe planen</h3>
-                <input id="geplantText" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
-                <input id="geplantBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
-                <label for="geplantDatum" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Geplantes Datum</label>
-                <input id="geplantDatum" type="date">
-                <label for="geplantWiederholung" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Wiederholung</label>
-                <select id="geplantWiederholung">
+                <label class="booking-field-label" for="geplantText">Beschreibung</label>
+<input class="booking-control" id="geplantText" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
+                <label class="booking-field-label" for="geplantBetrag">Betrag (€)</label>
+<input class="booking-control" id="geplantBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+                <label class="booking-field-label" for="geplantDatum">Geplantes Datum</label>
+<input class="booking-control" id="geplantDatum" type="date">
+                <label class="booking-field-label" for="geplantWiederholung">Wiederholung</label>
+<select class="booking-control" id="geplantWiederholung">
                     <option value="einmalig">Einmalig</option>
                     <option value="monatlich">Monatlich</option>
                     <option value="jaehrlich">Jährlich</option>
                 </select>
-                <label for="geplantBereich" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Später buchen nach</label>
-                <select id="geplantBereich" onchange="updateGeplantBereichUI(true)">
+                <label class="booking-field-label" for="geplantBereich">Später buchen nach</label>
+<select class="booking-control" id="geplantBereich" onchange="updateGeplantBereichUI(true)">
                     <option value="haushalt">Haushalt</option>
                     <option value="freizeit">Freizeit</option>
                     <option value="reisen">Reisen</option>
                 </select>
                 <div id="geplantReiseWrap" class="hidden">
-                    <label for="geplantReise" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Reise</label>
-                    <select id="geplantReise" onchange="updateGeplantKategorieSelect()"></select>
+                    <label class="booking-field-label" for="geplantReise">Reise</label>
+<select class="booking-control" id="geplantReise" onchange="updateGeplantKategorieSelect()"></select>
                 </div>
-                <label for="geplantKategorie" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Kategorie</label>
-                <select id="geplantKategorie"></select>
-                <label for="geplantBudgetWirksam" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Vom Frei verfügbar abziehen?</label>
-                <select id="geplantBudgetWirksam">
+                <label class="booking-field-label" for="geplantKategorie">Kategorie</label>
+<select class="booking-control" id="geplantKategorie"></select>
+                <label class="booking-field-label" for="geplantBudgetWirksam">Vom Frei verfügbar abziehen?</label>
+<select class="booking-control" id="geplantBudgetWirksam">
                     <option value="ja">Ja, Betrag reservieren</option>
                     <option value="nein">Nein, nur vormerken</option>
                 </select>
@@ -796,21 +801,23 @@
 
             <div id="reisenAddPanel" class="category-add-panel hidden">
                 <h3>Reise hinzufügen</h3>
-                <input id="landInput" autocapitalize="words" placeholder="Neues Land" enterkeyhint="next" oninput="updateNewReiseCurrencySuggestion()">
+                <label class="booking-field-label" for="landInput">Land / Reiseziel</label>
+<input class="booking-control" id="landInput" autocapitalize="words" placeholder="Neues Land" enterkeyhint="next" oninput="updateNewReiseCurrencySuggestion()">
                 <div class="reise-currency-field">
-                    <label for="landCurrency">Währung nach Land auswählen</label>
-                    <select id="landCurrency" onchange="markNewReiseCurrencyManual()"><option value="">Währung wählen</option></select>
+                    <label class="booking-field-label" for="landCurrency">Reisewährung</label>
+<select class="booking-control" id="landCurrency" onchange="markNewReiseCurrencyManual()"><option value="">Währung wählen</option></select>
                     <div id="landCurrencyHint" class="reise-currency-note">Bitte die passende Währung auswählen.</div>
                 </div>
-                <input id="landBudget" type="text" inputmode="decimal" placeholder="Budget in Euro (optional)" enterkeyhint="next">
+                <label class="booking-field-label" for="landBudget">Budget in Euro (optional)</label>
+<input class="booking-control" id="landBudget" type="text" inputmode="decimal" placeholder="Budget in Euro (optional)" enterkeyhint="next">
                 <div class="date-range">
                     <div class="date-field">
-                        <label for="landVon">Von</label>
-                        <input id="landVon" type="date" aria-label="Reisebeginn">
+                        <label class="booking-field-label" for="landVon">Von</label>
+<input class="booking-control" id="landVon" type="date" aria-label="Reisebeginn">
                     </div>
                     <div class="date-field">
-                        <label for="landBis">Bis</label>
-                        <input id="landBis" type="date" aria-label="Reiseende">
+                        <label class="booking-field-label" for="landBis">Bis</label>
+<input class="booking-control" id="landBis" type="date" aria-label="Reiseende">
                     </div>
                 </div>
                 <button onclick="addLand()" class="btn btn-primary">Reise hinzufügen</button>
@@ -836,7 +843,8 @@
 
             <div id="reiseAddPanel" class="category-add-panel hidden">
                 <h3>Reiseausgabe hinzufügen</h3>
-                <div id="reiseAmountInputRow" class="reise-amount-input-row"><input id="betrag" oninput="updateReiseAmountPreview()" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next"><button id="reiseInputCurrencyToggle" type="button" onclick="toggleReiseInputCurrency()" aria-label="Eingabewährung wechseln">EUR ⇄</button></div>
+                <label class="booking-field-label" for="betrag">Betrag</label>
+                <div id="reiseAmountInputRow" class="reise-amount-input-row"><input class="booking-control" id="betrag" oninput="updateReiseAmountPreview()" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next"><button id="reiseInputCurrencyToggle" type="button" onclick="toggleReiseInputCurrency()" aria-label="Eingabewährung wechseln">EUR ⇄</button></div>
                 <div id="reiseAmountPreview" class="reise-amount-preview" role="status" aria-live="polite"></div>
                 <div class="quick-category-grid" id="reiseKategorieGrid">
                     <button class="quick-category-btn selected" data-category="Essen / Trinken" onclick="setReiseKategorie('Essen / Trinken',this)">🍽️ Essen / Trinken</button>
@@ -847,7 +855,8 @@
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setReiseKategorie('Sonstiges',this)">🎉 Sonstiges</button>
                 </div>
                 <select id="kategorieSelect" class="hidden" aria-hidden="true"></select>
-                <input id="text" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                <label class="booking-field-label" for="text">Beschreibung (optional)</label>
+<input class="booking-control" id="text" autocapitalize="words" placeholder="z. B. Restaurant oder Aktivität" enterkeyhint="next">
                 <div class="entry-date-time"><label><span>Datum</span><input id="datum" type="date"></label><div id="reiseUhrzeitWrap" class="entry-time-field"><label for="reiseUhrzeit">Uhrzeit (optional)</label><div class="entry-time-input"><input id="reiseUhrzeit" type="time" step="60" aria-label="Uhrzeit (optional)" title="Ortszeit dieses Geräts"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div></div>
                 <button onclick="addEintrag()" class="btn btn-primary">Hinzufügen</button>
                 <button onclick="toggleCategoryAdd('reiseAddPanel')" class="btn" style="background:#3a3a3c;margin-top:10px;">Abbrechen</button>
@@ -886,20 +895,27 @@
 
             <div id="versAddPanel" class="category-add-panel hidden">
                 <h3>Versicherung hinzufügen</h3>
-                <input id="versName" autocapitalize="words" placeholder="Versicherung" enterkeyhint="next">
-                <input id="versBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
-                <input id="versDatum" type="date">
-                <input id="versAnbieter" autocapitalize="words" placeholder="Anbieter" enterkeyhint="next">
-                <input id="versNummer" autocapitalize="words" placeholder="Versicherungsnummer" enterkeyhint="next">
+                <label class="booking-field-label" for="versName">Versicherung</label>
+<input class="booking-control" id="versName" autocapitalize="words" placeholder="Versicherung" enterkeyhint="next">
+                <label class="booking-field-label" for="versBetrag">Betrag pro Zahlung (€)</label>
+<input class="booking-control" id="versBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+                <label class="booking-field-label" for="versDatum">Erste Zahlung</label>
+<input class="booking-control" id="versDatum" type="date">
+                <label class="booking-field-label" for="versAnbieter">Anbieter (optional)</label>
+<input class="booking-control" id="versAnbieter" autocapitalize="words" placeholder="Anbieter" enterkeyhint="next">
+                <label class="booking-field-label" for="versNummer">Versicherungsnummer (optional)</label>
+<input class="booking-control" id="versNummer" autocapitalize="words" placeholder="Versicherungsnummer" enterkeyhint="next">
 
-                <select id="versIntervall">
+                <label class="booking-field-label" for="versIntervall">Zahlungsrhythmus</label>
+<select class="booking-control" id="versIntervall">
                     <option value="monatlich">Monatlich</option>
                     <option value="vierteljährlich">Vierteljährlich</option>
                     <option value="halbjährlich">Halbjährlich</option>
                     <option value="jährlich">Jährlich</option>
                 </select>
 
-                <select id="versMonat">
+                <label class="booking-field-label" for="versMonat">Startmonat</label>
+<select class="booking-control" id="versMonat">
                     <option value="1">Januar</option>
                     <option value="2">Februar</option>
                     <option value="3">März</option>
@@ -942,7 +958,8 @@
 
             <div id="hausAddPanel" class="category-add-panel hidden">
                 <h3>Haushaltsausgabe hinzufügen</h3>
-                <input id="hausBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+                <label class="booking-field-label" for="hausBetrag">Betrag (€)</label>
+<input class="booking-control" id="hausBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <div class="quick-category-grid" id="hausKategorieGrid">
                     <button class="quick-category-btn selected" data-category="Einkauf" onclick="setQuickCategory('haus','Einkauf',this)">🛒 Einkauf</button>
                     <button class="quick-category-btn" data-category="Tanken" onclick="setQuickCategory('haus','Tanken',this)">⛽ Tanken</button>
@@ -950,7 +967,8 @@
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('haus','Sonstiges',this)">🏠 Sonstiges</button>
                 </div>
                 <input id="hausKategorie" type="hidden" value="Einkauf">
-                <input id="hausText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                <label class="booking-field-label" for="hausText">Beschreibung (optional)</label>
+<input class="booking-control" id="hausText" autocapitalize="words" placeholder="z. B. REWE" enterkeyhint="next">
                 <div class="entry-date-time"><label><span>Datum</span><input id="hausDatum" type="date"></label><div id="hausUhrzeitWrap" class="entry-time-field"><label for="hausUhrzeit">Uhrzeit (optional)</label><div class="entry-time-input"><input id="hausUhrzeit" type="time" step="60" aria-label="Uhrzeit (optional)" title="Ortszeit dieses Geräts"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div></div>
                 <button onclick="addHaushalt()" class="btn btn-primary">Hinzufügen</button>
             </div>
@@ -990,7 +1008,8 @@
 
             <div id="freizeitAddPanel" class="category-add-panel hidden">
                 <h3>Freizeitausgabe hinzufügen</h3>
-                <input id="freizeitBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+                <label class="booking-field-label" for="freizeitBetrag">Betrag (€)</label>
+<input class="booking-control" id="freizeitBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <div class="quick-category-grid" id="freizeitKategorieGrid">
                     <button class="quick-category-btn selected" data-category="Essen / Trinken" onclick="setQuickCategory('freizeit','Essen / Trinken',this)">🍽️ Essen / Trinken</button>
                     <button class="quick-category-btn" data-category="Aktivität" onclick="setQuickCategory('freizeit','Aktivität',this)">🎯 Aktivität</button>
@@ -998,7 +1017,8 @@
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('freizeit','Sonstiges',this)">🎉 Sonstiges</button>
                 </div>
                 <input id="freizeitKategorie" type="hidden" value="Essen / Trinken">
-                <input id="freizeitText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                <label class="booking-field-label" for="freizeitText">Beschreibung (optional)</label>
+<input class="booking-control" id="freizeitText" autocapitalize="words" placeholder="z. B. Restaurant" enterkeyhint="next">
                 <div class="entry-date-time"><label><span>Datum</span><input id="freizeitDatum" type="date"></label><div id="freizeitUhrzeitWrap" class="entry-time-field"><label for="freizeitUhrzeit">Uhrzeit (optional)</label><div class="entry-time-input"><input id="freizeitUhrzeit" type="time" step="60" aria-label="Uhrzeit (optional)" title="Ortszeit dieses Geräts"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div></div>
                 <button onclick="addFreizeit()" class="btn btn-primary">Hinzufügen</button>
             </div>
@@ -1050,11 +1070,15 @@
 
             <div id="einnahmenAddPanel" class="category-add-panel hidden">
                 <h3>Einnahme hinzufügen</h3>
-                <input id="einnahmenText" autocapitalize="words" placeholder="Bezeichnung (z. B. Bruder Handyvertrag)" enterkeyhint="next">
-                <input id="einnahmenBetrag" type="text" inputmode="decimal" min="0" step="0.01" placeholder="Betrag" enterkeyhint="next">
-                <input id="einnahmenVon" autocapitalize="words" placeholder="Von wem? (optional)" enterkeyhint="next">
+                <label class="booking-field-label" for="einnahmenText">Bezeichnung</label>
+<input class="booking-control" id="einnahmenText" autocapitalize="words" placeholder="z. B. Rückzahlung" enterkeyhint="next">
+                <label class="booking-field-label" for="einnahmenBetrag">Betrag (€)</label>
+<input class="booking-control" id="einnahmenBetrag" type="text" inputmode="decimal" min="0" step="0.01" placeholder="Betrag" enterkeyhint="next">
+                <label class="booking-field-label" for="einnahmenVon">Von wem? (optional)</label>
+<input class="booking-control" id="einnahmenVon" autocapitalize="words" placeholder="Von wem? (optional)" enterkeyhint="next">
                 <div class="entry-date-time"><label><span>Datum</span><input id="einnahmenDatum" type="date"></label><div id="einnahmenUhrzeitWrap" class="entry-time-field"><label for="einnahmenUhrzeit">Uhrzeit (optional)</label><div class="entry-time-input"><input id="einnahmenUhrzeit" type="time" step="60" aria-label="Uhrzeit (optional)" title="Ortszeit dieses Geräts"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div></div>
-                <select id="einnahmenWiederholung" onchange="toggleIncomeTime('einnahmenWiederholung','einnahmenUhrzeitWrap')">
+                <label class="booking-field-label" for="einnahmenWiederholung">Wiederholung</label>
+<select class="booking-control" id="einnahmenWiederholung" onchange="toggleIncomeTime('einnahmenWiederholung','einnahmenUhrzeitWrap')">
                     <option value="einmalig">Einmalig</option>
                     <option value="monatlich">Monatlich</option>
                 </select>
@@ -1086,20 +1110,21 @@
             <div id="kostenAddPanel" class="category-add-panel hidden">
                 <h3>Fixkosten hinzufügen</h3>
 
-            <input id="costText" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
-            <input id="costBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
-            <input id="costInfo" autocapitalize="words" placeholder="Info (z. B. Kundennummer, Vertragsnummer)" enterkeyhint="next">
-            <label for="costHaendler" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">Anbieter (optional)</label>
-            <input id="costHaendler" autocapitalize="off" placeholder="z. B. Telekom oder Netflix" enterkeyhint="next">
+            <label class="booking-field-label" for="costText">Beschreibung</label>
+<input class="booking-control" id="costText" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
+            <label class="booking-field-label" for="costBetrag">Betrag pro Monat (€)</label>
+<input class="booking-control" id="costBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+            <label class="booking-field-label" for="costInfo">Vertragsinfo (optional)</label>
+<input class="booking-control" id="costInfo" autocapitalize="words" placeholder="z. B. Kunden- oder Vertragsnummer" enterkeyhint="next">
+            <label class="booking-field-label" for="costHaendler">Anbieter (optional)</label>
+<input class="booking-control" id="costHaendler" autocapitalize="off" placeholder="z. B. Telekom oder Netflix" enterkeyhint="next">
             <div class="info-text">Name aus der Zahlungsmitteilung. Mehrere Namen mit einem Semikolon trennen.</div>
-            <label for="costZuordnungTage" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">Zeitfenster zur Fälligkeit (± Tage)</label>
-            <input id="costZuordnungTage" type="number" inputmode="numeric" min="0" max="31" step="1" value="5" enterkeyhint="next">
+            <label class="booking-field-label" for="costZuordnungTage">Zeitfenster zur Fälligkeit (± Tage)</label>
+<input class="booking-control" id="costZuordnungTage" type="number" inputmode="numeric" min="0" max="31" step="1" value="5" enterkeyhint="next">
             <div class="info-text">Vorbereitung für die Push-Erfassung: 5 bedeutet bis zu 5 Tage vor oder nach der Fälligkeit.</div>
 
-            <label for="costDatum" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">
-                Erste Abbuchung
-            </label>
-            <input id="costDatum" type="date">
+            <label class="booking-field-label" for="costDatum">Erste Abbuchung</label>
+<input class="booking-control" id="costDatum" type="date">
             <div class="info-text">🔁 Wird ab diesem Datum jeden Monat automatisch berücksichtigt.</div>
 
             <button onclick="addKosten()" class="btn btn-primary">Hinzufügen</button>
@@ -1122,41 +1147,41 @@
     </div>
 
 
-    <script src="./js/core/dateninitialisierung.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-    <script src="./js/core/speicherung-backup.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/rueckgaengig.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/erinnerungen.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/core/formatierung.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/gehalt.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/navigation.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/eintragsaktionen.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/einstellungen.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/archiv.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/wochenbudget.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/schnelleingabe.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/geplante-ausgaben.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/sparen-investieren.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/reise-waehrung.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/reise-budget-kurs.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/reisen.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/fixkosten.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/listen.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/versicherungen.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/berechnungen.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/verschieben.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/einnahmen.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/haushalt.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/freizeit.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/formulare.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/alltag-gemeinsam.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/ausgabenarchiv.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/faelligkeiten.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/zeitraeume.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/uebersicht.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/grafik/diagramme.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/app/aktualisierung.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/eingabehilfen.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/app/start.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/dateninitialisierung.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/speicherung-backup.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/rueckgaengig.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/erinnerungen.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/core/formatierung.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/gehalt.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/navigation.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/eintragsaktionen.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/einstellungen.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/archiv.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/wochenbudget.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/schnelleingabe.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/geplante-ausgaben.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/sparen-investieren.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reise-budget-kurs.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reisen.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/fixkosten.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/listen.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/versicherungen.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/berechnungen.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/verschieben.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/einnahmen.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/haushalt.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/freizeit.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/formulare.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/alltag-gemeinsam.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/ausgabenarchiv.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/faelligkeiten.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/zeitraeume.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/uebersicht.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/grafik/diagramme.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/app/aktualisierung.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/eingabehilfen.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/app/start.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
 
 
     <div id="undoToast" class="undo-toast hidden" role="status" aria-live="polite">
@@ -1180,10 +1205,10 @@
 </dialog>
 
     <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
-    <link rel="stylesheet" href="./css/bedienung.css?v=test-start-home-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
-    <script src="./js/ui/wischgesten.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
+    <link rel="stylesheet" href="./css/bedienung.css?v=test-form-labels-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
+    <script src="./js/ui/wischgesten.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
 
-    <script src="./js/ui/zurueckwischen.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
+    <script src="./js/ui/zurueckwischen.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
 
 <dialog id="paymentReviewDialog" class="payment-review-dialog" aria-labelledby="paymentReviewHeading" aria-describedby="paymentReviewRemaining" aria-modal="true" closedby="none">
   <h2 id="paymentReviewHeading" tabindex="-1">Zahlungen prüfen</h2>
@@ -1191,10 +1216,10 @@
   <div id="paymentReviewError" role="alert" class="payment-review-error"></div>
   <div id="serverPaymentReview"></div>
 </dialog>
-<script src="./js/server/haendler.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/server/reise-zahlungen.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/zahlungsbestaetigung.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
-<script src="./js/server/synchronisierung.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/haendler.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/reise-zahlungen.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/zahlungsbestaetigung.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/synchronisierung.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
     <!-- Gemeinsame Navigation in Kategorien (aus der Übersicht) -->
     <nav id="categoryBottomNav" class="bottom-nav hidden" aria-label="Hauptnavigation in Kategorien">
@@ -1202,7 +1227,7 @@
         <button type="button" class="active" aria-current="page" onclick="openUebersicht()"><span class="nav-icon">📋</span>Übersicht</button>
         <button type="button" onclick="openGrafik()"><span class="nav-icon">📊</span>Grafik</button>
     </nav>
-<script src="./js/ui/ansicht-speichern.js?v=test-start-home-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/ansicht-speichern.js?v=test-form-labels-v1" type="application/x-kostentracker"></script>
 </body>
 
 </html>
