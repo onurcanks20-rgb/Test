@@ -2255,3 +2255,9 @@ button:disabled { opacity:.5; cursor:default; }
 #land .reise-budget-editor { gap:0; }
 #land .reise-budget-editor .reise-currency-settings { margin:12px 0 0; }
 #land .reise-budget-editor .date-field .booking-control { min-height:48px; }
+
+/* Schnelleingabe blendet Beschreibung und zugehörige Beschriftung gemeinsam aus. */
+.quick-entry-mode label[for="hausText"],
+.quick-entry-mode label[for="freizeitText"],
+.quick-entry-mode label[for="text"] { display:none; }
+.quick-entry-mode .quick-amount-row { margin:12px 0; }
