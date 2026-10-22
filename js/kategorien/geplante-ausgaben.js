@@ -347,29 +347,37 @@ Kostentracker.module({
                     const kategorie = kategorien.includes(e.kategorie) ? e.kategorie : (kategorien[0] || "Sonstiges");
                     return gruppenHeader + `
                         <div class="item" style="align-items:stretch;">
-                            <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
-                                <input id="editGeplantText-${e.id}" value="${dependencies.escapeHtml(e.text || '')}" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
-                                <input id="editGeplantBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
-                                <input id="editGeplantDatum-${e.id}" type="date" value="${e.datum || ''}">
-                                <select id="editGeplantWiederholung-${e.id}">
+                            <div class="booking-edit-form">
+                                <label class="booking-field-label" for="editGeplantText-${e.id}">Beschreibung</label>
+<input class="booking-control" id="editGeplantText-${e.id}" value="${dependencies.escapeHtml(e.text || '')}" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
+                                <label class="booking-field-label" for="editGeplantBetrag-${e.id}">Betrag (€)</label>
+<input class="booking-control" id="editGeplantBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                                <label class="booking-field-label" for="editGeplantDatum-${e.id}">Geplantes Datum</label>
+<input class="booking-control" id="editGeplantDatum-${e.id}" type="date" value="${e.datum || ''}">
+                                <label class="booking-field-label" for="editGeplantWiederholung-${e.id}">Wiederholung</label>
+<select class="booking-control" id="editGeplantWiederholung-${e.id}">
                                     <option value="einmalig" ${(e.wiederholung || "einmalig") === "einmalig" ? "selected" : ""}>Einmalig</option>
                                     <option value="monatlich" ${e.wiederholung === "monatlich" ? "selected" : ""}>Monatlich</option>
                                     <option value="jaehrlich" ${e.wiederholung === "jaehrlich" ? "selected" : ""}>Jährlich</option>
                                 </select>
-                                <select id="editGeplantBereich-${e.id}" onchange="updateEditGeplantBereichUI('${e.id}',true)">
+                                <label class="booking-field-label" for="editGeplantBereich-${e.id}">Später buchen nach</label>
+<select class="booking-control" id="editGeplantBereich-${e.id}" onchange="updateEditGeplantBereichUI('${e.id}',true)">
                                     <option value="haushalt" ${bereich === "haushalt" ? "selected" : ""}>Haushalt</option>
                                     <option value="freizeit" ${bereich === "freizeit" ? "selected" : ""}>Freizeit</option>
                                     <option value="reisen" ${bereich === "reisen" ? "selected" : ""}>Reisen</option>
                                 </select>
                                 <div id="editGeplantReiseWrap-${e.id}" class="${bereich === "reisen" ? "" : "hidden"}">
-                                    <select id="editGeplantReise-${e.id}" onchange="updateEditGeplantKategorieSelect('${e.id}')">
+                                    <label class="booking-field-label" for="editGeplantReise-${e.id}">Reise</label>
+<select class="booking-control" id="editGeplantReise-${e.id}" onchange="updateEditGeplantKategorieSelect('${e.id}')">
                                         ${laender.length ? laender.map(l => `<option value="${dependencies.escapeHtml(l)}" ${l === land ? "selected" : ""}>${dependencies.escapeHtml(l)}</option>`).join("") : `<option value="">Keine Reise vorhanden</option>`}
                                     </select>
                                 </div>
-                                <select id="editGeplantKategorie-${e.id}">
+                                <label class="booking-field-label" for="editGeplantKategorie-${e.id}">Kategorie</label>
+<select class="booking-control" id="editGeplantKategorie-${e.id}">
                                     ${kategorien.map(k => `<option value="${dependencies.escapeHtml(k)}" ${k === kategorie ? "selected" : ""}>${dependencies.escapeHtml(k)}</option>`).join("")}
                                 </select>
-                                <select id="editGeplantBudget-${e.id}">
+                                <label class="booking-field-label" for="editGeplantBudget-${e.id}">Vom Frei verfügbar abziehen?</label>
+<select class="booking-control" id="editGeplantBudget-${e.id}">
                                     <option value="ja" ${e.budgetWirksam !== false ? "selected" : ""}>Ja, vom Frei verfügbar abziehen</option>
                                     <option value="nein" ${e.budgetWirksam === false ? "selected" : ""}>Nein, nur vormerken</option>
                                 </select>

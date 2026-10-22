@@ -176,14 +176,18 @@ Kostentracker.module({
                 const isEdit = String(context.session.state.editSparenInvestierenId) === String(e.id);
                 if (isEdit) return gruppenHeader + `
                     <div class="item" style="align-items:stretch;">
-                        <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
-                            <select id="editSparenTyp-${e.id}">
+                        <div class="booking-edit-form">
+                            <label class="booking-field-label" for="editSparenTyp-${e.id}">Art</label>
+<select class="booking-control" id="editSparenTyp-${e.id}">
                                 <option value="investieren" ${e.typ === "investieren" ? "selected" : ""}>📈 Investieren</option>
                                 <option value="sparen" ${e.typ === "sparen" ? "selected" : ""}>💰 Rücklage / Sparen</option>
                             </select>
-                            <input id="editSparenBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag pro Gehaltsperiode" enterkeyhint="next">
-                            <input id="editSparenText-${e.id}" autocapitalize="words" value="${dependencies.escapeHtml(e.text || '')}" placeholder="Beschreibung (optional)" enterkeyhint="next">
-                            <input id="editSparenDatum-${e.id}" type="date" value="${e.datum || ''}">
+                            <label class="booking-field-label" for="editSparenBetrag-${e.id}">Betrag pro Gehaltsperiode (€)</label>
+<input class="booking-control" id="editSparenBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag pro Gehaltsperiode" enterkeyhint="next">
+                            <label class="booking-field-label" for="editSparenText-${e.id}">Beschreibung (optional)</label>
+<input class="booking-control" id="editSparenText-${e.id}" autocapitalize="words" value="${dependencies.escapeHtml(e.text || '')}" placeholder="Beschreibung (optional)" enterkeyhint="next">
+                            <label class="booking-field-label" for="editSparenDatum-${e.id}">Gültig ab</label>
+<input class="booking-control" id="editSparenDatum-${e.id}" type="date" value="${e.datum || ''}">
                             <div style="display:flex;gap:10px;">
                                 <button onclick="saveEditSparenInvestieren('${e.id}')">💾 Speichern</button>
                                 <button onclick="cancelEditSparenInvestieren()" style="background:#3a3a3c;">❌ Abbrechen</button>

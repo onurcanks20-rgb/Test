@@ -143,12 +143,16 @@ Kostentracker.module({
                 const isEdit = String(context.session.state.editEinnahmeId) === String(e.id);
                 let html;
                 if (isEdit) {
-                    html = `<div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                        <input id="editEinnahmenText-${e.id}" value="${dependencies.escapeHtml(e.text || '')}" autocapitalize="words">
-                        <input id="editEinnahmenBetrag-${e.id}" type="text" inputmode="decimal" min="0" step="0.01" value="${dependencies.formatInputBetrag(e.betrag)}">
-                        <input id="editEinnahmenVon-${e.id}" value="${dependencies.escapeHtml(e.von || '')}" placeholder="Von wem? (optional)" autocapitalize="words">
+                    html = `<div class="booking-edit-form">
+                        <label class="booking-field-label" for="editEinnahmenText-${e.id}">Bezeichnung</label>
+<input class="booking-control" id="editEinnahmenText-${e.id}" value="${dependencies.escapeHtml(e.text || '')}" autocapitalize="words">
+                        <label class="booking-field-label" for="editEinnahmenBetrag-${e.id}">Betrag (€)</label>
+<input class="booking-control" id="editEinnahmenBetrag-${e.id}" type="text" inputmode="decimal" min="0" step="0.01" value="${dependencies.formatInputBetrag(e.betrag)}">
+                        <label class="booking-field-label" for="editEinnahmenVon-${e.id}">Von wem? (optional)</label>
+<input class="booking-control" id="editEinnahmenVon-${e.id}" value="${dependencies.escapeHtml(e.von || '')}" placeholder="Von wem? (optional)" autocapitalize="words">
                         <div class="entry-date-time"><label><span>Datum</span><input id="editEinnahmenDatum-${e.id}" type="date" value="${e.datum || ''}"></label>${dependencies.renderEntryTimeInput(`editEinnahmenUhrzeit-${e.id}`,e,e.wiederholung==='monatlich')}</div>
-                        <select id="editEinnahmenWiederholung-${e.id}" onchange="toggleIncomeTime('editEinnahmenWiederholung-${e.id}','editEinnahmenUhrzeit-${e.id}Wrap')"><option value="einmalig" ${e.wiederholung !== 'monatlich' ? 'selected' : ''}>Einmalig</option><option value="monatlich" ${e.wiederholung === 'monatlich' ? 'selected' : ''}>Monatlich</option></select>
+                        <label class="booking-field-label" for="editEinnahmenWiederholung-${e.id}">Wiederholung</label>
+<select class="booking-control" id="editEinnahmenWiederholung-${e.id}" onchange="toggleIncomeTime('editEinnahmenWiederholung-${e.id}','editEinnahmenUhrzeit-${e.id}Wrap')"><option value="einmalig" ${e.wiederholung !== 'monatlich' ? 'selected' : ''}>Einmalig</option><option value="monatlich" ${e.wiederholung === 'monatlich' ? 'selected' : ''}>Monatlich</option></select>
                         <div style="display:flex; gap:10px;"><button onclick="saveEditEinnahme('${e.id}')">💾 Speichern</button><button onclick="cancelEditEinnahme()">❌ Abbrechen</button></div>
                     </div>`;
                 } else {

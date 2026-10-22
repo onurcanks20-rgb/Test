@@ -135,18 +135,21 @@ Kostentracker.module({
 
                 if (isEdit) {
                     item = dependencies.createItem(`
-                    <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                        <input id="editKostenText-${k.id}" value="${dependencies.escapeHtml(k.text || k.name || "")}" placeholder="Beschreibung" autocapitalize="words">
-                        <input id="editKostenBetrag-${k.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(k.betrag)}" placeholder="Betrag">
-                        <input id="editKostenInfo-${k.id}" value="${dependencies.escapeHtml(k.info || "")}" placeholder="Info (z. B. Kundennummer, Vertragsnummer)" autocapitalize="words">
-                        <label for="editKostenHaendler-${k.id}" style="opacity:0.7; font-size:13px; margin-top:4px;">Anbieter (optional)</label>
-                        <input id="editKostenHaendler-${k.id}" value="${dependencies.escapeHtml(k.haendler || "")}" placeholder="z. B. Telekom oder Netflix" autocapitalize="off">
+                    <div class="booking-edit-form">
+                        <label class="booking-field-label" for="editKostenText-${k.id}">Beschreibung</label>
+<input class="booking-control" id="editKostenText-${k.id}" value="${dependencies.escapeHtml(k.text || k.name || "")}" placeholder="Beschreibung" autocapitalize="words">
+                        <label class="booking-field-label" for="editKostenBetrag-${k.id}">Betrag pro Monat (€)</label>
+<input class="booking-control" id="editKostenBetrag-${k.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(k.betrag)}" placeholder="Betrag">
+                        <label class="booking-field-label" for="editKostenInfo-${k.id}">Vertragsinfo (optional)</label>
+<input class="booking-control" id="editKostenInfo-${k.id}" value="${dependencies.escapeHtml(k.info || "")}" placeholder="Info (z. B. Kundennummer, Vertragsnummer)" autocapitalize="words">
+                        <label class="booking-field-label" for="editKostenHaendler-${k.id}">Anbieter (optional)</label>
+<input class="booking-control" id="editKostenHaendler-${k.id}" value="${dependencies.escapeHtml(k.haendler || "")}" placeholder="z. B. Telekom oder Netflix" autocapitalize="off">
                         <div class="info-text">Mehrere Namen mit einem Semikolon trennen.</div>
-                        <label for="editKostenZuordnungTage-${k.id}" style="opacity:0.7; font-size:13px; margin-top:4px;">Zeitfenster zur Fälligkeit (± Tage)</label>
-                        <input id="editKostenZuordnungTage-${k.id}" type="number" inputmode="numeric" min="0" max="31" step="1" value="${normalizeFixkostenZuordnungTage(k.zuordnungTage)}">
+                        <label class="booking-field-label" for="editKostenZuordnungTage-${k.id}">Zeitfenster zur Fälligkeit (± Tage)</label>
+<input class="booking-control" id="editKostenZuordnungTage-${k.id}" type="number" inputmode="numeric" min="0" max="31" step="1" value="${normalizeFixkostenZuordnungTage(k.zuordnungTage)}">
                         <div class="info-text">Vorbereitung für die Push-Erfassung: Tage vor oder nach der Fälligkeit.</div>
-                        <label for="editKostenDatum-${k.id}" style="opacity:0.7; font-size:13px; margin-top:4px;">Erste Abbuchung · danach monatlich</label>
-                        <input id="editKostenDatum-${k.id}" type="date" value="${datum}">
+                        <label class="booking-field-label" for="editKostenDatum-${k.id}">Erste Abbuchung · danach monatlich</label>
+<input class="booking-control" id="editKostenDatum-${k.id}" type="date" value="${datum}">
 
                         <div style="display:flex; gap:10px; margin-top:6px;">
                             <button onclick="saveEditKosten('${k.id}')">💾 Speichern</button>

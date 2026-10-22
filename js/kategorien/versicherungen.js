@@ -214,23 +214,30 @@ Kostentracker.module({
                 else {
 
                     item.innerHTML = `
-                <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                <div class="booking-edit-form">
 
-                    <input id="editName-${v.id}" value="${dependencies.escapeHtml(v.name || "")}" autocapitalize="words">
-                    <input id="editBetrag-${v.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(v.betrag)}">
-                    <input id="editDatum-${v.id}" type="date" value="${v.datum || ""}">
+                    <label class="booking-field-label" for="editName-${v.id}">Versicherung</label>
+<input class="booking-control" id="editName-${v.id}" value="${dependencies.escapeHtml(v.name || "")}" autocapitalize="words">
+                    <label class="booking-field-label" for="editBetrag-${v.id}">Betrag pro Zahlung (€)</label>
+<input class="booking-control" id="editBetrag-${v.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(v.betrag)}">
+                    <label class="booking-field-label" for="editDatum-${v.id}">Erste Zahlung</label>
+<input class="booking-control" id="editDatum-${v.id}" type="date" value="${v.datum || ""}">
 
-                    <input id="editAnbieter-${v.id}" value="${dependencies.escapeHtml(v.anbieter || "")}" autocapitalize="words">
-                    <input id="editNummer-${v.id}" value="${dependencies.escapeHtml(v.versicherungsnummer || "")}" autocapitalize="words">
+                    <label class="booking-field-label" for="editAnbieter-${v.id}">Anbieter (optional)</label>
+<input class="booking-control" id="editAnbieter-${v.id}" value="${dependencies.escapeHtml(v.anbieter || "")}" autocapitalize="words">
+                    <label class="booking-field-label" for="editNummer-${v.id}">Versicherungsnummer (optional)</label>
+<input class="booking-control" id="editNummer-${v.id}" value="${dependencies.escapeHtml(v.versicherungsnummer || "")}" autocapitalize="words">
 
-                    <select id="editIntervall-${v.id}">
+                    <label class="booking-field-label" for="editIntervall-${v.id}">Zahlungsrhythmus</label>
+<select class="booking-control" id="editIntervall-${v.id}">
                         <option value="monatlich" ${v.intervall === "monatlich" ? "selected" : ""}>monatlich</option>
                         <option value="vierteljährlich" ${v.intervall === "vierteljährlich" ? "selected" : ""}>vierteljährlich</option>
                         <option value="halbjährlich" ${v.intervall === "halbjährlich" ? "selected" : ""}>halbjährlich</option>
                         <option value="jährlich" ${v.intervall === "jährlich" ? "selected" : ""}>jährlich</option>
                     </select>
 
-                    <select id="editMonat-${v.id}">
+                    <label class="booking-field-label" for="editMonat-${v.id}">Startmonat</label>
+<select class="booking-control" id="editMonat-${v.id}">
                         <option value="1" ${parseInt(v.monat) === 1 ? "selected" : ""}>Januar</option>
                         <option value="2" ${parseInt(v.monat) === 2 ? "selected" : ""}>Februar</option>
                         <option value="3" ${parseInt(v.monat) === 3 ? "selected" : ""}>März</option>

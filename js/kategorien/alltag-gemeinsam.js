@@ -124,15 +124,19 @@ Kostentracker.module({
                 let html;
                 if (isEdit) {
                     html = istFreizeit ? `
-                        <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                            <input id="editFreizeitBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
-                            <input id="editFreizeitText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                        <div class="booking-edit-form">
+                            <label class="booking-field-label" for="editFreizeitBetrag-${e.id}">Betrag (€)</label>
+<input class="booking-control" id="editFreizeitBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                            <label class="booking-field-label" for="editFreizeitText-${e.id}">Beschreibung (optional)</label>
+<input class="booking-control" id="editFreizeitText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                             <div class="entry-date-time"><label><span>Datum</span><input id="editFreizeitDatum-${e.id}" type="date" value="${e.datum || ''}"></label>${dependencies.renderEntryTimeInput(`editFreizeitUhrzeit-${e.id}`,e)}</div>
                             <div style="display:flex; gap:10px;"><button onclick="saveEditFreizeit('${e.id}')">💾 Speichern</button><button onclick="cancelEditFreizeit()">❌ Abbrechen</button></div>
                         </div>` : `
-                        <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                            <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
-                            <input id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                        <div class="booking-edit-form">
+                            <label class="booking-field-label" for="editBetrag-${e.id}">Betrag (€)</label>
+<input class="booking-control" id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                            <label class="booking-field-label" for="editText-${e.id}">Beschreibung (optional)</label>
+<input class="booking-control" id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                             <div class="entry-date-time"><label><span>Datum</span><input id="editDatum-${e.id}" type="date" value="${e.datum || ''}"></label>${dependencies.renderEntryTimeInput(`editUhrzeit-${e.id}`,e)}</div>
                             <div style="display:flex; gap:10px;"><button onclick="saveEditHaushalt('${e.id}')">💾 Speichern</button><button onclick="cancelEditHaushalt()">❌ Abbrechen</button></div>
                         </div>`;

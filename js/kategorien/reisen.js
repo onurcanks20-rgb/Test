@@ -292,16 +292,17 @@ Kostentracker.module({
                 box.innerHTML = `
                     <div class="item reise-budget-editor">
                         <div class="reise-budget-editor-title">Reise planen</div>
-                        <input id="reiseBudgetEdit" type="text" inputmode="decimal" value="${budget ? dependencies.formatInputBetrag(budget) : ""}" placeholder="Budget in Euro" enterkeyhint="next">
+                        <label class="booking-field-label" for="reiseBudgetEdit">Budget in Euro</label>
+<input class="booking-control" id="reiseBudgetEdit" type="text" inputmode="decimal" value="${budget ? dependencies.formatInputBetrag(budget) : ""}" placeholder="Budget in Euro" enterkeyhint="next">
                         <div class="reise-currency-settings"><span>Reisewährung</span>${dependencies.renderReiseCurrencySelector(true)}</div>
                         <div class="date-range">
                             <div class="date-field">
-                                <label for="reiseVonEdit">Von</label>
-                                <input id="reiseVonEdit" type="date" value="${dependencies.escapeHtml(meta.von || "")}">
+                                <label class="booking-field-label" for="reiseVonEdit">Von</label>
+<input class="booking-control" id="reiseVonEdit" type="date" value="${dependencies.escapeHtml(meta.von || "")}">
                             </div>
                             <div class="date-field">
-                                <label for="reiseBisEdit">Bis</label>
-                                <input id="reiseBisEdit" type="date" value="${dependencies.escapeHtml(meta.bis || "")}">
+                                <label class="booking-field-label" for="reiseBisEdit">Bis</label>
+<input class="booking-control" id="reiseBisEdit" type="date" value="${dependencies.escapeHtml(meta.bis || "")}">
                             </div>
                         </div>
                         <div class="reise-form-actions">
@@ -641,8 +642,10 @@ Kostentracker.module({
 
                             sub.innerHTML = `
                         <div style="font-size:13px;opacity:.75;">Betrag in ${e.fx ? e.fx.currency : 'EUR'}${e.fx ? ' · gespeicherter Kurs' : ''}</div>
-                        <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.fx ? e.fx.amount : e.betrag)}" placeholder="Betrag in ${e.fx ? e.fx.currency : 'EUR'}" enterkeyhint="next">
-                        <input id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || "")}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                        <label class="booking-field-label" for="editBetrag-${e.id}">Betrag (${e.fx ? dependencies.escapeHtml(e.fx.currency) : 'EUR'})</label>
+<input class="booking-control" id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.fx ? e.fx.amount : e.betrag)}" placeholder="Betrag in ${e.fx ? e.fx.currency : 'EUR'}" enterkeyhint="next">
+                        <label class="booking-field-label" for="editText-${e.id}">Beschreibung (optional)</label>
+<input class="booking-control" id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || "")}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                         <div class="entry-date-time"><label><span>Datum</span><input id="editDatum-${e.id}" type="date" value="${e.datum || ""}"></label>${dependencies.renderEntryTimeInput(`editReiseUhrzeit-${e.id}`,e)}</div>
 
                         <div class="actions">
