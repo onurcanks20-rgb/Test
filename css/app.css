@@ -2168,3 +2168,90 @@ button:disabled { opacity:.5; cursor:default; }
 .payment-notice-merchant {font-weight:650;overflow-wrap:anywhere;}
 .payment-notice-target {font-size:13px;font-weight:400;opacity:.75;line-height:1.4;margin-top:4px;overflow-wrap:anywhere;}
 .payment-notice-edit {width:auto;min-height:44px;flex-shrink:0;margin:0;padding:10px 12px;border-radius:12px;background:var(--primary);color:#fff;font-size:14px;font-weight:600;}
+
+/* Buchungsformulare: dauerhafte Beschriftungen und gleiche Feldabstände. */
+.booking-field-label {
+    display:block;
+    margin:12px 0 6px;
+    color:var(--text);
+    opacity:.75;
+    font-size:13px;
+    font-weight:500;
+    line-height:18px;
+    text-align:left;
+}
+.booking-control {
+    display:block;
+    width:100%;
+    min-width:0;
+    min-height:48px;
+    box-sizing:border-box;
+    margin:0 0 4px;
+    padding:12px 14px;
+    font-size:16px;
+    line-height:24px;
+    border-radius:12px;
+}
+.booking-control:focus-visible {
+    outline:2px solid var(--primary);
+    outline-offset:2px;
+}
+.booking-edit-form {
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    width:100%;
+    min-width:0;
+}
+.booking-edit-form > .booking-field-label:first-child { margin-top:0; }
+.booking-edit-form > .info-text { margin:4px 0 8px; }
+.booking-edit-form > div:has(> button) { margin-top:12px; }
+.category-add-panel .entry-date-time,
+.booking-edit-form .entry-date-time { margin:12px 0; }
+.category-add-panel .date-range,
+.reise-budget-editor .date-range { align-items:start; margin:12px 0; }
+.category-add-panel .date-field > .booking-field-label,
+.reise-budget-editor .date-field > .booking-field-label { margin:0 0 6px; }
+.category-add-panel .entry-date-time > label > span,
+.category-add-panel .entry-date-time .entry-time-field > label,
+.booking-edit-form .entry-date-time > label > span,
+.booking-edit-form .entry-date-time .entry-time-field > label {
+    font-size:13px;
+    font-weight:500;
+    line-height:18px;
+    opacity:.75;
+}
+.booking-control[type="date"] {
+    height:48px;
+    min-height:48px;
+    max-height:48px;
+    padding:11px 12px;
+    border:1px solid rgba(128,128,128,.28);
+    background:#1c1c1e;
+    color:#fff;
+    color-scheme:dark;
+    -webkit-appearance:none;
+    appearance:none;
+    text-align:left;
+    line-height:24px;
+}
+.booking-control[type="date"]::-webkit-date-and-time-value {
+    margin:0;
+    padding:0;
+    line-height:24px;
+    text-align:left;
+}
+.booking-control[type="date"]::-webkit-datetime-edit { padding:0; }
+:root[data-theme="light"] .booking-control[type="date"] {
+    background:#fff;
+    color:#000;
+    color-scheme:light;
+}
+@media (max-width:360px) {
+    .category-add-panel .entry-date-time,
+    .booking-edit-form .entry-date-time { grid-template-columns:minmax(0,1fr); }
+}
+.category-add-panel .reise-amount-input-row { margin:0 0 4px; }
+#land .reise-budget-editor { gap:0; }
+#land .reise-budget-editor .reise-currency-settings { margin:12px 0 0; }
+#land .reise-budget-editor .date-field .booking-control { min-height:48px; }
