@@ -2470,3 +2470,15 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
 }
 
 .alltag-page .item.compact-alltag-card { display:block; }
+
+/* Reservierung: Hilfe rechts oben, ohne zusätzliche Zeile im Betrag. */
+#geplantZusammenfassung { position:relative; }
+#geplantZusammenfassung .bereich-week-info-label { padding-right:40px; }
+#geplantZusammenfassung .category-info-button {
+    position:absolute;top:5px;right:6px;
+    display:grid;place-items:center;
+    width:44px;height:44px;min-width:44px;min-height:44px;
+    margin:0;padding:0;border:0;border-radius:50%;
+    background:transparent;color:var(--alltag-muted);font-size:20px;line-height:1;
+}
+#geplantZusammenfassung .category-info-button:focus-visible { outline:2px solid var(--primary);outline-offset:-3px; }
