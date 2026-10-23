@@ -2394,3 +2394,8 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
     .alltag-list-heading h3 { font-size:18px; }
     .alltag-page .alltag-archive { padding:8px;font-size:11px; }
 }
+
+/* Überschreibt die ältere globale Kartenfarbe nur für die neue Alltagsansicht. */
+:root[data-theme="light"] :is(#haushaltView,#freizeitView) .item.alltag-entry {
+    background:#ffffff !important;
+}
