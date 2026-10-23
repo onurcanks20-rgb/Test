@@ -2951,3 +2951,50 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
 #grafikView .grafik-total { font-size:22px; }
 #grafikView .grafik-stat-label { font-size:13px; }
 #grafikView .grafik-stat-value { font-size:20px; }
+
+/* Archive – volle Zeilenbreite, ruhige Gruppen, feste Navigation darüber. */
+:is(#ausgabenArchivView,#globalArchivView) { padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
+:is(#ausgabenArchivView,#globalArchivView) .container.alltag-header { position:relative;z-index:1; }
+:is(#ausgabenArchivView,#globalArchivView) .alltag-topbar { margin-bottom:16px; }
+:is(#ausgabenArchivView,#globalArchivView) .alltag-topbar h2 { font-size:22px; }
+:is(#ausgabenArchivView,#globalArchivView) .alltag-search { margin:12px 0; }
+#ausgabenArchivView :is(.item,.swipe-entry-shell) { width:100%;max-width:100%;box-sizing:border-box;margin-left:0 !important; }
+#ausgabenArchivView .compact-alltag-content { grid-template-columns:32px minmax(0,1fr) auto;gap:10px; }
+#ausgabenArchivView :is(.archive-year-toggle,.archive-month-toggle) { display:block;min-height:48px;margin:10px 0 6px;padding:12px;border:0;border-radius:10px;background:var(--alltag-surface);font-size:14px;box-shadow:none; }
+#ausgabenArchivView .archive-year-toggle { margin-top:20px;font-weight:650; }
+#ausgabenArchivView .archive-month-toggle { color:var(--alltag-muted);background:transparent;padding:10px 2px; }
+#ausgabenArchivView :is(.archive-year-toggle,.archive-month-toggle) strong { flex-shrink:0;white-space:nowrap;font-size:14px;font-weight:600;color:var(--text); }
+.archive-group-label { display:flex;align-items:center;gap:8px;min-width:0; }
+.archive-group-chevron { flex:0 0 16px;width:16px;height:16px;color:var(--alltag-muted); }
+.archive-group-chevron.is-open { transform:rotate(90deg); }
+#ausgabenArchivView .item.alltag-entry { padding:12px;min-height:72px; }
+#ausgabenArchivView .item.alltag-entry:not(.compact-alltag-card) { display:block; }
+#ausgabenArchivView .booking-control { background:#fff;color:#111;color-scheme:light; }
+#ausgabenArchivView :is(.archive-year-toggle,.archive-month-toggle):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
+#globalArchivView .archive-filter-card { margin:0 0 18px;padding:14px;border:0;border-radius:12px;background:var(--alltag-surface); }
+#globalArchivView .archive-filter-card .alltag-search { margin:0 0 12px; }
+#globalArchivView .archive-filter-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+#globalArchivView .archive-filter-grid > select:nth-child(3) { grid-column:1/-1; }
+#globalArchivView .archive-filter-grid :is(input,select) { width:100%;max-width:100%;min-width:0;min-height:46px;margin:0;padding:11px 12px;border:1px solid #dedee3;border-radius:9px;background:#fff;color:#111;color-scheme:light;font-size:16px; }
+#globalArchivView .archive-date-field label { margin:0 0 6px;font-size:12px;font-weight:500;color:var(--alltag-muted); }
+#globalArchivView .archive-filter-card button { display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px;border-radius:9px;background:var(--alltag-row) !important;color:var(--text);font-size:13px;font-weight:500; }
+#globalArchivView .archive-filter-card button .alltag-icon { width:18px;height:18px; }
+#globalArchivView #globalArchivTransferStatus { color:var(--alltag-muted);font-size:11px;line-height:1.5; }
+#globalArchivView .archive-year { margin:20px 2px 8px;font-size:18px;font-weight:650; }
+#globalArchivView .archive-month { margin:0 0 14px;border:0;border-radius:12px;background:var(--alltag-surface);overflow:hidden; }
+#globalArchivView .archive-month-head { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;box-sizing:border-box;margin:0;padding:12px;border-radius:0;background:transparent;color:var(--text);text-align:left;font-size:14px; }
+#globalArchivView .archive-month-title { display:flex;align-items:center;gap:6px;font-weight:600; }
+#globalArchivView .archive-month-sum { min-width:0;font-size:13px;font-weight:600;white-space:normal;text-align:right; }
+#globalArchivView .archive-entry { display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:74px;box-sizing:border-box;padding:12px;border-color:var(--alltag-line); }
+#globalArchivView .archive-category-icon { display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:color-mix(in srgb,var(--primary) 10%,transparent);color:var(--primary); }
+#globalArchivView .archive-category-icon .alltag-icon { width:19px;height:19px; }
+#globalArchivView .archive-entry-type { margin:0 0 4px;font-size:11px;line-height:1.35;color:var(--alltag-muted);opacity:1; }
+#globalArchivView .archive-entry-title { font-size:14px;font-weight:600;line-height:1.35; }
+#globalArchivView .archive-entry-meta { margin-top:4px;font-size:12px;line-height:1.4;color:var(--alltag-muted);opacity:1; }
+#globalArchivView .archive-entry-amount { font-size:16px;font-weight:650;letter-spacing:-.025em; }
+@media(max-width:360px) {
+ #globalArchivView .archive-filter-grid { grid-template-columns:1fr; }
+ #globalArchivView .archive-entry { grid-template-columns:28px minmax(0,1fr) auto;gap:8px;padding:11px 10px; }
+ #globalArchivView .archive-category-icon { width:28px;height:28px; }
+ #globalArchivView .archive-entry-amount { font-size:14px; }
+}
