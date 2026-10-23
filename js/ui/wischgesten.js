@@ -126,6 +126,13 @@ function swipeEntryMeta(shell) {
             }
 
             function animateSwipeDelete(shell, deleteButton, width) {
+                /* Country swipe confirmation. */
+                if (deleteButton?.getAttribute('data-swipe-confirm') === 'true') {
+                    deleteButton.click();
+                    closeSwipe(shell);
+                    return;
+                }
+                /* End country swipe confirmation. */
                 animateSwipeRemoval(shell, width, -1, () => {
                     const oldConfirm = window.confirm;
                     try {
