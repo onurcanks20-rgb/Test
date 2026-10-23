@@ -2928,3 +2928,26 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
 #grafikView .bottom-nav .alltag-icon { width:24px;height:24px; }
 #grafikView :is(button,input,select):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
 @media(max-width:360px) { #grafikView .grafik-compare-period .date-range { grid-template-columns:1fr; } #grafikView .grafik-compare-options { grid-template-columns:1fr; } }
+
+/* Grafik: Auswahl mittig, Beschriftungen leichter lesbar. */
+#grafikView label.grafik-compare-option {
+    display:flex;align-items:center;justify-content:flex-start;gap:10px;
+    min-height:48px;margin:0;padding:10px;opacity:1;font-size:14px;line-height:1.35;
+}
+#grafikView .grafik-compare-option input[type="checkbox"] {
+    appearance:auto;-webkit-appearance:checkbox;display:block;position:static;
+    flex:0 0 21px;width:21px;height:21px;min-width:21px;min-height:21px;
+    max-width:21px;max-height:21px;margin:0;padding:0;border:0;border-radius:0;
+    box-sizing:border-box;vertical-align:middle;align-self:center;
+}
+#grafikView .grafik-compare-option > span { display:block;min-width:0;line-height:1.35; }
+#grafikView .grafik-axis-label { font-size:12px; }
+#grafikView .grafik-compare-legend { font-size:14px;line-height:1.45;gap:8px 14px; }
+#grafikView .grafik-legend-name,#grafikView .grafik-legend-value { font-size:14px; }
+#grafikView .grafik-donut-center span { font-size:13px; }
+#grafikView .grafik-donut-center strong { font-size:21px; }
+#grafikView .grafik-chart-title { font-size:18px; }
+#grafikView .grafik-chart-subtitle { font-size:13px; }
+#grafikView .grafik-total { font-size:22px; }
+#grafikView .grafik-stat-label { font-size:13px; }
+#grafikView .grafik-stat-value { font-size:20px; }
