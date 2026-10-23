@@ -2264,3 +2264,133 @@ button:disabled { opacity:.5; cursor:default; }
 
 /* Die Start-Schnelleingabe hat bereits einen eigenen Abbrechen-Button. */
 #reiseAddPanel.quick-entry-mode .reise-add-cancel { display:none; }
+
+/* Haushalt & Freizeit – kompakte, ruhige Kategorieansicht. */
+.alltag-symbols { position:absolute;width:0;height:0;overflow:hidden;pointer-events:none; }
+.alltag-icon { display:block;width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0; }
+.alltag-nav-vector { display:none; }
+.alltag-page {
+    --alltag-surface:#1c1c1e;
+    --alltag-row:#242426;
+    --alltag-muted:#a3a3aa;
+    --alltag-line:rgba(255,255,255,.07);
+    padding-bottom:calc(100px + env(safe-area-inset-bottom));
+}
+:root[data-theme="light"] .alltag-page {
+    --alltag-surface:#fff;
+    --alltag-row:#fff;
+    --alltag-muted:#686870;
+    --alltag-line:rgba(0,0,0,.07);
+}
+:is(#haushaltView,#freizeitView) .container {
+    width:calc(100% - 32px);
+    max-width:488px;
+    margin:16px auto;
+    padding:0;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+}
+:is(#haushaltView,#freizeitView) .alltag-header {
+    position:relative;
+    z-index:60;
+    padding:12px;
+    border-radius:22px;
+    background:var(--alltag-surface);
+}
+.alltag-page .alltag-topbar { display:flex;align-items:center;gap:10px;min-height:48px;margin:0; }
+.alltag-page .alltag-topbar h2 { flex:1;min-width:0;margin:0;font-size:25px;font-weight:700;line-height:1.2;letter-spacing:-.035em;overflow-wrap:anywhere; }
+.alltag-page .alltag-topbar :is(.back-btn,.category-add-btn),
+.alltag-overflow > summary {
+    display:grid;place-items:center;flex:0 0 44px;
+    width:44px;height:44px;min-height:44px;
+    padding:0;margin:0;border:0;border-radius:50%;
+    background:var(--secondary);color:var(--text);cursor:pointer;
+}
+.alltag-page .alltag-topbar .category-add-btn { background:var(--action-add);color:#fff; }
+.alltag-page .alltag-topbar .back-btn .alltag-icon { width:26px;height:26px; }
+.alltag-page .category-add-panel { margin-top:16px;background:var(--alltag-surface); }
+.alltag-overflow { position:relative;flex:0 0 44px; }
+.alltag-overflow:has(.alltag-delete-action.hidden) { display:none; }
+.alltag-overflow > summary { list-style:none; }
+.alltag-overflow > summary::-webkit-details-marker { display:none; }
+.alltag-overflow[open] > summary::before { content:"";position:fixed;inset:0;z-index:1;cursor:default; }
+.alltag-overflow > summary .alltag-icon { position:relative;z-index:2; }
+.alltag-menu {
+    position:absolute;right:-54px;top:54px;z-index:3;
+    width:280px;max-width:calc(100vw - 40px);
+    padding:6px;border:1px solid var(--alltag-line);border-radius:18px;
+    background:var(--secondary);box-shadow:0 12px 40px rgba(0,0,0,.28);
+}
+.alltag-page .alltag-menu .alltag-delete-action {
+    display:flex;align-items:center;gap:12px;width:100%;min-height:56px;
+    margin:0;padding:12px;border:0;border-radius:12px;
+    background:transparent;color:var(--danger);
+    font-size:15px;font-weight:500;line-height:1.4;text-align:left;
+}
+.alltag-page .alltag-menu .alltag-delete-action.hidden { display:none; }
+.alltag-page .alltag-menu .alltag-delete-action:hover { background:rgba(128,128,128,.12); }
+.alltag-page :is(button,summary):focus-visible { outline:2px solid var(--primary);outline-offset:3px; }
+.alltag-page .bereich-week-info {
+    margin:0 0 24px;padding:20px;
+    border:1px solid var(--alltag-line);border-radius:22px;
+    background:var(--alltag-surface);
+}
+.alltag-page .bereich-week-info-top { display:flex;flex-direction:column;align-items:flex-start;gap:8px; }
+.alltag-page .bereich-week-info-label { color:var(--alltag-muted);opacity:1;font-size:11px;font-weight:500;letter-spacing:.07em; }
+.alltag-page .bereich-week-info-amount { font-size:34px;font-weight:700;line-height:1.15;letter-spacing:-.04em;font-variant-numeric:tabular-nums; }
+.alltag-page .bereich-week-info-breakdown { margin-top:10px;color:var(--alltag-muted);opacity:1;font-size:12px;line-height:1.5; }
+.alltag-list-heading { display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 14px; }
+.alltag-list-heading h3 { font-size:20px;line-height:1.2;font-weight:700;letter-spacing:-.03em; }
+.alltag-page .alltag-archive { display:flex;align-items:center;gap:6px;width:auto;min-height:44px;margin:0;padding:8px 12px;border-radius:18px;background:var(--secondary);color:var(--text);font-size:12px;font-weight:500;white-space:nowrap; }
+.alltag-archive .alltag-icon { width:16px;height:16px;opacity:.75; }
+.alltag-search { display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:0 14px;border:1px solid var(--alltag-line);border-radius:17px;background:var(--secondary); }
+.alltag-search > .alltag-icon { width:20px;height:20px;color:var(--alltag-muted); }
+.alltag-page .alltag-search .list-search { flex:1;min-width:0;min-height:48px;margin:0;padding:12px 0;border:0;border-radius:0;background:transparent;color:var(--text);font-size:15px;box-shadow:none;outline:none; }
+.alltag-search:focus-within { outline:2px solid var(--primary);outline-offset:2px; }
+.alltag-page .list-search::placeholder { color:var(--alltag-muted);opacity:1; }
+.alltag-page .date-group-title { margin:22px 2px 9px;font-size:14px;font-weight:600;letter-spacing:0;color:var(--alltag-muted); }
+.alltag-page .date-group-title.first { margin-top:0; }
+.alltag-page .date-group-total { color:var(--text);font-size:13px;font-weight:600; }
+:is(#haushaltView,#freizeitView) .item.alltag-entry {
+    margin:9px 0;padding:16px 12px;
+    border:1px solid var(--alltag-line);border-radius:20px;
+    background:var(--alltag-row);box-shadow:none;
+}
+.alltag-page .compact-alltag-content { grid-template-columns:36px minmax(0,1fr) auto 20px;gap:10px;min-height:44px; }
+.alltag-category-icon { display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:color-mix(in srgb,var(--primary) 15%,transparent);color:var(--primary); }
+.alltag-category-icon .alltag-icon { width:21px;height:21px; }
+.alltag-page .compact-alltag-main { gap:4px; }
+.alltag-page .compact-alltag-title { font-size:15px;font-weight:650;line-height:1.3;letter-spacing:-.015em; }
+.alltag-page .compact-alltag-sub { color:var(--alltag-muted);opacity:1;font-size:12px;line-height:1.4; }
+.alltag-page .compact-alltag-amount { font-size:16px;font-weight:650;letter-spacing:-.025em;font-variant-numeric:tabular-nums; }
+.alltag-page .alltag-row-open { display:grid;place-items:center;align-self:stretch;width:28px;min-height:44px;margin:0 0 0 -4px;padding:0;background:transparent;color:var(--alltag-muted); }
+.alltag-row-open .alltag-icon { width:16px;height:16px; }
+.alltag-page .swipe-entry-shell { margin:9px 0;border-radius:20px; }
+.alltag-page .swipe-entry-shell > .item.alltag-entry { margin:0; }
+.alltag-page .empty-state { padding:28px 18px;border:1px dashed var(--alltag-line);border-radius:20px;background:var(--alltag-surface); }
+.alltag-page .empty-state-title { font-size:16px; }
+.alltag-page .empty-state-text { font-size:13px;line-height:1.5;color:var(--alltag-muted); }
+/* Gemeinsame Navigation bleibt funktional identisch, neue Symbole nur auf diesen zwei Seiten. */
+body:has(.alltag-page:not(.hidden)) #categoryBottomNav {
+    left:0;bottom:0;transform:none;width:100%;max-width:none;
+    gap:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    border:0;border-top:1px solid rgba(128,128,128,.18);border-radius:0;
+    background:var(--bg);box-shadow:none;
+}
+body:has(.alltag-page:not(.hidden)) #categoryBottomNav button { min-height:48px;padding:4px 8px;font-size:11px;font-weight:500;line-height:1.4;background:transparent; }
+body:has(.alltag-page:not(.hidden)) #categoryBottomNav .nav-icon { display:grid;place-items:center;min-height:26px;margin-bottom:4px; }
+body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-emoji { display:none; }
+body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { display:block;width:24px;height:24px; }
+@media(max-width:360px) {
+    .alltag-page .alltag-topbar { gap:6px; }
+    .alltag-page .alltag-topbar h2 { font-size:22px; }
+    .alltag-page .compact-alltag-content { grid-template-columns:32px minmax(0,1fr) auto 16px;gap:6px; }
+    .alltag-category-icon { width:32px;height:32px; }
+    .alltag-page .compact-alltag-amount { font-size:14px; }
+    .alltag-list-heading h3 { font-size:18px; }
+    .alltag-page .alltag-archive { padding:8px;font-size:11px; }
+}
