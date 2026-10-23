@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/ui/ausgabenarchiv.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "alltagZusatztext",
     "createItem",
     "datumZeitwert",
@@ -191,25 +192,25 @@ Kostentracker.module({
                         } else {
                             const zusatz = dependencies.alltagZusatztext(e);
                             const istAusgeblendet = dependencies.istEintragAusgeblendet(typ, e.id);
-                            item = dependencies.createItem(`<div class="compact-alltag-content">
+                            item = dependencies.createItem(`<div class="compact-alltag-content"><span class="alltag-category-icon">${dependencies.alltagCategoryIcon(e.kategorie)}</span>
                                 <div class="compact-alltag-main">
                                     <span class="compact-alltag-title">${dependencies.escapeHtml(e.kategorie || 'Sonstiges')}</span>
                                     ${istAusgeblendet ? `<span class="compact-alltag-sub" style="opacity:.9;">👁️‍🗨️ Ausgeblendet</span>` : ''}
                                     ${zusatz || dependencies.entryClock(e) ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(zusatz)}${dependencies.renderEntryTime(e,!!zusatz)}</span>` : ''}
                                     ${e.datum ? `<span class="compact-alltag-sub">${dependencies.formatDatum(e.datum)}</span>` : ''}
                                 </div>
-                                <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
+                                <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" onclick="event.stopPropagation();toggleArchivDetails('${typ}','${e.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-chevron"></use></svg></button>
                                 <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                                     ${istAusgeblendet ? `<button onclick="event.stopPropagation(); eintragEinblenden('${typ}','${e.id}')" title="Wieder einblenden">👁️</button>` : ''}
-                                    <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
-                                    <button class="edit" onclick="event.stopPropagation(); startEditAusgabenArchiv('${typ}','${e.id}')">✏️</button>
-                                    <button class="delete" onclick="event.stopPropagation(); deleteArchivEintrag('${typ}','${e.id}')">🗑️</button>
+                                    <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-move"></use></svg></button>
+                                    <button class="edit" onclick="event.stopPropagation(); startEditAusgabenArchiv('${typ}','${e.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-edit"></use></svg></button>
+                                    <button class="delete" onclick="event.stopPropagation(); deleteArchivEintrag('${typ}','${e.id}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-delete"></use></svg></button>
                                 </div>
                             </div>`,40);
                             item.classList.add("compact-alltag-card");
                         }
 
-                        item.style.background = "#3a3a3c";
+                        item.classList.add("alltag-entry");
                         container.appendChild(item);
                     });
                 });
