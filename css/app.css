@@ -2796,3 +2796,78 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
 :root input:is([type="date"],[type="time"],[type="datetime-local"]) {
     background:#fff !important;color:#111 !important;-webkit-text-fill-color:#111 !important;color-scheme:light !important;
 }
+
+/* Startseite – freigegebener Entwurf, mit den vorhandenen Budgetberechnungen. */
+#home.home-dashboard { --home-surface:#19191b;--home-muted:#a3a3aa;--home-line:rgba(128,128,128,.18);padding-bottom:calc(72px + env(safe-area-inset-bottom)); }
+:root[data-theme="light"] #home.home-dashboard { --home-surface:#fff;--home-muted:#686870; }
+#home.home-dashboard > .container.app-shell { width:calc(100% - 32px);max-width:488px;margin:12px auto;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none; }
+#home.home-dashboard .topbar { margin:0 0 4px;gap:10px;min-height:48px;padding:6px 0; }
+#home.home-dashboard .topbar h2 { min-width:0;margin:0;font-size:26px;font-weight:700;line-height:1.2;letter-spacing:-.04em; }
+#home.home-dashboard .icon-btn { width:44px;height:44px;min-height:44px;margin:0;padding:0;background:transparent;color:var(--home-muted); }
+#home.home-dashboard .home-sync-status { margin:0 0 12px;min-height:28px;font-size:11px;line-height:1.3; }
+#home.home-dashboard .hero-card { margin:0 0 18px;padding:6px 0 0;border:0;border-radius:0;background:transparent;box-shadow:none;text-align:left; }
+#home.home-dashboard .hero-label { color:var(--home-muted);font-size:12px;font-weight:500;letter-spacing:.06em;opacity:1; }
+#home.home-dashboard .hero-amount { margin:7px 0 4px;font-size:clamp(32px,10.8vw,48px);font-weight:700;line-height:1.1;letter-spacing:-.04em; }
+#home.home-dashboard .hero-amount span { font-weight:700 !important;white-space:normal !important;overflow-wrap:anywhere; }
+#home.home-dashboard .link-button { display:inline-flex;align-items:center;min-height:44px;margin:0;padding:8px 0;color:var(--primary);font-size:14px;font-weight:500; }
+#home.home-dashboard .compact-details { margin-top:8px;padding:12px 14px;border-radius:12px;background:var(--home-surface); }
+#home.home-dashboard .calc-row { align-items:baseline;padding:9px 0;border-color:var(--home-line);font-size:13px;line-height:1.4; }
+#home.home-dashboard .calc-row > span:first-child { color:var(--home-muted); }
+#home.home-dashboard .calc-row > span:last-child { min-width:0;text-align:right; }
+#home.home-dashboard .detail-note { color:var(--home-muted);opacity:1;font-size:12px; }
+#home.home-dashboard .home-week-panel { margin:0 0 14px;border-radius:12px;background:var(--home-surface);overflow:hidden; }
+#home.home-dashboard .week-summary-card { margin:0;padding:16px;border:0;border-radius:0;background:transparent;box-shadow:none; }
+#home.home-dashboard .week-summary-head { align-items:baseline;gap:8px; }
+#home.home-dashboard .week-summary-title { text-transform:none;font-size:15px;font-weight:600;letter-spacing:0;opacity:1; }
+#home.home-dashboard .week-summary-dates { margin:0;color:var(--home-muted);font-size:11px;line-height:1.35;opacity:1; }
+#home.home-dashboard .home-week-balance { display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;margin:10px 0 4px;font-size:26px;font-weight:650;line-height:1.2;letter-spacing:-.025em; }
+#home.home-dashboard .week-summary-amount { font-size:inherit;font-weight:inherit; }
+#home.home-dashboard .home-week-budget { color:var(--home-muted);font-size:13px;line-height:1.4; }
+#home.home-dashboard .home-week-budget span { font-weight:inherit !important; }
+#home.home-dashboard .home-week-progress-row { display:flex;align-items:center;gap:10px;margin-top:13px; }
+#home.home-dashboard .home-week-progress { flex:1;min-width:0;height:8px;overflow:hidden;border-radius:5px;background:rgba(128,128,128,.22); }
+#home.home-dashboard .home-week-progress > span { display:block;height:100%;width:0;border-radius:inherit;background:var(--primary); }
+#home.home-dashboard .home-week-progress.over-budget > span { background:#ef5448; }
+#home.home-dashboard #homeWeekProgressLabel { flex-shrink:0;font-size:10px;color:var(--home-muted); }
+#home.home-dashboard .home-salary-info { margin:0 16px;border-top:1px solid var(--home-line); }
+#home.home-dashboard .salary-row { display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1.2fr);gap:10px;align-items:center;min-height:52px;margin:0;padding:10px 0;opacity:1;font-size:13px;line-height:1.4; }
+#home.home-dashboard .salary-row + .salary-row { border-top:1px solid var(--home-line); }
+#home.home-dashboard .salary-row strong { min-width:0;font-size:13px;font-weight:600;text-align:right;overflow-wrap:anywhere; }
+#home.home-dashboard .home-fact-icon { display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:color-mix(in srgb,var(--primary) 10%,transparent);color:var(--primary); }
+#home.home-dashboard .home-fact-icon .alltag-icon { width:18px;height:18px; }
+#home.home-dashboard .primary-add { display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;margin:0 0 20px;padding:12px;border-radius:10px;font-size:15px;font-weight:600; }
+#home.home-dashboard .primary-add .alltag-icon { width:22px;height:22px; }
+#home.home-dashboard .home-recent-heading { display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px; }
+#home.home-dashboard .home-recent-heading h3 { margin:0;font-size:18px;font-weight:650;letter-spacing:-.025em; }
+#home.home-dashboard #homeAllBookings { display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;width:auto;min-height:44px;margin:0;padding:6px 0;background:transparent;color:var(--primary);font-size:12px;font-weight:500; }
+#home.home-dashboard #homeAllBookings .alltag-icon { width:16px;height:16px; }
+#home.home-dashboard .home-recent-list { border-radius:12px;background:var(--home-surface);overflow:hidden; }
+#home.home-dashboard .home-booking-row { display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:center;min-height:68px;padding:12px;border-bottom:1px solid var(--home-line); }
+#home.home-dashboard .home-booking-row:last-child { border-bottom:0; }
+#home.home-dashboard .home-booking-icon { display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:color-mix(in srgb,var(--primary) 10%,transparent);color:var(--primary); }
+#home.home-dashboard .home-booking-icon .alltag-icon { width:19px;height:19px; }
+#home.home-dashboard .home-booking-main { display:flex;flex-direction:column;gap:4px;min-width:0; }
+#home.home-dashboard .home-booking-main > strong { overflow-wrap:anywhere;font-size:14px;font-weight:600;line-height:1.3; }
+#home.home-dashboard .home-booking-main > span { color:var(--home-muted);font-size:11px;line-height:1.4;overflow-wrap:anywhere; }
+#home.home-dashboard .home-booking-amount { white-space:nowrap;font-size:14px;font-weight:600; }
+#home.home-dashboard .home-booking-empty { padding:18px 14px;font-size:13px;color:var(--home-muted); }
+#home.home-dashboard .bottom-nav { left:0;bottom:0;transform:none;width:100%;max-width:none;gap:0;padding:4px 16px max(4px, env(safe-area-inset-bottom));border:0;border-top:1px solid var(--home-line);border-radius:0;background:var(--bg);box-shadow:none; }
+#home.home-dashboard .bottom-nav button { min-height:44px;margin:0;padding:2px 8px;gap:1px;font-size:11px;font-weight:500;line-height:1.2;background:transparent; }
+#home.home-dashboard .bottom-nav .nav-icon { display:grid;place-items:center;min-height:24px;margin:0; }
+#home.home-dashboard .bottom-nav .alltag-icon { width:24px;height:24px; }
+#home.home-dashboard :is(.week-summary-card,.icon-btn,.primary-add,#homeAllBookings):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
+@media(max-width:360px) {
+    #home.home-dashboard .topbar h2 { font-size:23px; }
+    #home.home-dashboard .salary-row { grid-template-columns:24px minmax(0,1fr) minmax(0,1.1fr);gap:8px;font-size:12px; }
+    #home.home-dashboard .salary-row strong { font-size:12px; }
+    #home.home-dashboard .home-recent-heading h3 { font-size:17px; }
+}
+#home.home-dashboard .home-trip-card { border:0;border-radius:12px;background:var(--home-surface); }
+#home.home-dashboard .home-trip-open { padding:14px;gap:5px; }
+#home.home-dashboard .home-trip-country { font-size:17px;font-weight:600; }
+#home.home-dashboard .home-trip-remaining { font-size:12px; }
+#home.home-dashboard .home-trip-add { min-height:44px;font-size:13px; }
+#home.home-dashboard .home-warning-card { margin:12px 0;padding:14px;border-radius:12px;box-shadow:none; }
+#home.home-dashboard .home-warning-head strong { font-size:15px; }
+#home.home-dashboard .home-warning-title { font-size:13px; }
+#home.home-dashboard .week-summary-card:focus-visible { outline-offset:-3px; }
