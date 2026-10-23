@@ -151,11 +151,10 @@ Kostentracker.module({
                 item.innerHTML = `
             <span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Reise')}</span><div class="land-main">
                 ${context.session.state.editLandName === land
-                    ? `<input id="editLand-${dependencies.safeId(land)}" value="${dependencies.escapeHtml(land)}">`
-                    : `<span class="land-name">${dependencies.escapeHtml(land)}</span>`
+                    ? `<label class="booking-field-label" for="editLand-${dependencies.safeId(land)}">Land</label><input class="booking-control" id="editLand-${dependencies.safeId(land)}" value="${dependencies.escapeHtml(land)}">`
+                    : `<div class="land-head"><span class="land-name">${dependencies.escapeHtml(land)}</span><strong class="land-spent" aria-label="Ausgegeben: ${dependencies.formatBetragText(sum)}">${dependencies.formatBetrag(sum)}</strong></div>`
                 }
                 <div class="land-stats">
-                    <span class="land-spent">Ausgegeben: ${dependencies.formatBetrag(sum)}</span>
                     ${budget > 0
                         ? `<span>Übrig: ${dependencies.formatBetrag(uebrig)} von ${dependencies.formatBetrag(budget)}</span>`
                         : `<span>Kein Budget festgelegt</span>`}
@@ -163,7 +162,7 @@ Kostentracker.module({
             </div>
         `;
 
-                item.onclick = () => {
+                item.onclick = event => {
                     if (context.session.state.editLandName !== land) {
                         openLand(land);
                     }
@@ -208,6 +207,8 @@ Kostentracker.module({
                 // 🗑️ Button daneben
                 let delBtn = document.createElement("button");
                 delBtn.className = "delete";
+                delBtn.type = "button";
+                delBtn.setAttribute("data-swipe-confirm", "true");
                 delBtn.innerHTML = '<svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg>';delBtn.setAttribute('aria-label','Reise löschen');
 
                 // 🔥 wichtig: verhindert Öffnen
@@ -223,6 +224,7 @@ Kostentracker.module({
                     actions.appendChild(delBtn);
                 }
 
+                if (context.session.state.editLandName !== land) actions.classList.add("actions");
                 item.appendChild(actions);
                 row.appendChild(item);
 
@@ -569,6 +571,7 @@ Kostentracker.module({
                 item.className = "item reise-category-card" + ((context.session.state.offeneKategorie === k || context.session.state.editKategorieName === k) ? " reise-category-open" : "");
 
                 const editingCategory = context.session.state.editKategorieName === k;
+                if (editingCategory) item.classList.add("reise-category-editing");
                 const categoryMain = document.createElement("div");
                 categoryMain.className = 'reise-category-main';
                 categoryMain.style.cursor = editingCategory ? 'default' : 'pointer';
@@ -576,8 +579,14 @@ Kostentracker.module({
                     const input = document.createElement("input");
                     input.id = "editKategorie-" + dependencies.safeId(k);
                     input.value = k;
+                    input.className = "booking-control";
+                    input.setAttribute("aria-label", "Kategoriename");
+                    const fieldLabel = document.createElement("label");
+                    fieldLabel.className = "booking-field-label";
+                    fieldLabel.setAttribute("for", input.id);
+                    fieldLabel.textContent = "Kategorie";
                     input.addEventListener("click", event => event.stopPropagation());
-                    categoryMain.appendChild(input);
+                    categoryMain.append(fieldLabel, input);
                 } else {
                     const label = document.createElement("span");
                     label.className = "reise-category-label";
@@ -611,8 +620,9 @@ Kostentracker.module({
                     categoryActions.appendChild(button);
                 };
                 if (editingCategory) {
-                    addCategoryAction("💾", "btn btn-icon btn-primary", () => saveEditKategorie(k));
-                    addCategoryAction("❌", "btn btn-icon btn-cancel", cancelEditKategorie);
+                    categoryActions.classList.add("reise-category-edit-actions");
+                    addCategoryAction("Speichern", "btn btn-primary", () => saveEditKategorie(k));
+                    addCategoryAction("Abbrechen", "btn btn-cancel", cancelEditKategorie);
                 } else {
                     addCategoryAction("✏️", "edit", () => startEditKategorie(k));
                     addCategoryAction("🗑️", "delete", () => deleteKategorie(k));
