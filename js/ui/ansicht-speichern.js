@@ -5,7 +5,6 @@ Kostentracker.module({
 "use strict";
 // Bisheriger Dateiname bleibt kompatibel. Unterseiten werden nicht mehr gespeichert.
 // Nur die Reiseansicht selbst merkt ihren Modus weiterhin im eigenen Modul.
-let leftApp=false;
 function visible(node){return !!node&&(node.getClientRects?node.getClientRects().length>0:!node.classList?.contains('hidden'));}
 function hasOpenEntry(){
  const focused=document.activeElement;
@@ -17,12 +16,9 @@ function restoreStartView(){
  if(document.visibilityState==='hidden'||hasOpenEntry())return;
  dependencies.goHome();
 }
-document.addEventListener('visibilitychange',()=>{
- if(document.visibilityState==='hidden')leftApp=true;
- else if(document.visibilityState==='visible'&&leftApp){leftApp=false;restoreStartView();}
-});
-window.addEventListener('pagehide',()=>{leftApp=true;});
-window.addEventListener('pageshow',event=>{if(event.persisted&&leftApp){leftApp=false;restoreStartView();}});
+// Ein Hintergrundwechsel und eine Wiederherstellung derselben Seite behalten
+// Navigation und Eingaben. Nur die Initialisierung eines neuen Dokuments
+// setzt die Ansicht auf Start; keine Sichtbarkeits-/pageshow-Navigation.
 // Nach der Registrierung aller Module, noch unter dem Ladebildschirm.
 setTimeout(restoreStartView,0);
 return {hasOpenEntry,restoreStartView};
