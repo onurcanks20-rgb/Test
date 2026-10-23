@@ -2,6 +2,12 @@ Kostentracker.module({
   "id": "js/budget/uebersicht.js",
   "dependencies": [
     "resumePaymentImportedNotice",
+    "alltagCategoryIcon",
+    "compareEntriesNewest",
+    "formatDateGroupLabel",
+    "renderEntryTime",
+    "istEintragAusgeblendet",
+    "parseISODate",
     "berechneNochFaelligBisGehalt",
     "berechneSparBudgetStatus",
     "einnahmenZahlungenImZeitraum",
@@ -37,7 +43,10 @@ Kostentracker.module({
   ],
   "read": [
     "Reisen",
-    "ReisenMeta"
+    "ReisenMeta",
+    "Haushalt",
+    "Freizeit",
+    "Einnahmen"
   ],
   "write": [],
   "replace": false
@@ -64,12 +73,44 @@ Kostentracker.module({
             if (einnahmenEl) einnahmenEl.innerHTML = "+" + dependencies.formatBetrag(ei);
         }
 
+        function renderHomeRecentBookings() {
+            const host = document.getElementById("homeRecentBookings");
+            if (!host) return;
+            const entries = [], today = dependencies.heuteISO();
+            const add = (entry, type, category, country = "") => {
+                if (!entry || !dependencies.parseISODate(entry.datum) || entry.datum > today || dependencies.istEintragAusgeblendet(type, entry.id)) return;
+                const amount = dependencies.parseBetrag(entry.betrag);
+                if (!Number.isFinite(amount)) return;
+                entries.push({ entry, type, category, country, amount });
+            };
+            for (const [key, type] of [["Haushalt", "haushalt"], ["Freizeit", "freizeit"]]) {
+                for (const list of Object.values(context.repository.view[key] || {})) {
+                    if (Array.isArray(list)) list.forEach(entry => add(entry, type, entry?.kategorie || "Sonstiges"));
+                }
+            }
+            for (const [country, categories] of Object.entries(context.repository.view.Reisen || {})) {
+                for (const [category, list] of Object.entries(categories || {})) {
+                    if (Array.isArray(list)) list.forEach(entry => add(entry, "reisen", category, country));
+                }
+            }
+            for (const entry of context.repository.view.Einnahmen || []) {
+                if (entry?.wiederholung !== "monatlich") add(entry, "einnahmen", "Einnahme");
+            }
+            entries.sort((a, b) => dependencies.compareEntriesNewest(a.entry, b.entry));
+            host.innerHTML = entries.length ? entries.slice(0, 3).map(({ entry, type, category, country, amount }) => {
+                const title = entry.text || entry.name || category;
+                const subtitle = [country, category, dependencies.formatDateGroupLabel(entry.datum)].filter(Boolean).join(" · ");
+                return `<div class="home-booking-row"><span class="home-booking-icon">${dependencies.alltagCategoryIcon(category)}</span><div class="home-booking-main"><strong>${dependencies.escapeHtml(title)}</strong><span>${dependencies.escapeHtml(subtitle)}${dependencies.renderEntryTime(entry, true)}</span></div><strong class="home-booking-amount">${type === "einnahmen" ? "+" : ""}${dependencies.formatBetrag(amount)}</strong></div>`;
+            }).join("") : '<div class="home-booking-empty">Noch keine Buchungen vorhanden.</div>';
+        }
+
         function renderHomeUebersicht() {
             dependencies.resumePaymentImportedNotice?.();
             renderHomeTrips();
 
             const zeitraum = dependencies.getGehaltszeitraum();
             dependencies.renderBudgetUndWochen(zeitraum);
+            renderHomeRecentBookings();
             dependencies.renderHomeWarnings();
 
             // Kosten im aktuellen Gehaltsmonat:

@@ -222,6 +222,22 @@ Kostentracker.module({
             // Waehrend der Woche bleibt wochenBudgetStart gleich. Nur der Restbetrag sinkt mit neuen Ausgaben.
             const wochenBudgetUebrig = Math.round((wochenBudgetStart - alltagDieseWoche) * 100) / 100;
             set("homeWeekAmount", wochenBudgetUebrig);
+            // Reine Darstellung der bereits berechneten Wochenwerte.
+            set("homeWeekBudgetStart", wochenBudgetStart);
+            const progress = document.getElementById("homeWeekProgress");
+            const fill = document.getElementById("homeWeekProgressFill");
+            const label = document.getElementById("homeWeekProgressLabel");
+            const prefix = document.getElementById("homeWeekPrefix");
+            const spentPercent = wochenBudgetStart > 0 ? Math.max(0, Math.round(alltagDieseWoche / wochenBudgetStart * 100)) : 0;
+            const progressLabel = wochenBudgetStart > 0 ? spentPercent + " % ausgegeben" : "Kein positives Wochenbudget";
+            if (prefix) prefix.textContent = wochenBudgetUebrig >= 0 ? "Noch" : "Rest:";
+            if (fill) fill.style.width = Math.min(100, spentPercent) + "%";
+            if (progress) {
+                progress.setAttribute("aria-valuenow", String(Math.min(100, spentPercent)));
+                progress.setAttribute("aria-valuetext", progressLabel);
+                progress.classList.toggle("over-budget", wochenBudgetUebrig < 0);
+            }
+            if (label) label.textContent = progressLabel;
             const weekPreview = document.getElementById("weekPreviewSheet");
             if (weekPreview && !weekPreview.classList.contains("hidden")) openWeekPreview();
 
