@@ -2600,10 +2600,10 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
 .settings-subpage .settings-page-card label:first-child { margin-top:0; }
 .settings-subpage .settings-page-card :is(input,select,textarea):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]) {
     width:100%;min-width:0;max-width:100%;min-height:48px;margin:0;padding:12px;
-    border:1px solid var(--settings-border);border-radius:9px;background:var(--settings-field);color:var(--text);
-    font:inherit;font-size:16px;line-height:1.35;box-sizing:border-box;color-scheme:var(--settings-scheme);
+    border:1px solid rgba(0,0,0,.10);border-radius:9px;background:#fff;color:#111;
+    font:inherit;font-size:16px;line-height:1.35;box-sizing:border-box;color-scheme:light;
 }
-.settings-subpage .settings-page-card input::placeholder { color:var(--settings-muted);opacity:.8; }
+.settings-subpage .settings-page-card :is(input,textarea)::placeholder { color:#737373;opacity:1; }
 .settings-subpage .settings-page-card :is(input,select,textarea):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
 .settings-subpage .settings-page-card input[type="date"] { text-align:left;appearance:none;-webkit-appearance:none; }
 .settings-subpage .settings-page-card input[type="date"]::-webkit-date-and-time-value { text-align:left;min-height:1.35em; }
