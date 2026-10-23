@@ -2536,3 +2536,43 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
     #uebersichtView .overview-card-title { font-size:13px; }
     #uebersichtView .overview-card-top > strong { font-size:14px; }
 }
+
+/* Einstellungen: nur die Hauptseite, passend zu Übersicht und Kategorien. */
+#settingsView { --settings-surface:#19191b;--settings-muted:#a3a3aa; }
+:root[data-theme="light"] #settingsView { --settings-surface:#fff;--settings-muted:#686870; }
+#settingsView > .container {
+    width:calc(100% - 32px);max-width:488px;
+    margin:12px auto;padding:0 0 calc(24px + env(safe-area-inset-bottom));
+    border:0;border-radius:0;background:transparent;box-shadow:none;
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+#settingsView .topbar { display:flex;align-items:center;gap:10px;min-height:48px;margin:0 0 20px;padding:6px 0;border:0;border-radius:0;background:transparent; }
+#settingsView .topbar h2 { flex:1;min-width:0;margin:0;font-size:24px;font-weight:700;line-height:1.2;letter-spacing:-.035em; }
+#settingsView .topbar :is(.back-btn,.page-info-button) {
+    display:grid;place-items:center;flex:0 0 44px;
+    width:44px;height:44px;min-height:44px;margin:0;padding:0;
+    border:0;border-radius:50%;background:var(--secondary);color:var(--text);font-size:22px;
+}
+#settingsView .settings-section-head { margin:20px 2px 10px;color:var(--settings-muted);opacity:1;font-size:11px;font-weight:600;letter-spacing:.08em; }
+#settingsView .settings-menu { gap:6px;margin-top:0; }
+#settingsView .settings-menu-item {
+    grid-template-columns:32px minmax(0,1fr) 16px;gap:12px;
+    min-height:66px;margin:0;padding:12px;
+    border:0;border-radius:12px;background:var(--settings-surface);color:var(--text);box-shadow:none;
+}
+:root[data-theme="light"] #settingsView .settings-menu-item { background:#fff !important; }
+#settingsView .settings-menu-icon { width:32px;height:32px;border-radius:50%;background:color-mix(in srgb,var(--primary) 10%,transparent);color:var(--primary); }
+#settingsView .settings-menu-icon .alltag-icon { width:19px;height:19px; }
+#settingsView .settings-menu-title { font-size:14px;font-weight:600;line-height:1.35;overflow-wrap:anywhere; }
+#settingsView .settings-menu-sub { margin-top:4px;color:var(--settings-muted);opacity:1;font-size:12px;font-weight:400;line-height:1.4; }
+#settingsView .settings-menu-chevron { display:grid;place-items:center;color:var(--settings-muted);opacity:.65; }
+#settingsView .settings-menu-chevron .alltag-icon { width:16px;height:16px; }
+#settingsView .settings-menu-item:focus-visible,#settingsView .page-info-button:focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
+#settingsView .settings-menu-item:active { filter:brightness(.94); }
+#settingsView #appUpdateStatus { margin:0 12px 4px;color:var(--settings-muted);font-size:12px;line-height:1.45;overflow-wrap:anywhere; }
+#settingsView #appUpdateStatus:empty { display:none; }
+@media(max-width:360px) {
+    #settingsView .topbar h2 { font-size:22px; }
+    #settingsView .settings-menu-item { grid-template-columns:28px minmax(0,1fr) 14px;gap:8px;padding:11px 10px; }
+    #settingsView .settings-menu-icon { width:28px;height:28px; }
+}
