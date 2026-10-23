@@ -2985,7 +2985,7 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
 #globalArchivView .archive-month-head { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;box-sizing:border-box;margin:0;padding:12px;border-radius:0;background:transparent;color:var(--text);text-align:left;font-size:14px; }
 #globalArchivView .archive-month-title { display:flex;align-items:center;gap:6px;font-weight:600; }
 #globalArchivView .archive-month-sum { min-width:0;font-size:13px;font-weight:600;white-space:normal;text-align:right; }
-#globalArchivView .archive-entry { display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:74px;box-sizing:border-box;padding:12px;border-color:var(--alltag-line); }
+#globalArchivView .archive-entry { display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;min-height:74px;box-sizing:border-box;padding:12px;border-color:var(--alltag-line); }
 #globalArchivView .archive-category-icon { display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:color-mix(in srgb,var(--primary) 10%,transparent);color:var(--primary); }
 #globalArchivView .archive-category-icon .alltag-icon { width:19px;height:19px; }
 #globalArchivView .archive-entry-type { margin:0 0 4px;font-size:11px;line-height:1.35;color:var(--alltag-muted);opacity:1; }
@@ -2994,7 +2994,24 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
 #globalArchivView .archive-entry-amount { font-size:16px;font-weight:650;letter-spacing:-.025em; }
 @media(max-width:360px) {
  #globalArchivView .archive-filter-grid { grid-template-columns:1fr; }
- #globalArchivView .archive-entry { grid-template-columns:28px minmax(0,1fr) auto;gap:8px;padding:11px 10px; }
+ #globalArchivView .archive-entry { gap:8px;padding:11px 10px; }
  #globalArchivView .archive-category-icon { width:28px;height:28px; }
  #globalArchivView .archive-entry-amount { font-size:14px; }
+}
+
+/* Jede Archivstruktur erhält passende Spalten, auch bei älteren Zeilen. */
+#globalArchivView .archive-entry:has(> .archive-category-icon) { grid-template-columns:32px minmax(0,1fr) auto; }
+#globalArchivView .archive-entry > .archive-category-icon { grid-column:1;grid-row:1; }
+#globalArchivView .archive-entry > .archive-entry-main { grid-column:1;grid-row:1;min-width:0;width:100%; }
+#globalArchivView .archive-entry > .archive-entry-amount { grid-column:2;grid-row:1;justify-self:end; }
+#globalArchivView .archive-entry:has(> .archive-category-icon) > .archive-entry-main { grid-column:2; }
+#globalArchivView .archive-entry:has(> .archive-category-icon) > .archive-entry-amount { grid-column:3; }
+#ausgabenArchivView .compact-alltag-content > .alltag-row-open { display:none !important; }
+#ausgabenArchivView .compact-alltag-content > .alltag-category-icon { grid-column:1;grid-row:1; }
+#ausgabenArchivView .compact-alltag-content > .compact-alltag-main { grid-column:2;grid-row:1;min-width:0; }
+#ausgabenArchivView .compact-alltag-content > .compact-alltag-amount { grid-column:3;grid-row:1; }
+#ausgabenArchivView .compact-alltag-content { grid-template-rows:auto;min-height:0; }
+#ausgabenArchivView .item.compact-alltag-card { height:auto;min-height:72px; }
+@media(max-width:360px) {
+ #globalArchivView .archive-entry:has(> .archive-category-icon) { grid-template-columns:28px minmax(0,1fr) auto; }
 }
