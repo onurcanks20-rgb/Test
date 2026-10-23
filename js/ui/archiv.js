@@ -347,6 +347,11 @@ Kostentracker.module({
             select.value = jahre.includes(aktuell) ? aktuell : "alle";
         }
 
+        function archivBereichSymbol(bereich) {
+            const symbol=({haushalt:"cart",freizeit:"food",fixkosten:"receipt",versicherungen:"shield",einnahmen:"income",reisen:"plane"})[bereich]||"archive";
+            return `<span class="archive-category-icon"><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-${symbol}"></use></svg></span>`;
+        }
+
         function renderGlobalArchiv() {
             const container = document.getElementById("globalArchivListe");
             if (!container) return;
@@ -378,10 +383,10 @@ Kostentracker.module({
                     const ausgaben = entries.filter(e=>!e.positiv).reduce((s,e)=>s+e.betrag,0);
                     const einnahmen = entries.filter(e=>e.positiv).reduce((s,e)=>s+e.betrag,0);
                     const sumText = einnahmen > 0 ? `${dependencies.formatBetrag(ausgaben)} · +${dependencies.formatBetrag(einnahmen)}` : dependencies.formatBetrag(ausgaben);
-                    html += `<div class="archive-month"><div class="archive-month-head" onclick="toggleGlobalArchivMonat('${key}')"><div class="archive-month-title">${offen?'▾':'▸'} ${dependencies.getMonatName(parseInt(m))}</div><div class="archive-month-sum">${sumText}</div></div>`;
+                    html += `<div class="archive-month"><button type="button" class="archive-month-head" aria-expanded="${offen}" onclick="toggleGlobalArchivMonat('${key}')"><span class="archive-month-title"><svg class="alltag-icon archive-group-chevron ${offen?'is-open':''}" aria-hidden="true"><use href="#alltag-chevron"></use></svg>${dependencies.getMonatName(parseInt(m))}</span><span class="archive-month-sum">${sumText}</span></button>`;
                     if (offen) {
                         entries.forEach(e => {
-                            html += `<div class="archive-entry"><div class="archive-entry-main"><div class="archive-entry-type">${globalArchivBereichLabel(e.bereich)}${e.ausgeblendet ? ' · 👁️‍🗨️ Ausgeblendet' : ''}</div><div class="archive-entry-title">${dependencies.escapeHtml(e.titel)}${dependencies.renderEntryTime(e)}</div><div class="archive-entry-meta">${dependencies.formatDatum(e.datum)}${e.meta ? ' · '+dependencies.escapeHtml(e.meta) : ''}</div>${e.ausgeblendet && e.id != null ? `<button type="button" onclick="event.stopPropagation(); eintragEinblenden('${e.bereich}','${e.id}')" style="width:auto;margin:8px 0 0;padding:7px 10px;background:#3a3a3c;font-size:12px;">👁️ Einblenden</button>` : ''}</div><div class="archive-entry-amount">${e.positiv?'+':''}${dependencies.formatBetrag(e.betrag)}</div></div>`;
+                            html += `<div class="archive-entry">${archivBereichSymbol(e.bereich)}<div class="archive-entry-main"><div class="archive-entry-type">${dependencies.escapeHtml(globalArchivBereichLabel(e.bereich).replace(/^\S+\s*/, ""))}${e.ausgeblendet ? ' · 👁️‍🗨️ Ausgeblendet' : ''}</div><div class="archive-entry-title">${dependencies.escapeHtml(e.titel)}${dependencies.renderEntryTime(e)}</div><div class="archive-entry-meta">${dependencies.formatDatum(e.datum)}${e.meta ? ' · '+dependencies.escapeHtml(e.meta) : ''}</div>${e.ausgeblendet && e.id != null ? `<button type="button" onclick="event.stopPropagation(); eintragEinblenden('${e.bereich}','${e.id}')" style="width:auto;margin:8px 0 0;padding:7px 10px;background:#3a3a3c;font-size:12px;">👁️ Einblenden</button>` : ''}</div><div class="archive-entry-amount">${e.positiv?'+':''}${dependencies.formatBetrag(e.betrag)}</div></div>`;
                         });
                     }
                     html += `</div>`;

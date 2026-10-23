@@ -155,8 +155,11 @@ Kostentracker.module({
                 const jahrOffen = !!jahresState[jahr];
                 const jahrSumme = Object.values(data[jahr]).flat().reduce((a,b) => a + (dependencies.parseBetrag(b.betrag)||0), 0);
                 const jahrItem = dependencies.createItem(`<div style="display:flex; justify-content:space-between; width:100%; align-items:center; cursor:pointer;">
-                    <div><span class="toggle-btn">${jahrOffen ? '▲' : '▼'}</span> 📁 ${jahr}</div><strong>${dependencies.formatBetrag(jahrSumme)}</strong>
+                    <div class="archive-group-label"><svg class="alltag-icon archive-group-chevron ${jahrOffen ? 'is-open' : ''}" aria-hidden="true"><use href="#alltag-chevron"></use></svg><span>${jahr}</span></div><strong>${dependencies.formatBetrag(jahrSumme)}</strong>
                 </div>`);
+                jahrItem.classList.add("archive-year-toggle");
+                jahrItem.setAttribute("role","button");jahrItem.setAttribute("tabindex","0");jahrItem.setAttribute("aria-expanded",String(jahrOffen));
+                jahrItem.onkeydown = event => { if(event.key === "Enter" || event.key === " "){event.preventDefault();jahrItem.onclick();} };
                 jahrItem.onclick = () => { jahresState[jahr] = !jahrOffen; renderAusgabenArchiv(); };
                 container.appendChild(jahrItem);
                 if (!jahrOffen) return;
@@ -167,8 +170,11 @@ Kostentracker.module({
                     const liste = [...data[jahr][monat]].sort(dependencies.compareEntriesNewest);
                     const summe = liste.reduce((a,b)=>a+(dependencies.parseBetrag(b.betrag)||0),0);
                     const monatItem = dependencies.createItem(`<div style="display:flex; justify-content:space-between; width:100%; align-items:center; cursor:pointer;">
-                        <div><span class="toggle-btn">${monatOffen ? '▲' : '▼'}</span> 📂 ${dependencies.getMonatName(parseInt(monat))}</div><strong>${dependencies.formatBetrag(summe)}</strong>
-                    </div>`,20);
+                        <div class="archive-group-label"><svg class="alltag-icon archive-group-chevron ${monatOffen ? 'is-open' : ''}" aria-hidden="true"><use href="#alltag-chevron"></use></svg><span>${dependencies.getMonatName(parseInt(monat))}</span></div><strong>${dependencies.formatBetrag(summe)}</strong>
+                    </div>`,0);
+                    monatItem.classList.add("archive-month-toggle");
+                    monatItem.setAttribute("role","button");monatItem.setAttribute("tabindex","0");monatItem.setAttribute("aria-expanded",String(monatOffen));
+                    monatItem.onkeydown = event => { if(event.key === "Enter" || event.key === " "){event.preventDefault();monatItem.onclick();} };
                     monatItem.onclick = () => { monatsState[key] = !monatOffen; renderAusgabenArchiv(); };
                     container.appendChild(monatItem);
                     if (!monatOffen) return;
@@ -188,7 +194,7 @@ Kostentracker.module({
                                     <button onclick="event.stopPropagation(); saveEditAusgabenArchiv('${typ}','${e.id}')">💾 Speichern</button>
                                     <button onclick="event.stopPropagation(); cancelEditAusgabenArchiv()">❌ Abbrechen</button>
                                 </div>
-                            </div>`,40);
+                            </div>`,0);
                         } else {
                             const zusatz = dependencies.alltagZusatztext(e);
                             const istAusgeblendet = dependencies.istEintragAusgeblendet(typ, e.id);
@@ -199,14 +205,14 @@ Kostentracker.module({
                                     ${zusatz || dependencies.entryClock(e) ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(zusatz)}${dependencies.renderEntryTime(e,!!zusatz)}</span>` : ''}
                                     ${e.datum ? `<span class="compact-alltag-sub">${dependencies.formatDatum(e.datum)}</span>` : ''}
                                 </div>
-                                <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" onclick="event.stopPropagation();toggleArchivDetails('${typ}','${e.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-chevron"></use></svg></button>
+                                <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
                                 <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                                     ${istAusgeblendet ? `<button onclick="event.stopPropagation(); eintragEinblenden('${typ}','${e.id}')" title="Wieder einblenden">👁️</button>` : ''}
                                     <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-move"></use></svg></button>
                                     <button class="edit" onclick="event.stopPropagation(); startEditAusgabenArchiv('${typ}','${e.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-edit"></use></svg></button>
                                     <button class="delete" onclick="event.stopPropagation(); deleteArchivEintrag('${typ}','${e.id}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-delete"></use></svg></button>
                                 </div>
-                            </div>`,40);
+                            </div>`,0);
                             item.classList.add("compact-alltag-card");
                         }
 
