@@ -2805,7 +2805,7 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
 #home.home-dashboard .topbar h2 { min-width:0;margin:0;font-size:26px;font-weight:700;line-height:1.2;letter-spacing:-.04em; }
 #home.home-dashboard .icon-btn { width:44px;height:44px;min-height:44px;margin:0;padding:0;background:transparent;color:var(--home-muted); }
 #home.home-dashboard .home-sync-status { margin:0 0 12px;min-height:28px;font-size:11px;line-height:1.3; }
-#home.home-dashboard .hero-card { margin:0 0 18px;padding:6px 0 0;border:0;border-radius:0;background:transparent;box-shadow:none;text-align:left; }
+#home.home-dashboard .hero-card { display:block;min-height:0;align-items:stretch;justify-content:initial;margin:0 0 18px;padding:6px 0 0;border:0;border-radius:0;background:transparent;box-shadow:none;text-align:left; }
 #home.home-dashboard .hero-label { color:var(--home-muted);font-size:12px;font-weight:500;letter-spacing:.06em;opacity:1; }
 #home.home-dashboard .hero-amount { margin:7px 0 4px;font-size:clamp(32px,10.8vw,48px);font-weight:700;line-height:1.1;letter-spacing:-.04em; }
 #home.home-dashboard .hero-amount span { font-weight:700 !important;white-space:normal !important;overflow-wrap:anywhere; }
@@ -2816,10 +2816,10 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
 #home.home-dashboard .calc-row > span:last-child { min-width:0;text-align:right; }
 #home.home-dashboard .detail-note { color:var(--home-muted);opacity:1;font-size:12px; }
 #home.home-dashboard .home-week-panel { margin:0 0 14px;border-radius:12px;background:var(--home-surface);overflow:hidden; }
-#home.home-dashboard .week-summary-card { margin:0;padding:16px;border:0;border-radius:0;background:transparent;box-shadow:none; }
-#home.home-dashboard .week-summary-head { align-items:baseline;gap:8px; }
-#home.home-dashboard .week-summary-title { text-transform:none;font-size:15px;font-weight:600;letter-spacing:0;opacity:1; }
-#home.home-dashboard .week-summary-dates { margin:0;color:var(--home-muted);font-size:11px;line-height:1.35;opacity:1; }
+#home.home-dashboard .week-summary-card { display:block;min-height:0;width:100%;max-width:100%;box-sizing:border-box;margin:0;padding:16px;border:0;border-radius:0;background:transparent;box-shadow:none; }
+#home.home-dashboard .week-summary-head { display:flex;align-items:baseline;justify-content:space-between;width:100%;min-width:0;gap:8px; }
+#home.home-dashboard .week-summary-title { flex:0 0 auto;white-space:nowrap;text-transform:none;font-size:15px;font-weight:600;letter-spacing:0;opacity:1; }
+#home.home-dashboard .week-summary-dates { flex:1;min-width:0;text-align:right;white-space:normal;margin:0;color:var(--home-muted);font-size:11px;line-height:1.35;opacity:1; }
 #home.home-dashboard .home-week-balance { display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;margin:10px 0 4px;font-size:26px;font-weight:650;line-height:1.2;letter-spacing:-.025em; }
 #home.home-dashboard .week-summary-amount { font-size:inherit;font-weight:inherit; }
 #home.home-dashboard .home-week-budget { color:var(--home-muted);font-size:13px;line-height:1.4; }
@@ -2830,9 +2830,9 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
 #home.home-dashboard .home-week-progress.over-budget > span { background:#ef5448; }
 #home.home-dashboard #homeWeekProgressLabel { flex-shrink:0;font-size:10px;color:var(--home-muted); }
 #home.home-dashboard .home-salary-info { margin:0 16px;border-top:1px solid var(--home-line); }
-#home.home-dashboard .salary-row { display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1.2fr);gap:10px;align-items:center;min-height:52px;margin:0;padding:10px 0;opacity:1;font-size:13px;line-height:1.4; }
+#home.home-dashboard .salary-row { background:transparent;border:0;border-radius:0;box-shadow:none;display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1.2fr);gap:10px;align-items:center;min-height:52px;margin:0;padding:10px 0;opacity:1;font-size:13px;line-height:1.4; }
 #home.home-dashboard .salary-row + .salary-row { border-top:1px solid var(--home-line); }
-#home.home-dashboard .salary-row strong { min-width:0;font-size:13px;font-weight:600;text-align:right;overflow-wrap:anywhere; }
+#home.home-dashboard .salary-row strong { white-space:normal;min-width:0;font-size:13px;font-weight:600;text-align:right;overflow-wrap:anywhere; }
 #home.home-dashboard .home-fact-icon { display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:color-mix(in srgb,var(--primary) 10%,transparent);color:var(--primary); }
 #home.home-dashboard .home-fact-icon .alltag-icon { width:18px;height:18px; }
 #home.home-dashboard .primary-add { display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;margin:0 0 20px;padding:12px;border-radius:10px;font-size:15px;font-weight:600; }
