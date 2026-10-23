@@ -2377,12 +2377,12 @@ button:disabled { opacity:.5; cursor:default; }
 /* Gemeinsame Navigation bleibt funktional identisch, neue Symbole nur auf diesen zwei Seiten. */
 body:has(.alltag-page:not(.hidden)) #categoryBottomNav {
     left:0;bottom:0;transform:none;width:100%;max-width:none;
-    gap:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    gap:0;padding:4px 16px max(4px, env(safe-area-inset-bottom));
     border:0;border-top:1px solid rgba(128,128,128,.18);border-radius:0;
     background:var(--bg);box-shadow:none;
 }
-body:has(.alltag-page:not(.hidden)) #categoryBottomNav button { min-height:48px;padding:4px 8px;font-size:11px;font-weight:500;line-height:1.4;background:transparent; }
-body:has(.alltag-page:not(.hidden)) #categoryBottomNav .nav-icon { display:grid;place-items:center;min-height:26px;margin-bottom:4px; }
+body:has(.alltag-page:not(.hidden)) #categoryBottomNav button { min-height:44px;padding:2px 8px;font-size:11px;font-weight:500;line-height:1.2;background:transparent; }
+body:has(.alltag-page:not(.hidden)) #categoryBottomNav .nav-icon { display:grid;place-items:center;min-height:24px;margin-bottom:1px; }
 body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-emoji { display:none; }
 body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { display:block;width:24px;height:24px; }
 @media(max-width:360px) {
@@ -2450,3 +2450,23 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
 }
 /* Einzüge liegen auf Touch-Geräten auf der Swipe-Hülle, nicht zusätzlich auf der Karte. */
 #land.category-design-page .swipe-entry-shell > .reise-entry-card { margin-left:0 !important;width:100%; }
+
+/* Einheitliche Detailkarten – ausschließlich Kategorien. */
+.alltag-page .category-detail-card { display:block; }
+.alltag-page .category-entry-details { margin-top:12px;padding-top:12px;border-top:1px solid rgba(128,128,128,.18);font-size:13px;line-height:1.5; }
+.alltag-page .category-entry-details dl { display:grid;grid-template-columns:minmax(85px,auto) minmax(0,1fr);gap:6px 16px;margin:0; }
+.alltag-page .category-entry-details dt { color:var(--alltag-muted); }
+.alltag-page .category-entry-details dd { margin:0;overflow-wrap:anywhere; }
+.alltag-page .category-status { display:inline-block;width:fit-content;margin-top:5px;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:500;color:var(--text);background:rgba(128,128,128,.12); }
+.alltag-page .category-summary-columns { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px; }
+.alltag-page .category-summary-columns div { display:flex;flex-direction:column;gap:4px; }
+.alltag-page .category-summary-columns span,.alltag-page .category-summary-columns small { color:var(--alltag-muted);font-size:12px; }
+.alltag-page .category-summary-columns strong { font-size:20px; }
+.alltag-page .category-info-button { background:transparent;color:inherit;padding:0;min-width:32px;min-height:32px;font-size:18px;vertical-align:middle; }
+.alltag-page .alltag-row-open[aria-expanded="true"] svg { transform:rotate(90deg); }
+.alltag-page .compact-alltag-main[onclick] { cursor:pointer; }
+@media(max-width:360px) {
+ .alltag-page .category-detail-card .compact-alltag-content > .compact-alltag-main { flex-basis:auto !important; }
+}
+
+.alltag-page .item.compact-alltag-card { display:block; }
