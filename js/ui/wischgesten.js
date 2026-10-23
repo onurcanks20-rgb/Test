@@ -724,7 +724,9 @@ function swipeEntryMeta(shell) {
                         '[onclick*="toggleVersicherungDetails("]',
                         '[onclick*="toggleEinnahmeDetails("]',
                         '[onclick*="toggleReiseDetails("]',
-                        '[onclick*="toggleArchivDetails("]'
+                        '[onclick*="toggleArchivDetails("]',
+                        '[onclick*="toggleSparenDetails("]',
+                        '[onclick*="toggleGeplantDetails("]'
                     ].join(',');
                     const directDetailTarget = event.target.closest(detailSelector);
                     if (!directDetailTarget) {

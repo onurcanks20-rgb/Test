@@ -181,6 +181,10 @@ Kostentracker.module({
         }
 
         const HELP_CONTENT = {
+  "geplantReservierung": {
+    "title": "Reservierte Ausgaben",
+    "html": "<p>Die Summe zeigt reservierte Ausgaben in der aktuellen Gehaltsperiode. Nur Einträge mit „Vom Frei verfügbar abziehen: Ja“ werden dafür berücksichtigt.</p><p>„Nur vorgemerkt“ verändert deinen verfügbaren Betrag nicht. Die Einstellung und die Wiederholung findest du in den Details des Eintrags.</p>"
+  },
   "settingsMerchantView": {
     "title":"Händlerzuordnung",
     "html":"<p>Bekannte Händler werden automatisch erkannt. Unbekannte Zahlungen bleiben in der Prüfung, bis du Bereich und Kategorie auswählst.</p><p>Mit „Für diesen Händler merken“ gilt deine Auswahl auch für kommende Zahlungen mit demselben Händlernamen. Groß-/Kleinschreibung und Satzzeichen werden vereinheitlicht. Deine eigenen Regeln haben Vorrang vor den mitgelieferten Zuordnungen.</p><p>Hier kannst du eigene Regeln ergänzen, bearbeiten oder löschen. Bereits gespeicherte Buchungen werden dadurch nicht verschoben. Die Regeln sind Teil deiner Datensicherung.</p><p>Die Reiseprüfung und die Prüfung von Fixkosten bleiben erhalten. Eine Händlerregel legt kein dauerhaftes Reiseland fest. Im eindeutigen Reisezeitraum wird die passende Reisekategorie verwendet. Auf Reisezahlungen lassen sich Regeln nicht direkt speichern; lege dafür hier eine Alltagszuordnung an.</p>"
