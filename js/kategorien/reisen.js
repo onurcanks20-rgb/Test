@@ -644,17 +644,20 @@ Kostentracker.module({
 
                         if (context.session.state.editReiseId === e.id) {
 
+                            sub.classList.add("reise-entry-editing");
                             sub.innerHTML = `
-                        <div style="font-size:13px;opacity:.75;">Betrag in ${e.fx ? e.fx.currency : 'EUR'}${e.fx ? ' · gespeicherter Kurs' : ''}</div>
+                        <div class="booking-edit-form reise-edit-form">
+                        <div class="info-text">Betrag in ${e.fx ? e.fx.currency : 'EUR'}${e.fx ? ' · gespeicherter Kurs' : ''}</div>
                         <label class="booking-field-label" for="editBetrag-${e.id}">Betrag (${e.fx ? dependencies.escapeHtml(e.fx.currency) : 'EUR'})</label>
 <input class="booking-control" id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.fx ? e.fx.amount : e.betrag)}" placeholder="Betrag in ${e.fx ? e.fx.currency : 'EUR'}" enterkeyhint="next">
                         <label class="booking-field-label" for="editText-${e.id}">Beschreibung (optional)</label>
 <input class="booking-control" id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || "")}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                         <div class="entry-date-time"><label><span>Datum</span><input id="editDatum-${e.id}" type="date" value="${e.datum || ""}"></label>${dependencies.renderEntryTimeInput(`editReiseUhrzeit-${e.id}`,e)}</div>
 
-                        <div class="actions">
-                            <button onclick="saveEditReise(${e.id})">💾</button>
-                            <button onclick="cancelEditReise()">❌</button>
+                        <div class="actions reise-form-actions">
+                            <button type="button" onclick="saveEditReise(${e.id})">Speichern</button>
+                            <button type="button" class="reise-form-cancel" onclick="cancelEditReise()">Abbrechen</button>
+                        </div>
                         </div>
                     `;
 
