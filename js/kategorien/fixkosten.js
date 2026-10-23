@@ -169,10 +169,9 @@ Kostentracker.module({
 <span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Fixkosten')}</span>
                             <div class="compact-alltag-main" onclick="toggleFixkostenDetails('${k.id}')" style="cursor:pointer;">
                                 <span class="compact-alltag-title">${dependencies.escapeHtml(k.text || k.name || "-")}</span>
-                                ${k.haendler ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(k.haendler)}</span>` : ''}
-                                <span class="compact-alltag-sub">Monatlich am ${String(tag).padStart(2, "0")}.</span>
+                                <span class="compact-alltag-sub">${k.haendler ? dependencies.escapeHtml(k.haendler) + ' · ' : ''}am ${String(tag).padStart(2, "0")}.</span>
                             </div>
-                            <strong class="compact-alltag-amount">${dependencies.formatBetrag(k.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" onclick="event.stopPropagation(); toggleFixkostenDetails('${k.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
+                            <strong class="compact-alltag-amount">${dependencies.formatBetrag(k.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${istOffen}" onclick="event.stopPropagation(); toggleFixkostenDetails('${k.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
                             <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                                 <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-move"></use></svg></button>
                                 <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
@@ -180,7 +179,7 @@ Kostentracker.module({
                             </div>
                         </div>
                         ${istOffen ? `
-                            <div onclick="toggleFixkostenDetails('${k.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
+                            <div onclick="toggleFixkostenDetails('${k.id}')" class="category-entry-details" style="display:flex;flex-direction:column;gap:8px;cursor:pointer;">
                                 <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Wiederholung</span><span style="font-weight:600;text-align:right;">Monatlich am ${tag}.</span></div>
                                 <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Startdatum</span><span style="font-weight:600;text-align:right;">${dependencies.formatDatum(datum)}</span></div>
                                 ${k.info ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Info</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${dependencies.escapeHtml(k.info)}</span></div>` : ''}

@@ -164,18 +164,18 @@ Kostentracker.module({
                     const zusatz = alltagZusatztext(e);
                     html = `<div class="compact-alltag-content">
                         <span class="alltag-category-icon">${alltagCategoryIcon(e.kategorie)}</span>
-                        <div class="compact-alltag-main">
+                        <div class="compact-alltag-main" onclick="toggleAlltagsDetails('${typ}','${e.id}')">
                             <span class="compact-alltag-title">${dependencies.escapeHtml(e.kategorie || 'Sonstiges')}</span>
                             ${zusatz || dependencies.entryClock(e) ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(zusatz)}${dependencies.renderEntryTime(e,!!zusatz)}</span>` : ''}
                         </div>
                         <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
-                        <button type="button" class="alltag-row-open" aria-label="Eintrag bearbeiten" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-chevron"></use></svg></button>
+                        <button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${!!offenMap[String(e.id)]}" onclick="event.stopPropagation(); toggleAlltagsDetails('${typ}','${e.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-chevron"></use></svg></button>
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                             <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
                             <button class="edit" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button>
                             <button class="delete" onclick="event.stopPropagation(); ${istFreizeit ? `deleteFreizeit('${e.id}')` : `deleteHaushalt('${e.id}')`}">🗑️</button>
                         </div>
-                    </div>`;
+                    </div>${offenMap[String(e.id)] ? `<div class="category-entry-details"><dl><dt>Datum</dt><dd>${dependencies.escapeHtml(String(e.datum || '').split('-').reverse().join('.'))}${dependencies.entryClock(e) ? ' · ' + dependencies.escapeHtml(dependencies.entryClock(e)) : ''}</dd><dt>Beschreibung</dt><dd>${dependencies.escapeHtml(zusatz || 'Keine Beschreibung')}</dd></dl></div>` : ''}`;
                 }
                 const item = dependencies.createItem(html);
                 if (!isEdit) item.classList.add("compact-alltag-card");
@@ -191,6 +191,14 @@ Kostentracker.module({
             map[key] = !map[key];
             renderRecentAusgaben(typ);
         }
+
+document.addEventListener('click', event => {
+    if (event.defaultPrevented || event.target.closest('button,input,select,textarea,a,label,summary,.actions,.swipe-action-rail,[onclick]')) return;
+    const card = event.target.closest('.item');
+    if (!card) return;
+    const detail = card.querySelector('[onclick*="toggleAlltagsDetails("],[onclick*="toggleFixkostenDetails("],[onclick*="toggleVersicherungDetails("],[onclick*="toggleEinnahmeDetails("],[onclick*="toggleSparenDetails("],[onclick*="toggleGeplantDetails("],[onclick*="toggleReiseDetails("],[onclick*="toggleArchivDetails("]');
+    detail?.click();
+});
 
 return { alltagCategoryIcon, closeAlltagMenus, alleAusgabenAusBereich, renderBereichWocheninfo, alltagZusatztext, renderRecentAusgaben, toggleAlltagsDetails };
 });

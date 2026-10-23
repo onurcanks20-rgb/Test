@@ -160,7 +160,7 @@ Kostentracker.module({
                             <span class="compact-alltag-title">${dependencies.escapeHtml(v.name || "Versicherung")}</span>
                             ${v.anbieter ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(v.anbieter)}</span>` : ''}
                         </div>
-                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(v.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" onclick="event.stopPropagation(); toggleVersicherungDetails('${v.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
+                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(v.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${istOffen}" onclick="event.stopPropagation(); toggleVersicherungDetails('${v.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                             <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-move"></use></svg></button>
                             <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
@@ -169,10 +169,7 @@ Kostentracker.module({
                     </div>
 
                     ${istOffen ? `
-                        <div style="
-                            background:#3a3a3c;
-                            border-radius:14px;
-                            padding:12px;
+                        <div class="category-entry-details" style="
                             display:flex;
                             flex-direction:column;
                             gap:8px;
@@ -270,7 +267,8 @@ Kostentracker.module({
 
 
             if (total) {
-                total.innerHTML = "Fixkosten pro aktuellem Gehaltsmonat: " + dependencies.formatBetrag(dependencies.berechneGesamtFixkosten());
+                total.innerHTML = "";
+                total.classList.add("hidden");
             }
         }
 

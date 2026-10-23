@@ -323,7 +323,7 @@ Kostentracker.module({
             if (!listeEl) return;
             const z = dependencies.getGehaltszeitraum();
             const reserviert = geplanteReservierungenImZeitraum(z.start, z.ende).reduce((sum,e)=>sum+(dependencies.parseBetrag(e.betrag)||0),0);
-            if (sumEl) sumEl.innerHTML = `<div class="bereich-week-info-top"><span class="bereich-week-info-label">Reserviert in dieser Gehaltsperiode</span><span class="bereich-week-info-amount">${dependencies.formatBetrag(reserviert)}</span></div><div class="bereich-week-info-breakdown">Nur Einträge mit „Vom Frei verfügbar abziehen: Ja“ werden reserviert.</div>`;
+            if (sumEl) sumEl.innerHTML = `<div class="bereich-week-info-top"><span class="bereich-week-info-label">Reserviert <button type="button" class="category-info-button" aria-label="Informationen zur Reservierung" onclick="openPageInfo('geplantReservierung')">ⓘ</button></span><span class="bereich-week-info-amount">${dependencies.formatBetrag(reserviert)}</span></div>`;
             const items = [...(context.repository.view["Geplante Ausgaben"] || [])].sort((a,b) => String(a.datum).localeCompare(String(b.datum)));
             document.getElementById("geplantDeleteAllBtn")?.classList.toggle("hidden", !items.length);
             if (!items.length) {
@@ -390,22 +390,32 @@ Kostentracker.module({
                         </div>`;
                 }
                 const ziel = e.bereich === "reisen" ? `${dependencies.escapeHtml(e.land || "Reise")} · ${dependencies.escapeHtml(e.kategorie || "Sonstiges")}` : `${e.bereich === "freizeit" ? "Freizeit" : "Haushalt"} · ${dependencies.escapeHtml(e.kategorie || "Sonstiges")}`;
+                const offen = !!context.session.state.offeneGeplantDetails?.[String(e.id)];
                 return gruppenHeader + `
-                    <div class="item category-record" style="align-items:center;">
-<span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Geplant')}</span>
-                        <div style="min-width:0;flex:1;">
-                            <div style="font-weight:750;">${dependencies.escapeHtml(e.text || "Geplante Ausgabe")}</div>
-                            <div class="info-text" style="margin-top:4px;">${dependencies.formatDatum(e.datum)} · ${ziel}</div>
-                            <div class="info-text" style="margin-top:3px;">${e.wiederholung === "monatlich" ? "Monatlich" : e.wiederholung === "jaehrlich" ? "Jährlich" : "1× Einmalig"} · ${e.budgetWirksam !== false ? "Im Frei verfügbar reserviert" : "Nur vorgemerkt"}</div>
-                            <div style="font-weight:800;margin-top:5px;">${dependencies.formatBetrag(e.betrag)}</div>
+                    <div class="item compact-alltag-card category-record category-detail-card">
+                      <div class="compact-alltag-content">
+                        <span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Geplant')}</span>
+                        <div class="compact-alltag-main" onclick="toggleGeplantDetails('${e.id}')">
+                            <span class="compact-alltag-title">${dependencies.escapeHtml(e.text || "Geplante Ausgabe")}</span>
+                            <span class="compact-alltag-sub">${ziel}</span><span class="category-status">${e.budgetWirksam !== false ? 'Reserviert' : 'Nur vorgemerkt'}</span>
                         </div>
+                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
+                        <button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${offen}" onclick="event.stopPropagation();toggleGeplantDetails('${e.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-chevron"></use></svg></button>
                         <div class="actions" style="display:flex;gap:5px;">
                             <button class="edit" onclick="event.stopPropagation();startEditGeplanteAusgabe('${String(e.id)}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
                             <button class="delete" onclick="event.stopPropagation();deleteGeplanteAusgabe('${String(e.id)}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                         </div>
+                      </div>
+                      ${offen ? `<div class="category-entry-details"><dl><dt>Datum</dt><dd>${dependencies.formatDatum(e.datum)}</dd><dt>Wiederholung</dt><dd>${e.wiederholung === 'monatlich' ? 'Monatlich' : e.wiederholung === 'jaehrlich' ? 'Jährlich' : 'Einmalig'}</dd><dt>Budget</dt><dd>${e.budgetWirksam !== false ? 'Vom Frei verfügbar abziehen' : 'Nur vormerken'}</dd></dl></div>` : ''}
                     </div>`;
             }).join("");
         }
 
-return { updateGeplantBereichUI, updateGeplantKategorieSelect, geplantDatumZuISO, geplantNaechstesDatum, geplanteAusgabenImZeitraum, geplanteReservierungenImZeitraum, addGeplanteAusgabe, deleteGeplanteAusgabe, deleteAlleGeplanteAusgaben, startEditGeplanteAusgabe, cancelEditGeplanteAusgabe, editGeplantKategorienFuer, updateEditGeplantBereichUI, updateEditGeplantKategorieSelect, saveEditGeplanteAusgabe, editGeplanteAusgabe, verarbeiteFaelligeGeplanteAusgaben, renderGeplanteAusgaben };
+function toggleGeplantDetails(id) {
+    const map = context.session.state.offeneGeplantDetails ||= {};
+    map[String(id)] = !map[String(id)];
+    renderGeplanteAusgaben();
+}
+
+return { toggleGeplantDetails, updateGeplantBereichUI, updateGeplantKategorieSelect, geplantDatumZuISO, geplantNaechstesDatum, geplanteAusgabenImZeitraum, geplanteReservierungenImZeitraum, addGeplanteAusgabe, deleteGeplanteAusgabe, deleteAlleGeplanteAusgaben, startEditGeplanteAusgabe, cancelEditGeplanteAusgabe, editGeplantKategorienFuer, updateEditGeplantBereichUI, updateEditGeplantKategorieSelect, saveEditGeplanteAusgabe, editGeplanteAusgabe, verarbeiteFaelligeGeplanteAusgaben, renderGeplanteAusgaben };
 });
