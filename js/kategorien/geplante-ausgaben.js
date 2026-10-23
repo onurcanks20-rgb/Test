@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/geplante-ausgaben.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "appendEmptyAction",
     "beginUndoDelete",
     "closeStartQuickAdd",
@@ -388,18 +389,19 @@ Kostentracker.module({
                             </div>
                         </div>`;
                 }
-                const ziel = e.bereich === "reisen" ? `✈️ ${dependencies.escapeHtml(e.land || "Reise")} · ${dependencies.escapeHtml(e.kategorie || "Sonstiges")}` : `${e.bereich === "freizeit" ? "🎉 Freizeit" : "🛒 Haushalt"} · ${dependencies.escapeHtml(e.kategorie || "Sonstiges")}`;
+                const ziel = e.bereich === "reisen" ? `${dependencies.escapeHtml(e.land || "Reise")} · ${dependencies.escapeHtml(e.kategorie || "Sonstiges")}` : `${e.bereich === "freizeit" ? "Freizeit" : "Haushalt"} · ${dependencies.escapeHtml(e.kategorie || "Sonstiges")}`;
                 return gruppenHeader + `
-                    <div class="item" style="align-items:center;">
+                    <div class="item category-record" style="align-items:center;">
+<span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Geplant')}</span>
                         <div style="min-width:0;flex:1;">
                             <div style="font-weight:750;">${dependencies.escapeHtml(e.text || "Geplante Ausgabe")}</div>
                             <div class="info-text" style="margin-top:4px;">${dependencies.formatDatum(e.datum)} · ${ziel}</div>
-                            <div class="info-text" style="margin-top:3px;">${e.wiederholung === "monatlich" ? "🔁 Monatlich" : e.wiederholung === "jaehrlich" ? "🔁 Jährlich" : "1× Einmalig"} · ${e.budgetWirksam !== false ? "💶 Im Frei verfügbar reserviert" : "📝 Nur vorgemerkt"}</div>
+                            <div class="info-text" style="margin-top:3px;">${e.wiederholung === "monatlich" ? "Monatlich" : e.wiederholung === "jaehrlich" ? "Jährlich" : "1× Einmalig"} · ${e.budgetWirksam !== false ? "Im Frei verfügbar reserviert" : "Nur vorgemerkt"}</div>
                             <div style="font-weight:800;margin-top:5px;">${dependencies.formatBetrag(e.betrag)}</div>
                         </div>
                         <div class="actions" style="display:flex;gap:5px;">
-                            <button class="edit" onclick="event.stopPropagation();startEditGeplanteAusgabe('${String(e.id)}')">✏️</button>
-                            <button class="delete" onclick="event.stopPropagation();deleteGeplanteAusgabe('${String(e.id)}')">🗑️</button>
+                            <button class="edit" onclick="event.stopPropagation();startEditGeplanteAusgabe('${String(e.id)}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
+                            <button class="delete" onclick="event.stopPropagation();deleteGeplanteAusgabe('${String(e.id)}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                         </div>
                     </div>`;
             }).join("");

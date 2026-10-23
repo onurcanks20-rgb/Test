@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/versicherungen.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "appendEmptyAction",
     "addItem",
     "appendDateGroupHeader",
@@ -154,15 +155,16 @@ Kostentracker.module({
                 <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
 
                     <div class="compact-alltag-content">
+<span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Versicherung')}</span>
                         <div class="compact-alltag-main" onclick="toggleVersicherungDetails('${v.id}')" style="cursor:pointer;">
                             <span class="compact-alltag-title">${dependencies.escapeHtml(v.name || "Versicherung")}</span>
                             ${v.anbieter ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(v.anbieter)}</span>` : ''}
                         </div>
-                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(v.betrag)}</strong>
+                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(v.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" onclick="event.stopPropagation(); toggleVersicherungDetails('${v.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                            <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben">↪️</button>
-                            <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')">✏️</button>
-                            <button class="delete" onclick="event.stopPropagation(); deleteVersicherung('${v.id}')">🗑️</button>
+                            <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-move"></use></svg></button>
+                            <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
+                            <button class="delete" onclick="event.stopPropagation(); deleteVersicherung('${v.id}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                         </div>
                     </div>
 

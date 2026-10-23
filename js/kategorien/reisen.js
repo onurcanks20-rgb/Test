@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/reisen.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "appendEmptyAction",
     "addItem",
     "appendDateGroupHeader",
@@ -148,7 +149,7 @@ Kostentracker.module({
                 const budget = dependencies.parseBetrag(meta.budget) || 0;
                 const uebrig = budget - sum;
                 item.innerHTML = `
-            <div class="land-main">
+            <span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Reise')}</span><div class="land-main">
                 ${context.session.state.editLandName === land
                     ? `<input id="editLand-${dependencies.safeId(land)}" value="${dependencies.escapeHtml(land)}">`
                     : `<span class="land-name">${dependencies.escapeHtml(land)}</span>`
@@ -183,7 +184,7 @@ Kostentracker.module({
                 } else {
 
                     editBtn.className = "edit";
-                    editBtn.innerText = "✏️";
+                    editBtn.innerHTML = '<svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg>';editBtn.setAttribute('aria-label','Reise bearbeiten');
                     editBtn.onclick = (event) => {
                         event.stopPropagation();
                         startEditLand(land);
@@ -207,7 +208,7 @@ Kostentracker.module({
                 // 🗑️ Button daneben
                 let delBtn = document.createElement("button");
                 delBtn.className = "delete";
-                delBtn.innerText = "🗑️";
+                delBtn.innerHTML = '<svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg>';delBtn.setAttribute('aria-label','Reise löschen');
 
                 // 🔥 wichtig: verhindert Öffnen
                 delBtn.onclick = (event) => deleteLand(event, land);
@@ -588,7 +589,8 @@ Kostentracker.module({
                     chevron.className = "reise-category-chevron";
                     chevron.setAttribute("aria-hidden", "true");
                     chevron.textContent = "›";
-                    categoryMain.append(label, amount, chevron);
+                    const categoryIcon=document.createElement('span');categoryIcon.className='alltag-category-icon';categoryIcon.innerHTML=dependencies.alltagCategoryIcon(k);
+                    categoryMain.append(categoryIcon,label,amount,chevron);
                     categoryMain.addEventListener("click", () => toggleKategorie(k));
                 }
                 const categoryActions = document.createElement("div");
@@ -598,7 +600,9 @@ Kostentracker.module({
                     const button = document.createElement("button");
                     button.type = "button";
                     button.className = className;
-                    button.textContent = label;
+                    const categoryGlyphs={'✏️':'edit','🗑️':'delete','💾':'check','❌':'close'};
+                    const glyph=categoryGlyphs[label];
+                    if(glyph)button.innerHTML='<svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-'+glyph+'"></use></svg>';else button.textContent=label;
                     button.setAttribute("aria-label", (className === "edit" ? "Kategorie bearbeiten" : className === "delete" ? "Kategorie löschen" : label) + " · " + k);
                     button.addEventListener("click", event => {
                         event.stopPropagation();
@@ -636,7 +640,7 @@ Kostentracker.module({
                         let sub = document.createElement("div");
                         sub.className = "item reise-entry-card";
                         sub.style.marginLeft = "12px";
-                        sub.style.background = "#3a3a3c";
+                        sub.classList.add("alltag-entry");
 
                         if (context.session.state.editReiseId === e.id) {
 
@@ -662,15 +666,15 @@ Kostentracker.module({
                             const reiseBeschreibung = dependencies.escapeHtml(e.text || '');
                             sub.innerHTML = `
                         <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
-                            <div class="reise-entry-heading" onclick="toggleReiseDetails('${e.id}')">
+                            <div class="reise-entry-heading" onclick="toggleReiseDetails('${e.id}')"><span class="alltag-category-icon">${dependencies.alltagCategoryIcon(k)}</span>
                                 <span class="reise-entry-label">${dependencies.escapeHtml(e.text || k)}${dependencies.renderEntryTime(e)}</span>
                                 <div class="reise-entry-amounts"><strong class="reise-entry-amount">${dependencies.formatBetrag(e.betrag)}</strong>${entryFxDetails(e)}</div>
                             </div>
                             <div class="reise-entry-controls">
                                 <div class="actions reise-entry-actions">
-                                    <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben">↪️</button>
-                                    <button class="edit" onclick="event.stopPropagation(); startEditReise(${e.id})">✏️</button>
-                                    <button class="delete" data-delete-reise>🗑️</button>
+                                    <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-move"></use></svg></button>
+                                    <button class="edit" onclick="event.stopPropagation(); startEditReise(${e.id})" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
+                                    <button class="delete" data-delete-reise aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                                 </div>
                             </div>
                             ${reiseOffen ? `
@@ -693,17 +697,14 @@ Kostentracker.module({
 
                     if (alleEintraege.length > 0 && !suche) {
                         const clearWrap = document.createElement("div");
-                        clearWrap.style.marginLeft = "20px";
+                        clearWrap.className = "category-inline-options";
                         clearWrap.style.marginTop = "8px";
                         clearWrap.innerHTML = `
-                            <button class="delete"
-                                    data-clear-kategorie
-                                    style="width:100%;padding:11px 14px;border-radius:12px;font-weight:700;">
-                                🗑️ Alle ${dependencies.escapeHtml(k)}-Ausgaben löschen
-                            </button>
+                            <details class="alltag-overflow category-inline-overflow"><summary aria-label="Optionen für diese Kategorie"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button class="alltag-delete-action" data-clear-kategorie><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle ${dependencies.escapeHtml(k)}-Ausgaben löschen</span></button></div></details>
                         `;
                         clearWrap.querySelector('button').addEventListener("click", event => {
                             event.stopPropagation();
+                            const menu=clearWrap.querySelector('details');if(menu)menu.open=false;
                             clearKategorie(k);
                         });
                         div.appendChild(clearWrap);

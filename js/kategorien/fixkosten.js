@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/fixkosten.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "appendEmptyAction",
     "addItem",
     "appendDateGroupHeader",
@@ -165,16 +166,17 @@ Kostentracker.module({
                     item = dependencies.createItem(`
                     <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div class="compact-alltag-content">
+<span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Fixkosten')}</span>
                             <div class="compact-alltag-main" onclick="toggleFixkostenDetails('${k.id}')" style="cursor:pointer;">
                                 <span class="compact-alltag-title">${dependencies.escapeHtml(k.text || k.name || "-")}</span>
                                 ${k.haendler ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(k.haendler)}</span>` : ''}
                                 <span class="compact-alltag-sub">Monatlich am ${String(tag).padStart(2, "0")}.</span>
                             </div>
-                            <strong class="compact-alltag-amount">${dependencies.formatBetrag(k.betrag)}</strong>
+                            <strong class="compact-alltag-amount">${dependencies.formatBetrag(k.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" onclick="event.stopPropagation(); toggleFixkostenDetails('${k.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
                             <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                                <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben">↪️</button>
-                                <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')">✏️</button>
-                                <button class="delete" onclick="event.stopPropagation(); deleteLaufendeKosten('${k.id}')">🗑️</button>
+                                <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-move"></use></svg></button>
+                                <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
+                                <button class="delete" onclick="event.stopPropagation(); deleteLaufendeKosten('${k.id}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                             </div>
                         </div>
                         ${istOffen ? `

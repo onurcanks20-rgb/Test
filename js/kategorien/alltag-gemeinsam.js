@@ -89,7 +89,7 @@ Kostentracker.module({
         }
 
         function alltagCategoryIcon(category) {
-            const names={'Einkauf':'cart','Tanken':'fuel','Drogerie':'droplet','Essen / Trinken':'food','Aktivität':'activity','Geschenke':'gift'};
+            const names={'Einkauf':'cart','Tanken':'fuel','Drogerie':'droplet','Essen / Trinken':'food','Aktivität':'activity','Geschenke':'gift','Versicherung':'shield','Fixkosten':'receipt','Einnahme':'income','Geplant':'calendar','Sparen':'wallet','Investieren':'chart','Reise':'plane'};
             const name=Object.hasOwn(names,category)?names[category]:'spark';
             return `<svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-${name}"></use></svg>`;
         }

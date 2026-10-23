@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/sparen-investieren.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "appendEmptyAction",
     "alltagImZeitraum",
     "beginUndoDelete",
@@ -195,16 +196,17 @@ Kostentracker.module({
                         </div>
                     </div>`;
                 return gruppenHeader + `
-                    <div class="item" style="align-items:center;">
+                    <div class="item category-record" style="align-items:center;">
+<span class="alltag-category-icon">${dependencies.alltagCategoryIcon(e.typ==='sparen'?'Sparen':'Investieren')}</span>
                         <div style="min-width:0;flex:1;">
-                            <div style="font-weight:750;">${e.typ === "sparen" ? "💰 Sparen" : "📈 Investieren"}</div>
+                            <div style="font-weight:750;">${e.typ === "sparen" ? "Sparen" : "Investieren"}</div>
                             <div class="info-text" style="margin-top:4px;">${e.typ === "sparen" ? "Rücklage · dient als Puffer" : "Investition · bleibt geschützt"} · ab ${dependencies.formatDatum(e.datum)}</div>
                             ${e.text ? `<div class="info-text" style="margin-top:3px;">${dependencies.escapeHtml(e.text)}</div>` : ""}
                             <div style="font-weight:800;margin-top:5px;">${dependencies.formatBetrag(e.betrag)} / Gehaltsperiode</div>
                         </div>
                         <div class="actions" style="display:flex;gap:5px;">
-                            <button class="edit" onclick="event.stopPropagation();startEditSparenInvestieren('${String(e.id)}')">✏️</button>
-                            <button class="delete" onclick="event.stopPropagation();deleteSparenInvestieren('${String(e.id)}')">🗑️</button>
+                            <button class="edit" onclick="event.stopPropagation();startEditSparenInvestieren('${String(e.id)}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
+                            <button class="delete" onclick="event.stopPropagation();deleteSparenInvestieren('${String(e.id)}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                         </div>
                     </div>`;
             }).join("");
