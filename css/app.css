@@ -2576,3 +2576,12 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
     #settingsView .settings-menu-item { grid-template-columns:28px minmax(0,1fr) 14px;gap:8px;padding:11px 10px; }
     #settingsView .settings-menu-icon { width:28px;height:28px; }
 }
+
+/* Dezente Navigationspfeile in der Kategorienübersicht. */
+#uebersichtView .overview-card { grid-template-columns:32px minmax(0,1fr) 16px;gap:10px; }
+#uebersichtView .overview-card-chevron { display:grid;place-items:center;color:var(--overview-muted);opacity:.65; }
+#uebersichtView .overview-card-chevron .alltag-icon { width:16px;height:16px; }
+@media(max-width:360px) {
+    #uebersichtView .overview-card { grid-template-columns:28px minmax(0,1fr) 14px;gap:8px; }
+    #uebersichtView .overview-card-chevron .alltag-icon { width:14px;height:14px; }
+}
