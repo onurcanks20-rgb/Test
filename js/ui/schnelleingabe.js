@@ -50,6 +50,21 @@ Kostentracker.module({
             return context.repository.view.Einstellungen.quickAddFavoriten;
         }
 
+        function fillQuickChoice(button, label, symbol) {
+            button.type = "button";
+            button.setAttribute("aria-label", label);
+            const icon = document.createElement("span");
+            icon.className = "quick-choice-icon";
+            icon.innerHTML = '<svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-' + symbol + '"></use></svg>';
+            const text = document.createElement("span");
+            text.className = "quick-choice-label";
+            text.textContent = label;
+            const arrow = document.createElement("span");
+            arrow.className = "quick-choice-chevron";
+            arrow.innerHTML = '<svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg>';
+            button.append(icon, text, arrow);
+        }
+
         function renderQuickAddMenu() {
             const host = document.getElementById("quickAddChoices");
             if (!host) return;
@@ -63,7 +78,14 @@ Kostentracker.module({
                 const option = context.session.QUICK_ADD_OPTIONEN[key];
                 const btn = document.createElement("button");
                 btn.className = "add-choice";
-                btn.textContent = option.label;
+                const choices = {
+                    haushalt: ["Haushalt", "cart"], freizeit: ["Freizeit", "activity"],
+                    einnahmen: ["Einnahme", "income"], fixkosten: ["Fixkosten", "receipt"],
+                    versicherungen: ["Versicherung", "shield"], geplant: ["Geplante Ausgabe", "calendar"],
+                    sparen: ["Sparen & Investieren", "wallet"], reisen: ["Reise", "plane"]
+                };
+                const [label, symbol] = choices[key] || [option.label, "spark"];
+                fillQuickChoice(btn, label, symbol);
                 btn.addEventListener("click", option.action);
                 host.appendChild(btn);
             });
@@ -333,7 +355,7 @@ Kostentracker.module({
 
                 const neu = document.createElement("button");
                 neu.className = "add-choice";
-                neu.textContent = "＋ Reise anlegen";
+                fillQuickChoice(neu, "Reise anlegen", "plus");
                 neu.addEventListener("click", () => {
                     closeReiseAuswahlSheet();
                     dependencies.openReisen();
@@ -344,7 +366,7 @@ Kostentracker.module({
                 laender.forEach(land => {
                     const btn = document.createElement("button");
                     btn.className = "add-choice";
-                    btn.textContent = "✈️ " + land;
+                    fillQuickChoice(btn, land, "plane");
                     btn.addEventListener("click", () => {
                         closeReiseAuswahlSheet();
                         context.session.aktuellesLand = land;
