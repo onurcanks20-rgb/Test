@@ -2730,3 +2730,69 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
     #reisen .land-head .land-spent { font-size:14px; }
     #reisen .land-item > .alltag-category-icon { width:28px;height:28px; }
 }
+
+/* Schnellbuchung: kompakte Auswahl und ein Formular ohne doppelte Karten. */
+.quick-booking-sheet { --quick-surface:#19191b;--quick-row:#262628;--quick-muted:#a3a3aa;padding:12px 12px max(12px, env(safe-area-inset-bottom)); }
+:root[data-theme="light"] .quick-booking-sheet { --quick-surface:#fff;--quick-row:#f2f2f7;--quick-muted:#686870; }
+.quick-booking-sheet .add-sheet {
+    width:min(100%,488px);max-width:100%;box-sizing:border-box;
+    max-height:min(88dvh,calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px));
+    overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+    padding:18px;border-radius:16px;background:var(--quick-surface);color:var(--text);box-shadow:0 -8px 30px rgba(0,0,0,.2);
+}
+:root[data-theme="light"] .quick-booking-sheet .add-sheet { background:#fff; }
+.quick-booking-sheet .add-sheet h3 { margin:0 0 16px;font-size:21px;font-weight:650;line-height:1.25;letter-spacing:-.025em; }
+.quick-booking-sheet :is(#quickAddChoices,#reiseAuswahlChoices) { display:flex;flex-direction:column;gap:6px; }
+.quick-booking-sheet .add-choice { display:grid;grid-template-columns:32px minmax(0,1fr) 16px;align-items:center;gap:12px;width:100%;min-height:56px;margin:0;padding:10px 12px;border:0;border-radius:10px;background:var(--quick-row);color:var(--text);font-size:15px;font-weight:600;line-height:1.35;text-align:left; }
+.quick-booking-sheet .quick-choice-icon { display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:color-mix(in srgb,var(--primary) 10%,transparent);color:var(--primary); }
+.quick-booking-sheet .quick-choice-icon .alltag-icon { width:19px;height:19px; }
+.quick-booking-sheet .quick-choice-label { min-width:0;overflow-wrap:anywhere; }
+.quick-booking-sheet .quick-choice-chevron { color:var(--quick-muted);opacity:.65; }
+.quick-booking-sheet .quick-choice-chevron .alltag-icon { width:16px;height:16px; }
+.quick-booking-sheet .add-sheet > button:not(.add-choice) { min-height:44px;margin:14px 0 0 !important;padding:11px 14px;border-radius:9px;background:var(--quick-row) !important;color:var(--text);font-size:14px;font-weight:600; }
+.quick-booking-sheet .category-add-panel { width:100%;min-width:0;box-sizing:border-box;margin:0;padding:0;border:0;border-radius:0;background:transparent !important; }
+.quick-booking-sheet .category-add-panel .booking-field-label { display:block;margin:14px 0 6px;font-size:13px;line-height:1.4;font-weight:500;color:var(--quick-muted);opacity:1; }
+.quick-booking-sheet .category-add-panel :is(input,select,textarea):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]) {
+    width:100%;min-width:0;max-width:100%;box-sizing:border-box;min-height:48px;margin:0;padding:12px;
+    border:1px solid rgba(0,0,0,.1);border-radius:9px;background:#fff;color:#111;color-scheme:light;font:inherit;font-size:16px;line-height:1.35;
+}
+.quick-booking-sheet .category-add-panel :is(input,textarea)::placeholder { color:#737373;opacity:1; }
+.quick-booking-sheet .category-add-panel :is(input,select,textarea):focus-visible,.quick-booking-sheet .add-choice:focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
+.quick-booking-sheet .category-add-panel button.btn { min-height:44px;margin:12px 0 0;padding:11px 14px;border-radius:9px;font-size:14px;line-height:1.4; }
+.quick-booking-sheet .quick-amount-row { gap:8px;margin:12px 0 16px; }
+.quick-booking-sheet .quick-amount-btn { min-height:42px;margin:0;padding:10px 4px;border:0;border-radius:9px;background:var(--quick-row);color:var(--text);font-size:14px;font-weight:600; }
+.quick-booking-sheet .quick-category-grid { gap:8px;margin:14px 0 16px; }
+.quick-booking-sheet .quick-category-btn { display:flex;align-items:center;justify-content:flex-start;gap:8px;min-height:48px;margin:0;padding:10px;border:1px solid transparent;border-radius:9px;background:var(--quick-row);color:var(--text);font-size:14px;font-weight:500;line-height:1.35;text-align:left; }
+.quick-booking-sheet .quick-category-btn .alltag-icon { width:18px;height:18px;color:var(--primary); }
+.quick-booking-sheet .quick-category-btn.selected { border-color:var(--primary);background:color-mix(in srgb,var(--primary) 14%,var(--quick-row));box-shadow:inset 0 0 0 1px var(--primary); }
+:root[data-theme="light"] .quick-booking-sheet :is(.quick-amount-btn,.quick-category-btn) { background:var(--quick-row);color:var(--text); }
+:root[data-theme="light"] .quick-booking-sheet .quick-category-btn.selected { background:color-mix(in srgb,var(--primary) 10%,var(--quick-row)); }
+.quick-booking-sheet .entry-date-time { align-items:start;gap:12px;margin:14px 0; }
+.quick-booking-sheet .entry-date-time :is(label > span,.entry-time-field > label) { color:var(--quick-muted);opacity:1; }
+.quick-booking-sheet .category-add-panel .entry-time-input input { padding-right:42px; }
+.quick-booking-sheet .category-add-panel .entry-time-clear { min-height:44px;margin:0;padding:0;background:transparent;color:#686870; }
+.quick-booking-sheet .reminder-control { margin:14px 0;padding:10px 12px;border:0;border-radius:9px;background:var(--quick-row); }
+.quick-booking-sheet .reminder-toggle { min-height:44px;margin:0;padding:0;gap:12px;font-size:13px;line-height:1.4; }
+.quick-booking-sheet .reminder-toggle > span:first-child { min-width:0; }
+.quick-booking-sheet .reminder-toggle .ios-switch { flex-shrink:0; }
+.quick-booking-sheet .reise-amount-input-row { align-items:stretch;gap:8px;margin:0; }
+.quick-booking-sheet #reiseInputCurrencyToggle { flex:0 0 78px;min-width:78px;min-height:48px;margin:0;padding:10px 6px;border-radius:9px;font-size:14px; }
+.quick-booking-sheet .reise-amount-preview { margin:6px 0 0;font-size:12px;line-height:1.4;color:var(--quick-muted); }
+.quick-booking-sheet .date-range { margin:0;gap:12px; }
+.quick-booking-sheet .info-text { font-size:12px;line-height:1.45;color:var(--quick-muted); }
+@media(max-width:360px) {
+    .quick-booking-sheet .add-sheet { padding:16px; }
+    .quick-booking-sheet .add-sheet h3 { font-size:19px; }
+    .quick-booking-sheet .entry-date-time { grid-template-columns:minmax(0,1fr); }
+    .quick-booking-sheet .quick-category-btn { padding:9px 8px;gap:6px;font-size:13px; }
+}
+/* Beschriftung und verborgenes Beschreibungsfeld bleiben gemeinsam verborgen. */
+.quick-booking-sheet .category-add-panel.quick-entry-mode label:is([for="hausText"],[for="freizeitText"],[for="text"]) { display:none; }
+/* Dieselben Symbole funktionieren auch beim Hinzufügen direkt in der Kategorie. */
+.category-add-panel .quick-category-btn { display:flex;align-items:center;justify-content:flex-start;gap:8px; }
+.category-add-panel .quick-category-btn > .alltag-icon { width:18px;height:18px; }
+.category-add-panel .quick-category-btn > span { min-width:0; }
+/* Festgelegter gemeinsamer Stil: alle Datums- und Uhrzeitfelder immer weiß. */
+:root input:is([type="date"],[type="time"],[type="datetime-local"]) {
+    background:#fff !important;color:#111 !important;-webkit-text-fill-color:#111 !important;color-scheme:light !important;
+}
