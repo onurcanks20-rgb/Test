@@ -88,6 +88,26 @@ Kostentracker.module({
             return text.toLocaleLowerCase('de-DE') === kategorie.toLocaleLowerCase('de-DE') ? '' : text;
         }
 
+        function alltagCategoryIcon(category) {
+            const names={'Einkauf':'cart','Tanken':'fuel','Drogerie':'droplet','Essen / Trinken':'food','Aktivität':'activity','Geschenke':'gift'};
+            const name=Object.hasOwn(names,category)?names[category]:'spark';
+            return `<svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-${name}"></use></svg>`;
+        }
+        function closeAlltagMenus(restoreFocus=false) {
+            for(const menu of document.querySelectorAll('.alltag-overflow[open]')) {
+                menu.open=false;
+                if(restoreFocus)menu.querySelector('summary')?.focus();
+            }
+        }
+        document.addEventListener('click',event=>{
+            for(const menu of document.querySelectorAll('.alltag-overflow[open]')) {
+                if(!menu.contains(event.target)||event.target.closest?.('.alltag-delete-action'))menu.open=false;
+            }
+        });
+        document.addEventListener('keydown',event=>{
+            if(event.key==='Escape')closeAlltagMenus(true);
+        });
+
         function renderRecentAusgaben(typ) {
             const istFreizeit = typ === "freizeit";
             const container = document.getElementById(istFreizeit ? "freizeitListe" : "haushaltListe");
@@ -143,11 +163,13 @@ Kostentracker.module({
                 } else {
                     const zusatz = alltagZusatztext(e);
                     html = `<div class="compact-alltag-content">
+                        <span class="alltag-category-icon">${alltagCategoryIcon(e.kategorie)}</span>
                         <div class="compact-alltag-main">
                             <span class="compact-alltag-title">${dependencies.escapeHtml(e.kategorie || 'Sonstiges')}</span>
                             ${zusatz || dependencies.entryClock(e) ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(zusatz)}${dependencies.renderEntryTime(e,!!zusatz)}</span>` : ''}
                         </div>
                         <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
+                        <button type="button" class="alltag-row-open" aria-label="Eintrag bearbeiten" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-chevron"></use></svg></button>
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                             <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
                             <button class="edit" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button>
@@ -157,7 +179,7 @@ Kostentracker.module({
                 }
                 const item = dependencies.createItem(html);
                 if (!isEdit) item.classList.add("compact-alltag-card");
-                item.style.background = "#3a3a3c";
+                item.classList.add("alltag-entry");
                 container.appendChild(item);
                 if (isEdit) setTimeout(() => istFreizeit ? dependencies.setupFreizeitEditEnterFlow(e.id) : dependencies.setupHaushaltEditEnterFlow(e.id), 0);
             });
@@ -170,5 +192,5 @@ Kostentracker.module({
             renderRecentAusgaben(typ);
         }
 
-return { alleAusgabenAusBereich, renderBereichWocheninfo, alltagZusatztext, renderRecentAusgaben, toggleAlltagsDetails };
+return { alltagCategoryIcon, closeAlltagMenus, alleAusgabenAusBereich, renderBereichWocheninfo, alltagZusatztext, renderRecentAusgaben, toggleAlltagsDetails };
 });
