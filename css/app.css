@@ -2660,3 +2660,54 @@ body:has(.alltag-page:not(.hidden)) #categoryBottomNav .alltag-nav-vector { disp
     .settings-subpage .date-range,.settings-subpage .warning-settings-grid { grid-template-columns:minmax(0,1fr);gap:0; }
     .settings-subpage .warning-cat-grid { grid-template-columns:minmax(0,1fr); }
 }
+
+/* Reisen: Formulare bekommen eine eigene volle Zeile; Aktionen überlagern keine Inhalte. */
+#land.category-design-page .reise-entry-editing { display:block; }
+#land .reise-edit-form { display:flex;flex-direction:column;align-items:stretch;width:100%;min-width:0; }
+#land .reise-edit-form > .info-text { margin:0 0 8px;color:var(--alltag-muted);font-size:12px;line-height:1.4; }
+#land .reise-edit-form .booking-field-label { margin:12px 0 6px; }
+#land .reise-edit-form .entry-date-time { margin:12px 0;gap:12px;align-items:start; }
+#land .reise-edit-form .reminder-control { width:100%;box-sizing:border-box;margin:0 0 12px;padding:12px;border-radius:10px; }
+#land .reise-edit-form .reminder-toggle { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;margin:0;padding:0;font-size:13px;line-height:1.4;white-space:normal; }
+#land .reise-edit-form .reminder-toggle > span:first-child { min-width:0;text-align:left; }
+#land .reise-edit-form .reminder-toggle .ios-switch { flex-shrink:0; }
+#land .reise-edit-form .actions.reise-form-actions { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;width:100%;margin:0; }
+#land .reise-edit-form .actions.reise-form-actions button { width:100%;min-width:0;min-height:44px;margin:0;padding:11px 8px;border-radius:9px;font-size:14px;line-height:1.4;white-space:normal; }
+#land .reise-edit-form .actions.reise-form-actions .reise-form-cancel { background:var(--secondary);color:var(--text); }
+:is(#reisen,#land) :is(.booking-control,.booking-edit-form input,.entry-date-time input,.land-editing input):not([type="checkbox"]):not([type="radio"]):not([type="color"]) {
+    box-sizing:border-box;max-width:100%;min-width:0;background:#fff;color:#111;color-scheme:light;
+}
+:is(#reisen,#land) :is(.booking-control,.booking-edit-form input,.entry-date-time input,.land-editing input)::placeholder { color:#737373;opacity:1; }
+#land .reise-budget-editor { gap:0;padding:16px; }
+#land .reise-budget-editor-title { margin:0 0 14px;font-size:16px;line-height:1.35; }
+#land .reise-budget-editor > .booking-field-label { margin:0 0 6px;font-size:13px; }
+#land .reise-budget-editor .reise-currency-settings { margin:14px 0 0; }
+#land .reise-budget-editor .date-range { margin:14px 0;gap:12px; }
+#land .reise-budget-editor .date-field > .booking-field-label { margin:0 0 6px;font-size:13px; }
+#land .reise-budget-editor .reise-form-actions { margin:0; }
+#land .reise-budget-editor .reise-form-actions button { min-height:44px;padding:11px 8px;border-radius:9px;font-size:14px; }
+#land .reise-currency-picker { background:#fff;color:#111;border-color:rgba(0,0,0,.1);border-radius:9px; }
+#land .reise-currency-picker select { color:#111;color-scheme:light; }
+#reisen.category-design-page .land-item:not(.land-editing) {
+    display:grid;grid-template-columns:32px minmax(0,1fr) auto;
+    align-items:center;column-gap:12px;row-gap:5px;
+    min-height:84px;padding:12px;
+}
+#reisen .land-item:not(.land-editing) > .alltag-category-icon { grid-column:1;grid-row:1 / 3; }
+#reisen .land-item:not(.land-editing) .land-main { display:contents; }
+#reisen .land-item:not(.land-editing) .land-name { grid-column:2;grid-row:1;font-size:16px;line-height:1.3; }
+#reisen .land-item:not(.land-editing) .land-stats { grid-column:2 / -1;grid-row:2;gap:4px;font-size:12px;line-height:1.4; }
+#reisen .land-item:not(.land-editing) .land-actions { position:static;transform:none;grid-column:3;grid-row:1;gap:4px;margin:0; }
+#reisen .land-item:not(.land-editing) .land-actions button { display:grid;place-items:center;width:44px;height:44px;min-height:44px;margin:0;padding:0;border-radius:9px;background:var(--secondary); }
+#reisen .land-item:not(.land-editing) .land-actions button.edit { color:var(--action-edit); }
+#reisen .land-item:not(.land-editing) .land-actions button.delete { color:#ef5448; }
+#reisen .land-actions button .alltag-icon { width:18px;height:18px; }
+#reisen.category-design-page .land-item.land-editing { display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;padding:14px; }
+#reisen .land-item.land-editing .land-main { flex:1;min-width:0;width:auto; }
+#reisen .land-item.land-editing .land-actions { flex-basis:100%;margin-top:0; }
+#reisen .land-item.land-editing .land-actions button { min-height:44px;font-size:14px;border-radius:9px; }
+@media(max-width:360px) {
+    #land .reise-edit-form .entry-date-time { grid-template-columns:minmax(0,1fr); }
+    #reisen.category-design-page .land-item:not(.land-editing) { column-gap:8px;padding:11px 10px; }
+    #reisen .land-item:not(.land-editing) .land-name { font-size:14px; }
+}
