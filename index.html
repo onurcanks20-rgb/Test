@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <meta name="app-version" content="test-overview-design-v1">
+    <meta name="app-version" content="test-settings-main-v1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kostentracker">
@@ -13,17 +13,17 @@
     <meta name="application-name" content="Kostentracker">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="preload" href="icon-192.png" as="image" fetchpriority="high">
-    <link rel="preload" href="./js/app/ladebildschirm.js?v=test-overview-design-v1" as="script">
+    <link rel="preload" href="./js/app/ladebildschirm.js?v=test-settings-main-v1" as="script">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
     <title>Kostentracker Test</title>
 
-    <script src="./js/core/dienste.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-    <script src="./js/app/design-start.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/dienste.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+    <script src="./js/app/design-start.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=test-overview-design-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
+    <link rel="stylesheet" href="./css/app.css?v=test-settings-main-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
 
     <style id="bootSplashStyle">
       /* Paint the page canvas and safe-area background before app.css loads. */
@@ -56,7 +56,7 @@
   <div id="bootSplashLogo" class="boot-splash-logo"><img id="bootSplashIcon" src="icon-192.png" alt="" width="104" height="104" decoding="async" fetchpriority="high" hidden><span id="bootSplashFallback" class="boot-splash-fallback" hidden aria-hidden="true">💸</span></div>
   <div id="bootSplashError" class="boot-splash-error" hidden><p>App konnte nicht gestartet werden.</p><button type="button" onclick="location.reload()">Erneut laden</button></div>
 </div>
-<script src="./js/app/ladebildschirm.js?v=test-overview-design-v1"></script>
+<script src="./js/app/ladebildschirm.js?v=test-settings-main-v1"></script>
 
 
 <svg class="alltag-symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><symbol id="alltag-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol><symbol id="alltag-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="alltag-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol><symbol id="alltag-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol><symbol id="alltag-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol><symbol id="alltag-archive" viewBox="0 0 24 24"><path d="M4 9h16v11H4zM3 4h18v5H3zM9 13h6"/></symbol><symbol id="alltag-delete" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></symbol><symbol id="alltag-cart" viewBox="0 0 24 24"><path d="M3 3h2l3 12h10l3-9H6M9 18h.01M18 18h.01"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></symbol><symbol id="alltag-fuel" viewBox="0 0 24 24"><path d="M4 21V4h9v17M3 21h12M4 10h9M16 5l3 3v10a2 2 0 0 1-4 0v-5h-2M17 6v4h3"/></symbol><symbol id="alltag-droplet" viewBox="0 0 24 24"><path d="M12 3s-7 8-7 12a7 7 0 0 0 14 0c0-4-7-12-7-12Z"/></symbol><symbol id="alltag-house" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5 9v12h5v-7h4v7h5V9"/></symbol><symbol id="alltag-food" viewBox="0 0 24 24"><path d="M4 3v6a3 3 0 0 0 6 0V3M7 3v18M17 3c-3 3-3 8 0 9h3M20 3v18"/></symbol><symbol id="alltag-activity" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="alltag-gift" viewBox="0 0 24 24"><path d="M3 8h18v5H3zM5 13v8h14v-8M12 8v13"/><path d="M12 8C4 8 5 1 9 3c2 1 3 5 3 5s1-4 3-5c4-2 5 5-3 5Z"/></symbol><symbol id="alltag-spark" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z"/></symbol><symbol id="alltag-clipboard" viewBox="0 0 24 24"><path d="M8 5H5v16h14V5h-3M8 3h8v5H8zM8 12h8M8 16h8"/></symbol><symbol id="alltag-chart" viewBox="0 0 24 24"><path d="M4 21V11h4v10M10 21V3h4v18M16 21V7h4v14"/></symbol><symbol id="alltag-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="m8 12 3 3 5-6"/></symbol><symbol id="alltag-receipt" viewBox="0 0 24 24"><path d="M5 3h14v18l-3-2-4 2-4-2-3 2zM8 7h8M8 11h8M8 15h4"/></symbol><symbol id="alltag-wallet" viewBox="0 0 24 24"><path d="M20 8H4V5h14v3M4 8v12h16V8M16 12h5v5h-5z"/></symbol><symbol id="alltag-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M7 14h3M14 14h3"/></symbol><symbol id="alltag-income" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol><symbol id="alltag-plane" viewBox="0 0 24 24"><path d="m3 10 8 2V4c0-2 2-2 2 0v8l8-2v3l-8 3v4l3 1v1l-4-1-4 1v-1l3-1v-4l-8-3z"/></symbol><symbol id="alltag-edit" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14z"/></symbol><symbol id="alltag-move" viewBox="0 0 24 24"><path d="M4 18v-5a4 4 0 0 1 4-4h12m-5-5 5 5-5 5"/></symbol><symbol id="alltag-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol><symbol id="alltag-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol></defs></svg>
@@ -276,7 +276,7 @@
     <div id="settingsView" class="hidden">
         <div class="container">
             <div class="topbar">
-                <button class="back-btn" onclick="goHome()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <button class="back-btn" onclick="goHome()" aria-label="Zurück"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-back"></use></svg></button>
                 <h2 style="flex:1;">Einstellungen</h2>
             <button class="page-info-button" type="button" onclick="openPageInfo('settingsView')" aria-label="Informationen zu Einstellungen">ⓘ</button>
             </div>
@@ -284,58 +284,58 @@
             <div class="settings-section-head">Allgemein</div>
             <div class="settings-menu">
                 <button id="appUpdateCheckButton" class="settings-menu-item" type="button" onclick="checkAppUpdate(true)">
-                    <span class="settings-menu-icon">↻</span><span class="settings-menu-main"><span class="settings-menu-title">App aktualisieren</span><span class="settings-menu-sub">Automatisch prüfen und sicher neu laden</span></span><span class="settings-menu-chevron">›</span>
+                    <span class="settings-menu-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 8a8 8 0 1 0 0 8M20 3v5h-5"/></svg></span><span class="settings-menu-main"><span class="settings-menu-title">App aktualisieren</span><span class="settings-menu-sub">Automatisch prüfen und sicher neu laden</span></span><span class="settings-menu-chevron"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></span>
                 </button>
                 <div id="appUpdateStatus" class="settings-note" role="status" aria-live="polite"></div>
 
                 <button class="settings-menu-item" type="button" onclick="openSettingsBudget()">
-                    <span class="settings-menu-icon">💶</span>
+                    <span class="settings-menu-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-wallet"></use></svg></span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Budget & Gehalt</span><span class="settings-menu-sub">Aktuelles und nächstes Gehalt, Gehaltstag</span></span>
-                    <span class="settings-menu-chevron">›</span>
+                    <span class="settings-menu-chevron"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsQuickAdd()">
-                    <span class="settings-menu-icon">⚡</span>
+                    <span class="settings-menu-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m13 2-9 12h7l-1 8 10-13h-8z"/></svg></span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Schnelleingabe</span><span class="settings-menu-sub">Bereiche auswählen und Reihenfolge anpassen</span></span>
-                    <span class="settings-menu-chevron">›</span>
+                    <span class="settings-menu-chevron"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsWarnings()">
-                    <span class="settings-menu-icon">🔔</span>
+                    <span class="settings-menu-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5zM10 21h4M12 2v2"/></svg></span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Erinnerung</span><span class="settings-menu-sub">Große Ausgaben und Hinweise auf der Startseite</span></span>
-                    <span class="settings-menu-chevron">›</span>
+                    <span class="settings-menu-chevron"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openMerchantSettings()">
-                    <span class="settings-menu-icon">🏷️</span>
+                    <span class="settings-menu-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3h8l10 10-8 8L3 11z"/><circle cx="7" cy="7" r="1"/></svg></span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Händlerzuordnung</span><span class="settings-menu-sub">Automatische Kategorien und eigene Zuordnungen</span></span>
-                    <span class="settings-menu-chevron">›</span>
+                    <span class="settings-menu-chevron"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsDesign()">
-                    <span class="settings-menu-icon">🎨</span>
+                    <span class="settings-menu-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 1-4c-1-1 0-2 1-2h2a4 4 0 0 0 4-4c0-5-4-8-9-8Z"/><path d="M7 9h.01M11 6h.01M16 8h.01M6 13h.01"/></svg></span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Design</span><span id="settingsDesignMenuSub" class="settings-menu-sub">Systemeinstellung verwenden</span></span>
-                    <span class="settings-menu-chevron">›</span>
+                    <span class="settings-menu-chevron"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsGestures()">
-                    <span class="settings-menu-icon">👆</span>
+                    <span class="settings-menu-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 12V5a2 2 0 0 1 4 0v6l2-1 5 3v3c0 4-3 6-6 6-2 0-4-1-5-3l-4-5a2 2 0 0 1 3-2l1 1"/></svg></span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Gesten</span><span id="settingsGesturesMenuSub" class="settings-menu-sub">Rechts-Swipe: Aus</span></span>
-                    <span class="settings-menu-chevron">›</span>
+                    <span class="settings-menu-chevron"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></span>
                 </button>
             </div>
 
             <div class="settings-section-head" style="margin-top:22px;">Daten</div>
             <div class="settings-menu">
                 <button class="settings-menu-item" type="button" onclick="openGlobalArchiv()">
-                    <span class="settings-menu-icon">📁</span>
+                    <span class="settings-menu-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-archive"></use></svg></span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Archiv</span><span class="settings-menu-sub">Alle gespeicherten Einträge durchsuchen und exportieren</span></span>
-                    <span class="settings-menu-chevron">›</span>
+                    <span class="settings-menu-chevron"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openServerSettings()">
-                    <span class="settings-menu-icon">🔄</span>
+                    <span class="settings-menu-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h4M7 13h2m5-4 3 3-3 3M12 12h5"/></svg></span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Anmelden & Datensicherung</span><span class="settings-menu-sub">Persönlicher Zugang, gespeicherte Daten und Mitteilungen</span></span>
-                    <span class="settings-menu-chevron">›</span>
+                    <span class="settings-menu-chevron"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></span>
                 </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsBackup()">
-                    <span class="settings-menu-icon">💾</span>
+                    <span class="settings-menu-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 3h13l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8M14 5v2"/></svg></span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Backup</span><span class="settings-menu-sub">Daten in einer Datei sichern oder wiederherstellen</span></span>
-                    <span class="settings-menu-chevron">›</span>
+                    <span class="settings-menu-chevron"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></span>
                 </button>
             </div>
         </div>
@@ -1123,41 +1123,41 @@
     </div>
 
 
-    <script src="./js/core/dateninitialisierung.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-    <script src="./js/core/speicherung-backup.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/rueckgaengig.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/erinnerungen.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/core/formatierung.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/gehalt.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/navigation.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/eintragsaktionen.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/einstellungen.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/archiv.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/wochenbudget.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/schnelleingabe.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/geplante-ausgaben.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/sparen-investieren.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/reise-waehrung.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/reise-budget-kurs.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/reisen.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/fixkosten.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/listen.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/versicherungen.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/berechnungen.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/verschieben.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/einnahmen.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/haushalt.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/freizeit.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/formulare.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/alltag-gemeinsam.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/ausgabenarchiv.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/faelligkeiten.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/zeitraeume.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/uebersicht.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/grafik/diagramme.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/app/aktualisierung.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/eingabehilfen.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/app/start.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/dateninitialisierung.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/speicherung-backup.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/rueckgaengig.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/erinnerungen.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/core/formatierung.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/gehalt.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/navigation.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/eintragsaktionen.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/einstellungen.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/archiv.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/wochenbudget.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/schnelleingabe.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/geplante-ausgaben.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/sparen-investieren.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reise-budget-kurs.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reisen.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/fixkosten.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/listen.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/versicherungen.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/berechnungen.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/verschieben.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/einnahmen.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/haushalt.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/freizeit.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/formulare.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/alltag-gemeinsam.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/ausgabenarchiv.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/faelligkeiten.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/zeitraeume.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/uebersicht.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/grafik/diagramme.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/app/aktualisierung.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/eingabehilfen.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/app/start.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
 
 
     <div id="undoToast" class="undo-toast hidden" role="status" aria-live="polite">
@@ -1181,10 +1181,10 @@
 </dialog>
 
     <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
-    <link rel="stylesheet" href="./css/bedienung.css?v=test-overview-design-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
-    <script src="./js/ui/wischgesten.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
+    <link rel="stylesheet" href="./css/bedienung.css?v=test-settings-main-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
+    <script src="./js/ui/wischgesten.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
 
-    <script src="./js/ui/zurueckwischen.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
+    <script src="./js/ui/zurueckwischen.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
 
 <dialog id="paymentReviewDialog" class="payment-review-dialog" aria-labelledby="paymentReviewHeading" aria-describedby="paymentReviewRemaining" aria-modal="true" closedby="none">
   <h2 id="paymentReviewHeading" tabindex="-1">Zahlungen prüfen</h2>
@@ -1192,10 +1192,10 @@
   <div id="paymentReviewError" role="alert" class="payment-review-error"></div>
   <div id="serverPaymentReview"></div>
 </dialog>
-<script src="./js/server/haendler.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/server/reise-zahlungen.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/zahlungsbestaetigung.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
-<script src="./js/server/synchronisierung.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/haendler.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/reise-zahlungen.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/zahlungsbestaetigung.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/synchronisierung.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
     <!-- Gemeinsame Navigation in Kategorien (aus der Übersicht) -->
     <nav id="categoryBottomNav" class="bottom-nav hidden" aria-label="Hauptnavigation in Kategorien">
@@ -1203,7 +1203,7 @@
         <button type="button" class="active" aria-current="page" onclick="openUebersicht()"><span class="nav-icon"><span class="alltag-nav-emoji">📋</span><svg class="alltag-icon alltag-nav-vector" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-clipboard"></use></svg></span>Übersicht</button>
         <button type="button" onclick="openGrafik()"><span class="nav-icon"><span class="alltag-nav-emoji">📊</span><svg class="alltag-icon alltag-nav-vector" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chart"></use></svg></span>Grafik</button>
     </nav>
-<script src="./js/ui/ansicht-speichern.js?v=test-overview-design-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/ansicht-speichern.js?v=test-settings-main-v1" type="application/x-kostentracker"></script>
 </body>
 
 </html>
