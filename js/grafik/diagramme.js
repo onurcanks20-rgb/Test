@@ -2,6 +2,7 @@ Kostentracker.module({
   "id": "js/grafik/diagramme.js",
   "dependencies": [
     "addDays",
+    "renderTravelGraphic",
     "berechneterGehaltstag",
     "einnahmenZahlungenImZeitraum",
     "escapeHtml",
@@ -342,6 +343,7 @@ Kostentracker.module({
         }
 
         function renderGrafik(){
+            if (dependencies.renderTravelGraphic?.()) return;
             if(document.getElementById("grafikView")?.classList.contains("hidden"))return;
             const titleEl=document.getElementById("grafikTitle"), subtitle=document.getElementById("grafikSubtitle"), totalEl=document.getElementById("grafikTotal"), stats=document.getElementById("grafikStats");
 
