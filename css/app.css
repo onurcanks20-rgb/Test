@@ -3107,3 +3107,57 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 
 /* In der Schnelleingabe bleibt ausschließlich der äußere Abbrechen-Button. */
 #reiseAddPanel.quick-entry-mode .reise-add-cancel { display:none !important; }
+
+/* Zeiträume vergleichen – exakte Beträge statt schwer ablesbarer Balken. */
+#grafikView { --comparison-less:#73c989;--comparison-more:#e9a15c; }
+:root[data-theme="light"] #grafikView { --comparison-less:#247b4c;--comparison-more:#a55012; }
+#grafikView #grafikCompareCategoryCard { padding:0;background:transparent; }
+#grafikView .grafik-comparison-picker > summary { display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;box-sizing:border-box;padding:12px;border:1px solid #dedee3;border-radius:9px;background:#fff;color:#111;font-size:15px;line-height:1.4;list-style:none;cursor:pointer; }
+#grafikView .grafik-comparison-picker > summary::-webkit-details-marker { display:none; }
+#grafikView .grafik-comparison-picker > summary .alltag-icon { width:18px;height:18px;color:#73737b; }
+#grafikView .grafik-comparison-picker[open] > summary .alltag-icon { transform:rotate(90deg); }
+#grafikView .grafik-comparison-picker > .grafik-compare-help { margin:12px 2px; }
+#grafikView .grafik-is-comparison { padding:0;background:transparent;overflow:visible; }
+#grafikView .grafik-is-comparison > .grafik-chart-head { display:none; }
+#grafikView .grafik-is-comparison > .grafik-chart { display:block;min-height:0;margin:0;overflow:visible; }
+#grafikView .grafik-is-comparison > .grafik-legend:empty,#grafikView #grafikStats:empty { display:none; }
+#grafikView .grafik-comparison { width:100%;min-width:0; }
+#grafikView .grafik-comparison h3 { margin:20px 2px 12px;font-size:18px;font-weight:650;line-height:1.35;letter-spacing:-.02em; }
+#grafikView .grafik-comparison-summary { padding:16px;border-radius:12px;background:var(--graph-surface); }
+#grafikView .grafik-comparison-totals { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
+#grafikView .grafik-comparison-totals > div { min-width:0; }
+#grafikView .grafik-comparison-totals > div + div { padding-left:12px;border-left:1px solid var(--graph-line); }
+#grafikView .grafik-comparison-totals > div > span { display:block;margin-bottom:6px;color:var(--graph-muted);font-size:12px;line-height:1.4;overflow-wrap:anywhere; }
+#grafikView .grafik-comparison-totals strong { display:block;font-size:clamp(20px,6vw,27px);font-weight:650;line-height:1.25;letter-spacing:-.03em;overflow-wrap:anywhere; }
+#grafikView .grafik-comparison-summary-delta { display:flex;flex-direction:column;gap:5px;margin-top:16px;padding-top:14px;border-top:1px solid var(--graph-line); }
+#grafikView .grafik-comparison-summary-delta > strong { font-size:16px;font-weight:600;line-height:1.4; }
+#grafikView .grafik-comparison-summary-delta > span { font-size:12px;line-height:1.4;color:var(--graph-muted); }
+#grafikView .grafik-comparison-list { padding:0 12px;border-radius:12px;background:var(--graph-surface); }
+#grafikView .grafik-comparison-row { display:grid;grid-template-columns:28px minmax(0,1fr) minmax(80px,auto);align-items:start;gap:10px;min-width:0;margin:0;padding:16px 0; }
+#grafikView .grafik-comparison-row + .grafik-comparison-row { border-top:1px solid var(--graph-line); }
+#grafikView .grafik-comparison-icon { display:grid;place-items:center;width:28px;height:28px;color:var(--primary); }
+#grafikView .grafik-comparison-icon .alltag-icon { width:23px;height:23px; }
+#grafikView .grafik-comparison-main { min-width:0; }
+#grafikView .grafik-comparison-main h4 { margin:2px 0 10px;font-size:15px;font-weight:600;line-height:1.35;overflow-wrap:anywhere; }
+#grafikView .grafik-comparison-values { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+#grafikView .grafik-comparison-values > div { min-width:0; }
+#grafikView .grafik-comparison-values > div + div { padding-left:10px;border-left:1px solid var(--graph-line); }
+#grafikView .grafik-comparison-values span { display:block;color:var(--graph-muted);font-size:10px;line-height:1.4;overflow-wrap:anywhere; }
+#grafikView .grafik-comparison-values strong { display:block;margin-top:4px;font-size:13px;font-weight:600;line-height:1.4;overflow-wrap:anywhere; }
+#grafikView .grafik-comparison-values strong span { display:inline;color:inherit;font-size:inherit;line-height:inherit; }
+#grafikView .grafik-comparison-delta { display:flex;flex-direction:column;align-items:flex-end;gap:6px;max-width:112px;min-width:0;margin-top:2px;text-align:right; }
+#grafikView .grafik-comparison-delta > strong { color:var(--graph-muted);font-size:15px;font-weight:650;line-height:1.35;letter-spacing:-.02em;overflow-wrap:anywhere; }
+#grafikView .grafik-comparison-delta.less > strong { color:var(--comparison-less); }
+#grafikView .grafik-comparison-delta.more > strong { color:var(--comparison-more); }
+#grafikView .grafik-comparison-delta > span { max-width:100px;color:var(--graph-muted);font-size:10px;line-height:1.4; }
+#grafikView .grafik-comparison :is(.grafik-comparison-totals,.grafik-comparison-values,.grafik-comparison-delta) strong > span { white-space:normal !important; }
+#grafikView .grafik-comparison-note { margin:10px 2px 0;color:var(--graph-muted);font-size:11px;line-height:1.4; }
+#grafikView .grafik-comparison-picker > summary:focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
+@media(max-width:360px) {
+ #grafikView .grafik-comparison-row { grid-template-columns:24px minmax(0,1fr) 92px;gap:8px; }
+ #grafikView .grafik-comparison-values { grid-template-columns:1fr;gap:6px; }
+ #grafikView .grafik-comparison-values > div + div { padding-left:0;border-left:0; }
+ #grafikView .grafik-comparison-values span { display:inline; }
+ #grafikView .grafik-comparison-values strong { margin-top:2px; }
+ #grafikView .grafik-comparison-delta > strong { font-size:14px; }
+}
