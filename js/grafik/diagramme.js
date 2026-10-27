@@ -225,6 +225,12 @@ Kostentracker.module({
 
         function grafikRenderCompareSelection(){
             const host=document.getElementById("grafikCompareSelection"); if(!host)return;
+            const selectionLabel=document.getElementById("grafikCompareSelectionSummary");
+            if(selectionLabel){
+                const count=context.session.grafikCompareSelection.size;
+                const allCategories=[...context.session.grafikCompareSelection].every(key=>key.endsWith("|all"));
+                selectionLabel.textContent=count?`${count} ${allCategories?(count===1?"Kategorie":"Kategorien"):(count===1?"Auswahl":"Auswahlen")} ausgewählt`:"Kategorien auswählen";
+            }
             host.innerHTML=grafikCompareGroups().map(g=>{
                 const totalKey=`${g.category}|all`, totalChecked=context.session.grafikCompareSelection.has(totalKey);
                 const subRows=g.subs.map(sub=>{const key=`${g.category}|${sub}`;return `<label class="grafik-compare-option"><input type="checkbox" ${context.session.grafikCompareSelection.has(key)?"checked":""} onchange='grafikCompareChoose(${dependencies.escapeHtml(JSON.stringify(g.category))},${dependencies.escapeHtml(JSON.stringify(sub))},this.checked)'><span>${dependencies.escapeHtml(sub)}</span></label>`;}).join("");
@@ -265,14 +271,48 @@ Kostentracker.module({
             return rows.filter(r=>r.a>0||r.b>0);
         }
 
+        function grafikComparePeriodLabel(range, fallback) {
+            const a=range.start, b=range.ende;
+            const fullMonth=a.getDate()===1 && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && b.getDate()===new Date(b.getFullYear(),b.getMonth()+1,0).getDate();
+            return fullMonth ? a.toLocaleDateString("de-DE",{month:"long",year:"numeric"}) : (range.label||fallback);
+        }
+
+        function grafikCompareDelta(a,b,kind="expense") {
+            const value=Math.round((a-b)*100)/100;
+            const tone=value===0 || kind==="neutral" ? "neutral" : ((kind==="income" ? value>0 : value<0) ? "less" : "more");
+            return {value,tone,sign:value>0?"+":value<0?"−":"",description:value===0?"unverändert":kind==="expense"?(value>0?"mehr ausgegeben":"weniger ausgegeben"):(value>0?"mehr im Zeitraum A":"weniger im Zeitraum A")};
+        }
+
+        // Der bisherige Schnittstellenname bleibt erhalten; statt Balken erscheinen exakte Werte.
         function grafikRenderCompareBars(rows,rangeA,rangeB){
             const chart=document.getElementById("grafikChart"), legend=document.getElementById("grafikLegend"); if(!chart||!legend)return;
-            if(!rows.length){chart.innerHTML=`<div class="grafik-empty">Für diese Auswahl gibt es in beiden Zeiträumen noch keine passenden Daten.</div>`;legend.innerHTML="";return;}
-            const W=340,rowH=58,padL=118,padR=10,padT=10,padB=10,H=Math.max(220,padT+rows.length*rowH+padB),innerW=W-padL-padR,max=Math.max(1,...rows.flatMap(r=>[r.a,r.b]));
-            let svg=`<svg class="grafik-svg" style="height:${H}px" viewBox="0 0 ${W} ${H}" role="img">`;
-            rows.forEach((r,i)=>{const y=padT+i*rowH,labelY=y+27,aW=(r.a/max)*innerW,bW=(r.b/max)*innerW;svg+=`<text class="grafik-axis-label" x="0" y="${labelY}" text-anchor="start">${grafikEscapeXml(grafikShortLabel(r.label,17))}</text><rect x="${padL}" y="${y+5}" width="${aW}" height="17" rx="5" fill="${context.session.GRAFIK_COLORS[0]}"/><rect x="${padL}" y="${y+31}" width="${bW}" height="17" rx="5" fill="${context.session.GRAFIK_COLORS[1]}"/>`;});
-            svg+=`</svg>`;chart.innerHTML=svg;
-            legend.innerHTML=`<div class="grafik-compare-legend" style="grid-column:1/-1"><span><i class="grafik-compare-swatch" style="background:${context.session.GRAFIK_COLORS[0]}"></i>A · ${dependencies.escapeHtml(rangeA.label)}</span><span><i class="grafik-compare-swatch" style="background:${context.session.GRAFIK_COLORS[1]}"></i>B · ${dependencies.escapeHtml(rangeB.label)}</span></div>`;
+            legend.innerHTML="";
+            if(!rows.length){chart.innerHTML=`<div class="grafik-empty">Für diese Auswahl gibt es in beiden Zeiträumen noch keine passenden Daten.</div>`;return;}
+            const labelA=dependencies.escapeHtml(grafikComparePeriodLabel(rangeA,"Zeitraum A")), labelB=dependencies.escapeHtml(grafikComparePeriodLabel(rangeB,"Zeitraum B"));
+            const totalA=rows.reduce((sum,row)=>sum+row.a,0),totalB=rows.reduce((sum,row)=>sum+row.b,0);
+            const kindFor=row=>row.label.split(" · ")[0]==="Einnahmen"?"income":row.label.split(" · ")[0]==="Sparen & Investieren"?"neutral":"expense";
+            const kind=rows.every(row=>kindFor(row)==="expense")?"expense":rows.every(row=>kindFor(row)==="income")?"income":"neutral";
+            const delta=grafikCompareDelta(totalA,totalB,kind);
+            const percent=totalB!==0?(delta.value/Math.abs(totalB))*100:null;
+            const percentText=percent===null?(totalA===0?"Keine Veränderung":"Kein Vergleichswert in Zeitraum B"):`${percent>0?"+":""}${percent.toLocaleString("de-DE",{maximumFractionDigits:1})} % gegenüber Zeitraum B`;
+            const summary=delta.value===0?"Keine Veränderung":`${dependencies.formatBetrag(Math.abs(delta.value))} ${delta.description}`;
+            const icons={"Haushalt":"cart","Freizeit":"activity","Fixkosten":"receipt","Versicherungen":"shield","Einnahmen":"income","Reisen":"plane","Geplante Ausgaben":"calendar","Sparen & Investieren":"wallet"};
+            chart.innerHTML=`<section class="grafik-comparison" aria-label="Zeiträume vergleichen">
+                <h3>${kind==="expense"?"Ausgaben im Vergleich":kind==="income"?"Einnahmen im Vergleich":"Werte im Vergleich"}</h3>
+                <div class="grafik-comparison-summary">
+                    <div class="grafik-comparison-totals"><div><span>A · ${labelA}</span><strong>${dependencies.formatBetrag(totalA)}</strong></div><div><span>B · ${labelB}</span><strong>${dependencies.formatBetrag(totalB)}</strong></div></div>
+                    <div class="grafik-comparison-summary-delta"><strong>${summary}</strong><span>${percentText}</span></div>
+                </div>
+                <h3>Nach Kategorie</h3>
+                <div class="grafik-comparison-list">${rows.map(row=>{
+                    const delta=grafikCompareDelta(row.a,row.b,kindFor(row));
+                    const area=row.label.split(" · ")[0], icon=Object.hasOwn(icons,area)?icons[area]:"spark";
+                    return `<article class="grafik-comparison-row"><span class="grafik-comparison-icon"><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-${icon}"></use></svg></span>
+                        <div class="grafik-comparison-main"><h4>${dependencies.escapeHtml(row.label)}</h4><div class="grafik-comparison-values"><div><span>A · ${labelA}</span><strong>${dependencies.formatBetrag(row.a)}</strong></div><div><span>B · ${labelB}</span><strong>${dependencies.formatBetrag(row.b)}</strong></div></div></div>
+                        <div class="grafik-comparison-delta ${delta.tone}"><strong>${delta.sign}${dependencies.formatBetrag(Math.abs(delta.value))}</strong><span>${delta.description}</span></div>
+                    </article>`;
+                }).join("")}</div><p class="grafik-comparison-note">Differenz: Zeitraum A minus Zeitraum B</p>
+            </section>`;
         }
 
         function grafikCategoryChanged(doRender=true){
@@ -347,6 +387,7 @@ Kostentracker.module({
             if(document.getElementById("grafikView")?.classList.contains("hidden"))return;
             const titleEl=document.getElementById("grafikTitle"), subtitle=document.getElementById("grafikSubtitle"), totalEl=document.getElementById("grafikTotal"), stats=document.getElementById("grafikStats");
 
+            document.getElementById("grafikChartCard")?.classList.toggle("grafik-is-comparison",context.session.grafikCompareMode);
             if(context.session.grafikCompareMode){
                 const rangeA=grafikReadCompareRange("A"), rangeB=grafikReadCompareRange("B");
                 if(!rangeA||!rangeB){
@@ -357,17 +398,12 @@ Kostentracker.module({
                     if(chart)chart.innerHTML=`<div class="grafik-empty">Bitte Zeitraum A und Zeitraum B auswählen.</div>`;
                     if(legend)legend.innerHTML=""; if(stats)stats.innerHTML=""; return;
                 }
-                const rows=grafikCompareRows(rangeA,rangeB), totalA=rows.reduce((s,r)=>s+r.a,0), totalB=rows.reduce((s,r)=>s+r.b,0), diff=totalA-totalB, pct=totalB>0?(diff/totalB)*100:null;
-                if(titleEl)titleEl.textContent="Zeiträume vergleichen";
+                const rows=grafikCompareRows(rangeA,rangeB);
+                if(titleEl)titleEl.textContent="Werte im Vergleich";
                 if(subtitle)subtitle.textContent=`A: ${rangeA.label} · B: ${rangeB.label}`;
                 if(totalEl)totalEl.textContent="";
                 grafikRenderCompareBars(rows,rangeA,rangeB);
-                const pctText=pct===null?"–":`${pct>0?"+":""}${pct.toLocaleString("de-DE",{maximumFractionDigits:1})} %`;
-                if(stats)stats.innerHTML=`
-                    <div class="grafik-stat"><div class="grafik-stat-label">Zeitraum A</div><div class="grafik-stat-value">${dependencies.formatBetrag(totalA)}</div></div>
-                    <div class="grafik-stat"><div class="grafik-stat-label">Zeitraum B</div><div class="grafik-stat-value">${dependencies.formatBetrag(totalB)}</div></div>
-                    <div class="grafik-stat"><div class="grafik-stat-label">Unterschied</div><div class="grafik-stat-value">${diff>0?"+":""}${dependencies.formatBetrag(diff)}</div></div>
-                    <div class="grafik-stat"><div class="grafik-stat-label">Unterschied in %</div><div class="grafik-stat-value">${pctText}</div></div>`;
+                if(stats)stats.innerHTML="";
                 return;
             }
 
