@@ -2,6 +2,7 @@ Kostentracker.module({
   "id": "js/budget/uebersicht.js",
   "dependencies": [
     "resumePaymentImportedNotice",
+    "refreshTravelMode",
     "alltagCategoryIcon",
     "compareEntriesNewest",
     "formatDateGroupLabel",
@@ -269,6 +270,7 @@ Kostentracker.module({
         }
 
         function renderHomeTrips() {
+            dependencies.refreshTravelMode?.();
             const host = document.getElementById('homeActiveTrips');
             if (!host) return;
             const trips = activeHomeTrips();
