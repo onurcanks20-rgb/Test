@@ -2,6 +2,7 @@ Kostentracker.module({
   "id": "js/kategorien/reisen.js",
   "dependencies": [
     "alltagCategoryIcon",
+    "isTravelMode", "activeHomeTrips", "openTravelOverview",
     "appendEmptyAction",
     "addItem",
     "appendDateGroupHeader",
@@ -246,6 +247,9 @@ Kostentracker.module({
         }
 
         function openLand(l) {
+            if (dependencies.isTravelMode?.() && !dependencies.activeHomeTrips().includes(l)) {
+                dependencies.openTravelOverview(); return;
+            }
 
             // 🔥 WICHTIG: alten Zustand sauber zurücksetzen
             context.session.state.editLandName = null;

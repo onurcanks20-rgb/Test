@@ -1,6 +1,6 @@
 Kostentracker.module({
  id:'js/kategorien/reise-budget-kurs.js',
- dependencies:['getReiseCurrency','updateReiseAmountPreview','renderReiseBudget','formatBetrag','formatDatum','speichern'],
+ dependencies:['isTravelMode','renderTravelHome','getReiseCurrency','updateReiseAmountPreview','renderReiseBudget','formatBetrag','formatDatum','speichern'],
  session:['aktuellesLand','state'],read:['ReisenMeta'],write:['ReisenMeta'],replace:false
 }, (context,dependencies)=>{
  'use strict';
@@ -32,7 +32,7 @@ Kostentracker.module({
    if(!formats.has(display.currency))formats.set(display.currency,new Intl.NumberFormat('de-DE',{style:'currency',currency:display.currency,currencyDisplay:'code'}));
    return formats.get(display.currency).format(eur*display.rate);
  }
- function repaint(land) {if(context.session.aktuellesLand===land){if(!context.session.state.reiseBudgetEdit)dependencies.renderReiseBudget();dependencies.updateReiseAmountPreview();}}
+ function repaint(land) {if(context.session.aktuellesLand===land){if(!context.session.state.reiseBudgetEdit)dependencies.renderReiseBudget();dependencies.updateReiseAmountPreview();}if(dependencies.isTravelMode?.())dependencies.renderTravelHome?.();}
  async function fetchRate(quote) {
    if(pending.has(quote))return pending.get(quote);
    const task=(async()=>{
@@ -80,8 +80,8 @@ Kostentracker.module({
    if(land&&isLocal(land))return requestReiseBudgetRate(land);
    return Promise.resolve(false);
  }
- async function toggleReiseBudgetCurrency() {
-   const land=context.session.aktuellesLand,quote=dependencies.getReiseCurrency(land);
+ async function toggleReiseBudgetCurrency(land=context.session.aktuellesLand) {
+   const quote=dependencies.getReiseCurrency(land);
    if(!land||!quote||quote==='EUR')return;
    const meta=context.repository.view.ReisenMeta[land];if(!meta)return;
    meta.budgetCurrencyDisplay=isLocal(land)?'eur':'local';
@@ -89,6 +89,7 @@ Kostentracker.module({
    repaint(land);
    if(isLocal(land))await requestReiseBudgetRate(land);
  }
+ function reiseBudgetRateState(land=context.session.aktuellesLand) {return states.get(land+':'+dependencies.getReiseCurrency(land))?.status||'';}
  function refreshReiseBudgetRate(){return requestReiseBudgetRate(context.session.aktuellesLand,true);}
  function renderReiseBudgetToggle() {
    const land=context.session.aktuellesLand,display=reiseBudgetPresentation(land);
@@ -119,5 +120,5 @@ Kostentracker.module({
  window.addEventListener('online',()=>{prepareReiseBudgetRate();});
  window.addEventListener('offline',()=>{const land=context.session.aktuellesLand;if(land)repaint(land);});
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')prepareReiseBudgetRate();});
- return {reiseBudgetPresentation,formatReiseBudgetAmount,requestReiseBudgetRate,prepareReiseBudgetRate,toggleReiseBudgetCurrency,refreshReiseBudgetRate,renderReiseBudgetToggle,renderReiseBudgetRateNote};
+ return {reiseBudgetRateState,reiseBudgetPresentation,formatReiseBudgetAmount,requestReiseBudgetRate,prepareReiseBudgetRate,toggleReiseBudgetCurrency,refreshReiseBudgetRate,renderReiseBudgetToggle,renderReiseBudgetRateNote};
 });
