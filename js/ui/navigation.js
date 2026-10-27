@@ -2,6 +2,7 @@ Kostentracker.module({
   "id": "js/ui/navigation.js",
   "dependencies": [
     "applyLetzteAlltagsKategorie",
+    "travelModeRoute", "isTravelMode", "openTravelOverview", "refreshTravelMode",
     "closeAddSheet",
     "closeCategoryAddPanels",
     "getAktuellerMonat",
@@ -62,11 +63,14 @@ Kostentracker.module({
         }
 
         function show(id) {
+            dependencies.refreshTravelMode?.();
+            id = dependencies.travelModeRoute?.(id) || id;
             const changingView = document.getElementById(id)?.classList.contains("hidden");
             context.session.kostentrackerRememberView?.(id);
 
             const views = [
                 "home",
+                "travelOverviewView",
                 "reisen",
                 "land",
                 "haushaltView",
@@ -101,7 +105,7 @@ Kostentracker.module({
 
             // Kategorien behalten die Übersicht-Navigation; Einstellungen bleiben unverändert.
             const categoryViews = [
-                "reisen", "land", "haushaltView", "freizeitView",
+                "travelOverviewView", "reisen", "land", "haushaltView", "freizeitView",
                 "ausgabenArchivView", "globalArchivView", "geplanteAusgabenView",
                 "sparenInvestierenView", "einnahmenView", "kostenView",
                 "versicherungenView"
@@ -122,8 +126,7 @@ Kostentracker.module({
                 const datum = document.getElementById("datum");
                 if (datum) datum.value = "";
             }
-            // Erst den Ausgangszustand für Zurückwischen merken, dann oben öffnen.
-            // Die Geste stellt ihre gespeicherte Position nach dem Wechsel selbst wieder her.
+            // Ausgangsposition vorher für die Zurückwisch-Geste sichern.
             if (changingView) window.scrollTo(0, 0);
         }
 
@@ -134,6 +137,7 @@ Kostentracker.module({
         }
 
         function openUebersicht() {
+            if (dependencies.isTravelMode?.()) { dependencies.openTravelOverview(); return; }
             dependencies.verarbeiteFaelligeGeplanteAusgaben();
             show("uebersichtView");
             dependencies.renderUebersicht();
@@ -205,6 +209,7 @@ Kostentracker.module({
         }
 
         function openReisen() {
+            if (dependencies.isTravelMode?.()) { dependencies.openTravelOverview(); return; }
             show("reisen");
             dependencies.closeCategoryAddPanels();
 

@@ -1,6 +1,6 @@
 Kostentracker.module({
   "id": "js/ui/zurueckwischen.js",
-  "dependencies": [],
+  "dependencies": ["isTravelMode", "travelModeRoute"],
   "session": [
     "kostentrackerRememberView",
     "state"
@@ -14,7 +14,7 @@ Kostentracker.module({
         // Interactive edge navigation. Visual copies live in a shadow root so
         // duplicate form IDs never affect the app's renderers or saved inputs.
         (() => {
-            const viewIds = ['home','reisen','land','haushaltView','freizeitView','ausgabenArchivView','globalArchivView','geplanteAusgabenView','sparenInvestierenView','einnahmenView','kostenView','versicherungenView','uebersichtView','grafikView','settingsView','settingsBudgetView','settingsQuickAddView','settingsWarningsView','settingsDesignView','settingsGesturesView','settingsMerchantView','settingsBackupView'];
+            const viewIds = ['home','travelOverviewView','reisen','land','haushaltView','freizeitView','ausgabenArchivView','globalArchivView','geplanteAusgabenView','sparenInvestierenView','einnahmenView','kostenView','versicherungenView','uebersichtView','grafikView','settingsView','settingsBudgetView','settingsQuickAddView','settingsWarningsView','settingsDesignView','settingsGesturesView','settingsMerchantView','settingsBackupView'];
             const cache = new Map();
             const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
             const overlay = document.createElement('div');
@@ -165,7 +165,8 @@ Kostentracker.module({
                 const action = (button.getAttribute('onclick') || '').trim();
                 const targets = {'goHome()':'home','openUebersicht()':'uebersichtView','openSettings()':'settingsView','backToReisen()':'reisen'};
                 if (action === 'closeAusgabenArchiv()') return context.session.state.ausgabenArchivTyp === 'freizeit' ? 'freizeitView' : 'haushaltView';
-                return targets[action.replace(/;$/, '')];
+                const target = targets[action.replace(/;$/, '')];
+                return target && dependencies.isTravelMode?.() ? dependencies.travelModeRoute(target) : target;
             }
 
             function layer(node, scroll, front) {
@@ -344,6 +345,9 @@ Kostentracker.module({
             });
             observer.observe(document.body, {subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class','value','checked','selected']});
             observer.observe(document.documentElement, {attributes:true,attributeFilter:['data-theme','style']});
+            document.addEventListener('kostentracker:travelModeChanged',() => {
+                cache.clear(); discardPrepared(); cleanup(); schedulePreparation();
+            });
             document.addEventListener('input',invalidatePrepared,true);
             document.addEventListener('change',invalidatePrepared,true);
             document.addEventListener('focusout',schedulePreparation,true);
