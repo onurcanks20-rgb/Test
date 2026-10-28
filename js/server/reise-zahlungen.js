@@ -6,6 +6,7 @@ Kostentracker.module({
  'use strict';
  function validateImportedPayment(payment) {
   if(!payment||typeof payment.id!=='string'||!/^[-A-Za-z0-9_:]{1,128}$/.test(payment.id))throw new Error('Ungültige Zahlungs-ID.');
+  if(payment.source==='paypal-email'&&(payment.bank!=='paypal'||!/^paypal-email-[a-f0-9]{64}$/.test(payment.id)||typeof payment.paypalTransactionId!=='string'||! /^[A-Z0-9]{17}$/.test(payment.paypalTransactionId)||typeof payment.merchant!=='string'||!payment.merchant.trim()||payment.merchant.length>200))throw new Error('Ungültiger PayPal-E-Mail-Beleg.');
   const foreign=payment.foreign;
   if(foreign&&(typeof foreign.amount!=='number'||!Number.isFinite(foreign.amount)||foreign.amount<=0||foreign.amount>1e12||typeof foreign.currency!=='string'||! /^[A-Z]{3}$/.test(foreign.currency)||['EUR','XXX','XTS'].includes(foreign.currency)))throw new Error('Ungültiger Fremdwährungsbetrag.');
   if(!(Number.isInteger(payment.amountCents)&&payment.amountCents>0&&payment.amountCents<=100000000)&&!(payment.amountCents===null&&foreign))throw new Error('Ungültiger Eurobetrag.');

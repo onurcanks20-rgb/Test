@@ -185,13 +185,26 @@ function simulatePaymentConfirmation() {
 
 }
 
-function classifyPushPayment(payment) {
-  if(payment.reviewReason) return {review:payment.reviewReason};
-  if(payment.amountCents===null)return dependencies.routeTravelPayment(payment);
-  if(payment.source!=='bank-push') return classifyMerchantPayment(payment);
+function isPaypalEmail(payment) {return payment.source==='paypal-email';}
+function rememberPaypalReceipt(payment,status,recurringKey=null) {
+  if(!isPaypalEmail(payment))return;
+  const settings=context.repository.view.Einstellungen;settings.serverPaypalReceipts??={};
+  settings.serverPaypalReceipts[payment.id]={transactionId:payment.paypalTransactionId,date:payment.date,amountCents:payment.amountCents,merchant:payment.merchant,status,...(recurringKey?{recurringKey}:{})};
+}
+function possiblePaypalDuplicate(payment) {
+  const days=(a,b)=>Math.round((Date.parse(a+'T12:00:00Z')-Date.parse(b+'T12:00:00Z'))/86400000);
+  if(!isPaypalEmail(payment)){
+    if(payment.bank!=='paypal'&&!/paypal/iu.test(payment.merchant||''))return false;
+    return Object.values(context.repository.view.Einstellungen?.serverPaypalReceipts||{}).some(p=>p.amountCents===payment.amountCents&&days(payment.date,p.date)>=0&&days(payment.date,p.date)<=14);
+  }
+  const records=[...(context.repository.view.Einstellungen?.serverPendingReview||[])];
+  for(const group of [context.repository.view.Haushalt,context.repository.view.Freizeit,...Object.values(context.repository.view.Reisen||{})])for(const list of Object.values(group||{}))if(Array.isArray(list))for(const e of list)if(e._serverPaymentId)records.push({id:e._serverPaymentId,merchant:e._serverMerchant||e.text,date:e.datum,amountCents:Math.round(e.betrag*100)});
+  return records.some(p=>p.id!==payment.id&&p.amountCents===payment.amountCents&&p.date===payment.date&&normalizedProvider(p.merchant)===normalizedProvider(payment.merchant));
+}
+function recurringPaymentMatches(payment) {
   const paid=dependencies.parseISODate(payment.date), from=dependencies.addDays(paid,-31), to=dependencies.addDays(paid,31);
   const rows=[...dependencies.laufendeKostenImZeitraum(from,to),...dependencies.versicherungsZahlungenImZeitraum(from,to)];
-  const matches=[],unknown=[];
+  const matches=[],unknown=[],all=[];
   const calendar=d=>Date.UTC(d.getFullYear(),d.getMonth(),d.getDate());
   for(const due of rows) {
     if(Math.round((dependencies.parseBetrag(due.betrag)||0)*100)!==payment.amountCents) continue;
@@ -200,15 +213,24 @@ function classifyPushPayment(payment) {
     if(!item||dependencies.istEintragAusgeblendet(insurance?'versicherungen':'fixkosten',item.id)) continue;
     const window=dependencies.normalizeFixkostenZuordnungTage(item.zuordnungTage);
     if(Math.abs(calendar(due.datum)-calendar(paid))/86400000>window) continue;
+    const candidate={...due,key:[due.typ,String(item.id),dependencies.isoAusDate(due.datum)].join(':')};all.push(candidate);
     const aliases=String(insurance?item.anbieter||'':item.haendler||'').split(';').map(normalizedProvider).filter(Boolean);
-    if(!aliases.length) {unknown.push(due);continue;}
-    if(aliases.includes(normalizedProvider(payment.merchant))) matches.push({...due,key:[due.typ,String(item.id),dependencies.isoAusDate(due.datum)].join(':')});
+    if(!aliases.length) {unknown.push(candidate);continue;}
+    if(aliases.includes(normalizedProvider(payment.merchant))) matches.push(candidate);
   }
+  return {matches,unknown,all};
+}
+function classifyPushPayment(payment) {
+  if(payment.reviewReason) return {review:payment.reviewReason};
+  if(possiblePaypalDuplicate(payment))return {review:'Mögliche doppelte PayPal-Zahlung oder spätere Bankabbuchung. Bereits erfasste Zahlung bitte prüfen und gegebenenfalls ignorieren.'};
+  if(payment.amountCents===null)return dependencies.routeTravelPayment(payment);
+  if(payment.source!=='bank-push'&&!isPaypalEmail(payment)) return classifyMerchantPayment(payment);
+  const {matches,unknown,all}=recurringPaymentMatches(payment);
   if(matches.length===1&&!unknown.length) {
     if(context.repository.view.Einstellungen?.serverRecurringMatches?.[matches[0].key]) return {review:'Für diese Fälligkeit wurde bereits eine Zahlung zugeordnet.'};
     return {recurring:matches[0]};
   }
-  if(matches.length>1||unknown.length) return {review:'Mögliche Fixkosten/Versicherung: Anbieter, Betrag und Fälligkeit bitte prüfen.'};
+  if(matches.length>1||unknown.length||(isPaypalEmail(payment)&&all.length)) return {review:'Mögliche Fixkosten/Versicherung: Anbieter, Betrag und Fälligkeit bitte prüfen.'};
   return classifyMerchantPayment(payment);
 }
 function classifyMerchantPayment(payment) {
@@ -225,7 +247,7 @@ function importedPaymentDestination(payment) {
 }
 function appendImportedPayment(payment,destination=null) {
   const target=destination||importedPaymentDestination(payment),month=Number(payment.date.slice(5,7));
-  const entry={id:dependencies.generateId(),text:String(payment.merchant||'Apple Pay').slice(0,200),betrag:payment.amountCents/100,datum:payment.date,kategorie:target.category,_serverPaymentId:payment.id,...(payment.notificationDate?{_notificationDate:payment.notificationDate}:{}),...dependencies.importedEntryTime(payment),...(payment.testOnly?{_testPayment:true}:{})};
+  const entry={id:dependencies.generateId(),text:String(payment.merchant||'Apple Pay').slice(0,200),betrag:payment.amountCents/100,datum:payment.date,kategorie:target.category,_serverPaymentId:payment.id,...(isPaypalEmail(payment)?{_paypalTransactionId:payment.paypalTransactionId,_paymentSource:'paypal-email'}:{}),...(payment.notificationDate?{_notificationDate:payment.notificationDate}:{}),...dependencies.importedEntryTime(payment),...(payment.testOnly?{_testPayment:true}:{})};
   const fx=dependencies.importedForeignFx(payment,target.land);if(fx)entry.fx=fx;
   if(target.area==='Reisen'){dependencies.appendReiseExternalExpense(entry,target.land,target.category);return;}
   if(target.area==='Freizeit') dependencies.appendFreizeitExternalExpense(entry,month);else dependencies.appendHaushaltExternalExpense(entry,month);
@@ -275,7 +297,7 @@ function reviewCategories(id) {
   const select=document.getElementById('reviewCategory-'+id);if(!select)return;
   select.replaceChildren();
   const first=document.createElement('option');first.value='';first.textContent='Kategorie auswählen';select.appendChild(first);
-  const options=target.startsWith('reise:')?Object.keys(context.repository.view.Reisen?.[target.slice(6)]||{}):dependencies.merchantCategories(target);
+  const options=target.startsWith('recurring:')?[]:target.startsWith('reise:')?Object.keys(context.repository.view.Reisen?.[target.slice(6)]||{}):dependencies.merchantCategories(target);
   for(const category of options){const option=document.createElement('option');option.value=category;option.textContent=category;select.appendChild(option);}
   select.value='';select.disabled=!options.length;
   const payment=(context.repository.view.Einstellungen?.serverPendingReview||[]).find(p=>p.id===id),known=dependencies.merchantDestination(payment?.merchant);
@@ -292,13 +314,17 @@ function renderServerPaymentReview() {
     const amount=payment.amountCents===null?`${payment.foreign.amount} ${payment.foreign.currency}`:dependencies.formatBetragText(payment.amountCents/100);
     const label=document.createElement('div');label.textContent=`${payment.merchant} · ${amount} · ${dependencies.formatDatum(payment.date)}`;row.appendChild(label);
     if(payment.foreign&&payment.amountCents!==null){const foreign=document.createElement('div');foreign.className='settings-note';foreign.textContent=`Originalbetrag: ${payment.foreign.amount} ${payment.foreign.currency}`;row.appendChild(foreign);}
+    if(isPaypalEmail(payment)){const source=document.createElement('div');source.className='settings-note';source.textContent='PayPal-E-Mail · Transaktion '+payment.paypalTransactionId;row.appendChild(source);}
     const reason=document.createElement('div');reason.className='settings-note';reason.textContent=payment.reviewReason;row.appendChild(reason);
     if(payment.notificationText){const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Mitteilung anzeigen';details.appendChild(summary);const raw=document.createElement('div');raw.className='settings-note';raw.textContent=[payment.notificationTitle,payment.notificationSubtitle,payment.notificationText].filter(Boolean).join(' · ');details.appendChild(raw);row.appendChild(details);}
     const route=dependencies.routeTravelPayment(payment),target=document.createElement('select');target.id='reviewTarget-'+payment.id;target.setAttribute('aria-label','Zahlung zuordnen');
     const empty=document.createElement('option');empty.value='';empty.textContent='Ziel auswählen';target.appendChild(empty);
     for(const area of ['Haushalt','Freizeit']){const option=document.createElement('option');option.value=area;option.textContent=area;target.appendChild(option);}
     for(const land of Object.keys(context.repository.view.Reisen||{})){const option=document.createElement('option');option.value='reise:'+land;option.textContent='Reise: '+land;target.appendChild(option);}
-    const known=dependencies.merchantDestination(payment.merchant);target.value=route.destination?'reise:'+route.destination.land:route.review?'':known?.area||'';target.addEventListener('change',()=>reviewCategories(payment.id));row.appendChild(target);
+    if(isPaypalEmail(payment))for(const due of recurringPaymentMatches(payment).all){
+      const option=document.createElement('option');option.value='recurring:'+due.key;option.textContent=(due.typ==='versicherung'?'Versicherung: ':'Fixkosten: ')+due.name+' · '+dependencies.formatDatum(dependencies.isoAusDate(due.datum))+' (bereits eingeplant)';target.appendChild(option);
+    }
+    const known=dependencies.merchantDestination(payment.merchant);target.value=isPaypalEmail(payment)?'':route.destination?'reise:'+route.destination.land:route.review?'':known?.area||'';target.addEventListener('change',()=>reviewCategories(payment.id));row.appendChild(target);
     const category=document.createElement('select');category.id='reviewCategory-'+payment.id;category.setAttribute('aria-label','Kategorie');row.appendChild(category);
     const rememberLabel=document.createElement('label');rememberLabel.className='merchant-remember';const remember=document.createElement('input');remember.type='checkbox';remember.id='reviewRemember-'+payment.id;rememberLabel.appendChild(remember);const rememberText=document.createElement('span');rememberText.textContent='Für diesen Händler merken';rememberLabel.appendChild(rememberText);row.appendChild(rememberLabel);
     if(payment.amountCents===null){const euro=document.createElement('input');euro.id='reviewEuro-'+payment.id;euro.type='text';euro.inputMode='decimal';euro.placeholder='Abgerechneter Betrag in Euro';euro.setAttribute('aria-label','Abgerechneter Betrag in Euro');row.appendChild(euro);}
@@ -311,13 +337,18 @@ function renderServerPaymentReview() {
 }
 function resolveServerPaymentReview(id,book,target=null,euroValue=null,category=null,remember=false) {
   const pending=context.repository.view.Einstellungen?.serverPendingReview||[],payment=pending.find(p=>p.id===id);if(!payment)return;
-  let resolved=payment,destination;
+  let resolved=payment,destination,recurring=null;
   if(book){
     if(payment.amountCents===null){const euro=dependencies.parseBetrag(euroValue);if(!Number.isFinite(euro)||euro<=0||euro>1000000){alert('Bitte den abgerechneten Eurobetrag ergänzen.');return;}resolved={...payment,amountCents:Math.round(euro*100)};if(resolved.amountCents<=0){alert('Eurobetrag ist kleiner als ein Cent.');return;}}
     const route=dependencies.routeTravelPayment(resolved);
     if(target===null&&(route.review||!dependencies.merchantDestination(resolved.merchant))){alert('Bitte Bereich und Kategorie auswählen.');return;}
     if(target===''){alert('Bitte ein Ziel auswählen.');return;}
-    if(target?.startsWith('reise:')){
+    if(target?.startsWith('recurring:')){
+      if(!isPaypalEmail(resolved)){alert('Ungültiges Ziel.');return;}
+      recurring=recurringPaymentMatches(resolved).all.find(due=>due.key===target.slice(10));
+      if(!recurring){alert('Diese Fälligkeit passt nicht mehr. Bitte erneut prüfen.');return;}
+      if(context.repository.view.Einstellungen.serverRecurringMatches?.[recurring.key]){alert('Für diese Fälligkeit ist bereits eine Zahlung zugeordnet. Bitte bereits berücksichtigt / ignorieren wählen.');return;}
+    }else if(target?.startsWith('reise:')){
       const land=target.slice(6),options=Object.keys(context.repository.view.Reisen?.[land]||{});
       const chosen=category||(!remember&&dependencies.merchantDestination(resolved.merchant)?dependencies.travelPaymentCategory(resolved,land):'');
       if(!options.includes(chosen)){alert('Bitte eine Reisekategorie auswählen.');return;}
@@ -332,11 +363,12 @@ function resolveServerPaymentReview(id,book,target=null,euroValue=null,category=
   }
   const before=context.clone(context.repository.view);
   try {
-    if(book){dependencies.validateImportedPayment(resolved);if(remember){if(!destination||!['Haushalt','Freizeit'].includes(destination.area))throw Error('Händlerzuordnungen bitte für Haushalt oder Freizeit speichern.');dependencies.rememberMerchantRule(resolved.merchant,destination.area,destination.category);}appendImportedPayment(resolved,destination);}
+    if(book){dependencies.validateImportedPayment(resolved);if(remember&&!recurring){if(!destination||!['Haushalt','Freizeit'].includes(destination.area))throw Error('Händlerzuordnungen bitte für Haushalt oder Freizeit speichern.');dependencies.rememberMerchantRule(resolved.merchant,destination.area,destination.category);}if(recurring){context.repository.view.Einstellungen.serverRecurringMatches??={};context.repository.view.Einstellungen.serverRecurringMatches[recurring.key]={paymentId:resolved.id,date:resolved.date,merchant:resolved.merchant};}else appendImportedPayment(resolved,destination);}
+    rememberPaypalReceipt(resolved,book?(recurring?'recurring':'booked'):'ignored',recurring?.key);
     context.repository.view.Einstellungen.serverPendingReview=pending.filter(p=>p.id!==id);
     context.storage.setItem(context.storage.key,JSON.stringify(context.repository.view));context.storage.lastSaved=JSON.stringify(context.repository.view);
   } catch(error) {context.repository.view=before;showPaymentImportedNotice(false);serverStatus('Entscheidung konnte nicht gespeichert werden. Ziel prüfen und erneut versuchen.');const status=document.getElementById('paymentReviewError');if(status)status.textContent='Entscheidung konnte nicht gespeichert werden. Die Zahlung bleibt offen. Ziel prüfen und erneut versuchen.';syncPaymentReviewGate();return;}
-  if(book)showPaymentImportedNotice(true,[resolved.id]);renderServerPaymentReview();dependencies.refreshReiseImportedViews();dependencies.renderHomeUebersicht();dependencies.renderRecentAusgaben('haushalt');dependencies.renderRecentAusgaben('freizeit');scheduleTestServerSync();
+  if(book&&!recurring)showPaymentImportedNotice(true,[resolved.id]);renderServerPaymentReview();dependencies.refreshReiseImportedViews();dependencies.renderHomeUebersicht();dependencies.renderRecentAusgaben('haushalt');dependencies.renderRecentAusgaben('freizeit');scheduleTestServerSync();
 }
 
 function importTestServerPayments(payments) {
@@ -358,6 +390,7 @@ function importTestServerPayments(payments) {
         context.repository.view.Einstellungen.serverRecurringMatches??={};
         context.repository.view.Einstellungen.serverRecurringMatches[classification.recurring.key]={paymentId:payment.id,date:payment.date,merchant:payment.merchant};
       } else {appendImportedPayment(payment);count++;noticeIds.push(payment.id);}
+      rememberPaypalReceipt(payment,classification.review?'pending':classification.recurring?'recurring':'booked',classification.recurring?.key);
       if(payment.testOnly){context.repository.view.Einstellungen.serverTravelDemoIds??=[];context.repository.view.Einstellungen.serverTravelDemoIds.push(payment.id);}
       ids.add(payment.id);
     }
