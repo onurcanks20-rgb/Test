@@ -201,7 +201,7 @@ Kostentracker.module({
             }
             const imported=merchant?{...e,_serverMerchant:merchant}:{};
             const planned = ["haushalt","freizeit"].includes(quelle) && ["haushalt","freizeit"].includes(ziel) && e.ausGeplant === true && Number.isFinite(e.geplantReserviertBetrag)
-                ? {ausGeplant:true, geplantId:e.geplantId, geplantOccurrenceKey:e.geplantOccurrenceKey, geplantReserviertBetrag:e.geplantReserviertBetrag} : {};
+                ? {ausGeplant:true, geplantId:e.geplantId, geplantOccurrenceKey:e.geplantOccurrenceKey, geplantReserviertBetrag:e.geplantReserviertBetrag, ...(e.geplantWiederholung ? {geplantWiederholung:e.geplantWiederholung} : {})} : {};
             const datum = e.datum || dependencies.heuteISO();
             const betrag = dependencies.parseBetrag(e.betrag) || 0;
             const text = e.text || e.name || "Eintrag";

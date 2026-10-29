@@ -1,6 +1,9 @@
 Kostentracker.module({
   "id": "js/ui/archiv.js",
   "dependencies": [
+    "beginUndoDelete",
+    "finishUndoDelete",
+    "clearUndoDelete",
     "datumZeitwert",
     "escapeHtml",
     "formatBetrag",
@@ -30,7 +33,8 @@ Kostentracker.module({
     "Versicherungen",
     "Einnahmen",
     "Reisen",
-    "ReisenMeta"
+    "ReisenMeta",
+    "Geplante Ausgaben"
   ],
   "write": [
     "Haushalt",
@@ -131,6 +135,73 @@ Kostentracker.module({
                 if (f.suche && !dependencies.matchesSearch(f.suche, e.titel, e.meta, e.datum, e.betrag, globalArchivBereichLabel(e.bereich))) return false;
                 return true;
             });
+        }
+
+        function istArchivEinmalig(record) {
+            if (!["haushalt", "freizeit", "einnahmen"].includes(record.bereich)) return false;
+            const entry = record.eintrag || {};
+            const recurring = value => value != null && String(value).trim() !== "" && !["einmalig", "einmal", "nein"].includes(String(value).trim().toLocaleLowerCase("de-DE"));
+            if (recurring(entry.wiederholung) || recurring(entry.intervall) || recurring(entry.geplantWiederholung)) return false;
+            if (entry.geplantId != null) {
+                const source = (context.repository.view["Geplante Ausgaben"] || []).find(plan => String(plan.id) === String(entry.geplantId));
+                if (source && recurring(source.wiederholung)) return false;
+            }
+            return true;
+        }
+
+        function globalArchivLoeschAuswahl() {
+            const filter = getGlobalArchivFilter();
+            const valid = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && dependencies.parseISODate(value) && dependencies.isoAusDate(dependencies.parseISODate(value)) === value;
+            if (!valid(filter.von) || !valid(filter.bis)) return {filter, records:[], error:"Wähle Von und Bis für den Zeitraum, den du bereinigen möchtest."};
+            if (filter.von > filter.bis) return {filter, records:[], error:"Das Von-Datum muss vor oder auf dem Bis-Datum liegen."};
+            return {filter, records:filterGlobalArchivRecords(globalArchivRohEintraege()).filter(istArchivEinmalig), error:""};
+        }
+
+        function renderGlobalArchivLoeschen() {
+            const button = document.getElementById("globalArchivDeleteOnce");
+            const hint = document.getElementById("globalArchivDeleteHint");
+            const selection = globalArchivLoeschAuswahl();
+            if (button) {
+                button.disabled = !!selection.error || !selection.records.length;
+                button.textContent = selection.records.length ? `${selection.records.length} einmalige Einträge löschen` : "Einmalige Einträge löschen";
+            }
+            if (hint) hint.textContent = selection.error || (selection.records.length
+                ? "Gilt für die aktuellen Filter. Wiederkehrende Einträge und Reisen bleiben erhalten."
+                : "Keine passenden einmaligen Einträge. Wiederkehrende Einträge und Reisen bleiben erhalten.");
+        }
+
+        function deleteGlobalArchivEinmalige() {
+            const selection = globalArchivLoeschAuswahl();
+            if (selection.error) {setGlobalArchivTransferStatus(selection.error); return;}
+            if (!selection.records.length) {setGlobalArchivTransferStatus("Keine passenden einmaligen Einträge zum Löschen."); return;}
+            const counts = new Map();
+            for (const record of selection.records) counts.set(record.bereich, (counts.get(record.bereich) || 0) + 1);
+            const areas = [...counts].map(([area, count]) => `${globalArchivBereichLabel(area)}: ${count}`).join("\n");
+            const message = `${selection.records.length} einmalige Einträge vom ${dependencies.formatDatum(selection.filter.von)} bis ${dependencies.formatDatum(selection.filter.bis)} wirklich löschen?\n\n${areas}\n\nEs gelten die aktuellen Archivfilter. Wiederkehrende Einträge und Reisen bleiben erhalten. Budgets und Summen der gelöschten Buchungen werden angepasst. Anschließend kannst du kurz über „Rückgängig“ wiederherstellen.`;
+            if (!confirm(message)) return;
+
+            // Match complete records within their own area, never just a potentially reused ID.
+            const keys = new Set(selection.records.map(record => JSON.stringify([record.bereich, record.eintrag])));
+            let removed = 0;
+            const keep = (area, entry) => {
+                if (!keys.has(JSON.stringify([area, entry])) || !istArchivEinmalig({bereich:area, eintrag:entry})) return true;
+                removed++; return false;
+            };
+            dependencies.beginUndoDelete("Archiv bereinigt");
+            for (const [area, store] of [["haushalt", context.repository.view.Haushalt], ["freizeit", context.repository.view.Freizeit]]) {
+                for (const [month, list] of Object.entries(store || {})) if (Array.isArray(list)) store[month] = list.filter(entry => keep(area, entry));
+            }
+            context.repository.view.Einnahmen = (context.repository.view.Einnahmen || []).filter(entry => keep("einnahmen", entry));
+            if (!removed) {dependencies.clearUndoDelete(); renderGlobalArchiv(); return;}
+            if (dependencies.speichern() === false) {
+                dependencies.clearUndoDelete();
+                renderGlobalArchiv();
+                setGlobalArchivTransferStatus("Löschen konnte nicht gespeichert werden. Deine Einträge bleiben erhalten. Bitte erneut versuchen.");
+                return;
+            }
+            dependencies.finishUndoDelete(`${removed} einmalige Einträge gelöscht`);
+            renderGlobalArchiv();
+            setGlobalArchivTransferStatus(`${removed} einmalige Einträge gelöscht. Wiederkehrende Einträge und Reisen bleiben erhalten.`);
         }
 
         function setGlobalArchivTransferStatus(text) {
@@ -356,6 +427,7 @@ Kostentracker.module({
             const container = document.getElementById("globalArchivListe");
             if (!container) return;
             populateGlobalArchivJahre();
+            renderGlobalArchivLoeschen();
             let liste = filterGlobalArchivRecords(globalArchivEintraege());
 
             if (!liste.length) {
@@ -400,5 +472,5 @@ Kostentracker.module({
             renderGlobalArchiv();
         }
 
-return { openGlobalArchiv, resetGlobalArchivFilter, getGlobalArchivFilter, globalArchivRohEintraege, filterGlobalArchivRecords, setGlobalArchivTransferStatus, archivExportBasisName, csvCell, downloadFile, exportGlobalArchiv, archivFingerprint, vorhandeneArchivFingerprints, importiereArchivRecord, importGlobalArchiv, globalArchivEintraege, globalArchivBereichLabel, populateGlobalArchivJahre, renderGlobalArchiv, toggleGlobalArchivMonat };
+return { istArchivEinmalig, globalArchivLoeschAuswahl, renderGlobalArchivLoeschen, deleteGlobalArchivEinmalige, openGlobalArchiv, resetGlobalArchivFilter, getGlobalArchivFilter, globalArchivRohEintraege, filterGlobalArchivRecords, setGlobalArchivTransferStatus, archivExportBasisName, csvCell, downloadFile, exportGlobalArchiv, archivFingerprint, vorhandeneArchivFingerprints, importiereArchivRecord, importGlobalArchiv, globalArchivEintraege, globalArchivBereichLabel, populateGlobalArchivJahre, renderGlobalArchiv, toggleGlobalArchivMonat };
 });
