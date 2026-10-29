@@ -49,6 +49,17 @@ Kostentracker.module({
             });
         }
 
+        // The original reserved amount stays outside the ordinary weekly allowance.
+        // Later amount changes affect that week's allowance only by the difference.
+        function geplanterWochenAnteil(entry) {
+            const value = entry.geplantReserviertBetrag;
+            return entry.ausGeplant === true && typeof value === "number" && Number.isFinite(value) && value > 0 ? value : 0;
+        }
+
+        function wochenAlltagSumme(von, bis) {
+            return alltagImZeitraum(von, bis).reduce((sum, entry) => sum + entry.betrag - geplanterWochenAnteil(entry), 0);
+        }
+
         function openWeekPreview() {
             const sheet = document.getElementById("weekPreviewSheet");
             const list = document.getElementById("weekPreviewList");
@@ -61,6 +72,7 @@ Kostentracker.module({
             const versSum = dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
             const einnahmenSum = dependencies.einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
             const geplantSum = dependencies.geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const gebuchtReserviert = alltagImZeitraum(zeitraum.start, zeitraum.ende).reduce((sum, entry) => sum + geplanterWochenAnteil(entry), 0);
             const sparStatus = dependencies.berechneSparBudgetStatus(zeitraum);
             const sparenInvestierenGesamt = sparStatus.investieren + sparStatus.sparenPlan;
             const alltagGesamt = alltagImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
@@ -72,13 +84,13 @@ Kostentracker.module({
             const wochenStart = kalenderMontag < zeitraum.start ? new Date(zeitraum.start) : kalenderMontag;
             const wochenEnde = kalenderSonntag > zeitraum.ende ? new Date(zeitraum.ende) : kalenderSonntag;
 
-            const alltagVorWoche = alltagImZeitraum(zeitraum.start, dependencies.addDays(wochenStart, -1)).reduce((s,e)=>s+e.betrag,0);
-            const verfuegbarZuWochenbeginn = start + einnahmenSum - laufendSum - versSum - alltagVorWoche - geplantSum - sparenInvestierenGesamt;
+            const alltagVorWoche = wochenAlltagSumme(zeitraum.start, dependencies.addDays(wochenStart, -1));
+            const verfuegbarZuWochenbeginn = start + einnahmenSum - laufendSum - versSum - alltagVorWoche - geplantSum - gebuchtReserviert - sparenInvestierenGesamt;
             const tageInAktuellerWoche = Math.max(1, Math.round((wochenEnde - wochenStart) / 86400000) + 1);
             const verbleibendeTageAbWochenstart = Math.max(1, Math.round((zeitraum.ende - wochenStart) / 86400000) + 1);
             const wochenBudgetStart = verfuegbarZuWochenbeginn * (tageInAktuellerWoche / verbleibendeTageAbWochenstart);
             const bisHeute = heute < wochenEnde ? heute : wochenEnde;
-            const alltagDieseWoche = alltagImZeitraum(wochenStart, bisHeute).reduce((s,e)=>s+e.betrag,0);
+            const alltagDieseWoche = wochenAlltagSumme(wochenStart, bisHeute);
             const dieseWocheUebrig = Math.round((wochenBudgetStart - alltagDieseWoche) * 100) / 100;
 
             const rows = [{
@@ -165,6 +177,7 @@ Kostentracker.module({
             const versSum = vers.reduce((s,e)=>s+e.betrag,0);
             const einnahmenSum = dependencies.einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
             const geplantSum = dependencies.geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const gebuchtReserviert = alltagImZeitraum(zeitraum.start, zeitraum.ende).reduce((sum, entry) => sum + geplanterWochenAnteil(entry), 0);
             const sparStatus = dependencies.berechneSparBudgetStatus(zeitraum);
             const investierenSum = sparStatus.investieren;
             const sparenPlanSum = sparStatus.sparenPlan;
@@ -203,11 +216,10 @@ Kostentracker.module({
             const wochenStart = kalenderMontag < zeitraum.start ? new Date(zeitraum.start) : kalenderMontag;
             const wochenEnde = kalenderSonntag > zeitraum.ende ? new Date(zeitraum.ende) : kalenderSonntag;
 
-            const alltagVorWoche = alltagImZeitraum(zeitraum.start, dependencies.addDays(wochenStart, -1))
-                .reduce((s, e) => s + e.betrag, 0);
+            const alltagVorWoche = wochenAlltagSumme(zeitraum.start, dependencies.addDays(wochenStart, -1));
 
             // Das Geld, das zu Beginn dieser Woche noch fuer Alltag zur Verfuegung stand.
-            const verfuegbarZuWochenbeginn = start + einnahmenSum - laufendSum - versSum - alltagVorWoche - geplantSum - sparenInvestierenGesamt;
+            const verfuegbarZuWochenbeginn = start + einnahmenSum - laufendSum - versSum - alltagVorWoche - geplantSum - gebuchtReserviert - sparenInvestierenGesamt;
 
             const tageInAktuellerWoche = Math.max(1, Math.round((wochenEnde - wochenStart) / 86400000) + 1);
             const verbleibendeTageAbWochenstart = Math.max(1, Math.round((zeitraum.ende - wochenStart) / 86400000) + 1);
@@ -216,10 +228,9 @@ Kostentracker.module({
             const wochenBudgetStart = verfuegbarZuWochenbeginn * (tageInAktuellerWoche / verbleibendeTageAbWochenstart);
 
             const bisHeute = heute < wochenEnde ? heute : wochenEnde;
-            const alltagDieseWoche = alltagImZeitraum(wochenStart, bisHeute)
-                .reduce((s, e) => s + e.betrag, 0);
+            const alltagDieseWoche = wochenAlltagSumme(wochenStart, bisHeute);
 
-            // Waehrend der Woche bleibt wochenBudgetStart gleich. Nur der Restbetrag sinkt mit neuen Ausgaben.
+            // Reservierte Planbuchungen verbrauchen das Wochenbudget nicht erneut.
             const wochenBudgetUebrig = Math.round((wochenBudgetStart - alltagDieseWoche) * 100) / 100;
             set("homeWeekAmount", wochenBudgetUebrig);
             // Reine Darstellung der bereits berechneten Wochenwerte.
