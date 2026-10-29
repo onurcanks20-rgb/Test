@@ -200,6 +200,8 @@ Kostentracker.module({
                 catch(error) { alert(error.message); return; }
             }
             const imported=merchant?{...e,_serverMerchant:merchant}:{};
+            const planned = ["haushalt","freizeit"].includes(quelle) && ["haushalt","freizeit"].includes(ziel) && e.ausGeplant === true && Number.isFinite(e.geplantReserviertBetrag)
+                ? {ausGeplant:true, geplantId:e.geplantId, geplantOccurrenceKey:e.geplantOccurrenceKey, geplantReserviertBetrag:e.geplantReserviertBetrag} : {};
             const datum = e.datum || dependencies.heuteISO();
             const betrag = dependencies.parseBetrag(e.betrag) || 0;
             const text = e.text || e.name || "Eintrag";
@@ -209,12 +211,12 @@ Kostentracker.module({
                 context.repository.view.Haushalt ??= {};
                 const monat = (dependencies.parseISODate(datum)?.getMonth() ?? new Date().getMonth()) + 1;
                 context.repository.view.Haushalt[monat] ??= [];
-                context.repository.view.Haushalt[monat].push({...imported,...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum,kategorie:(merchant && area ? extra.kategorie : null) || e.kategorie || "Sonstiges"});
+                context.repository.view.Haushalt[monat].push({...imported,...planned,...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum,kategorie:(merchant && area ? extra.kategorie : null) || e.kategorie || "Sonstiges"});
             } else if (ziel === "freizeit") {
                 context.repository.view.Freizeit ??= {};
                 const monat = (dependencies.parseISODate(datum)?.getMonth() ?? new Date().getMonth()) + 1;
                 context.repository.view.Freizeit[monat] ??= [];
-                context.repository.view.Freizeit[monat].push({...imported,...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum,kategorie:(merchant && area ? extra.kategorie : null) || e.kategorie || "Sonstiges"});
+                context.repository.view.Freizeit[monat].push({...imported,...planned,...dependencies.entryTimeSnapshot(e),id:neueId,text,betrag,datum,kategorie:(merchant && area ? extra.kategorie : null) || e.kategorie || "Sonstiges"});
             } else if (ziel === "fixkosten") {
                 context.repository.view["Laufende Kosten"] ??= {fix:[]};
                 context.repository.view["Laufende Kosten"].fix ??= [];
