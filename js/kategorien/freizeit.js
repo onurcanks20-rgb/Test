@@ -125,6 +125,7 @@ function bookFreizeitPlannedOccurrence(entry, datum, occurrenceKey, wiederholung
     context.repository.view.Freizeit[month] ??= [];
     const exists = context.repository.view.Freizeit[month].some(x => String(x.geplantOccurrenceKey || "") === occurrenceKey || (wiederholung === "einmalig" && String(x.geplantId || "") === String(entry.id)));
     if (!exists) context.repository.view.Freizeit[month].push({id:dependencies.generateId(), geplantId:entry.id, geplantOccurrenceKey:occurrenceKey, ausGeplant:true,
+        geplantReserviertBetrag:entry.budgetWirksam !== false ? Math.max(0, dependencies.parseBetrag(entry.betrag)||0) : 0,
         text:entry.text || entry.kategorie || "Geplante Ausgabe", betrag:dependencies.parseBetrag(entry.betrag)||0, datum, kategorie:entry.kategorie||"Sonstiges"});
     return true;
 }
