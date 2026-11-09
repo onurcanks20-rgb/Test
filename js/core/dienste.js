@@ -118,10 +118,15 @@
         for (const [name, fn] of Object.entries(api)) {
             if (exportsByName.has(name)) throw new Error("Doppelte Schnittstelle: " + name);
             if (typeof fn !== "function") throw new Error("Ungültige Schnittstelle: " + name);
-            exportsByName.set(name, fn);
+            // One outer UI action owns the discard decision, including nested module calls.
+            const action = name === "runWithUnsavedGuard" ? fn : (...args) => {
+                const guard = exportsByName.get("runWithUnsavedGuard");
+                return guard ? guard(name, fn, args) : fn(...args);
+            };
+            exportsByName.set(name, action);
             // Ausschließlich Kompatibilität für bestehende inline HTML-Handler.
             // Module rufen diese Globals nicht auf; sie benutzen dependencies.
-            Object.defineProperty(window, name, { configurable: true, value: fn, writable: true });
+            Object.defineProperty(window, name, { configurable: true, value: action, writable: true });
         }
     }
     Object.defineProperty(window, "Kostentracker", {
