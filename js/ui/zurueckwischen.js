@@ -239,7 +239,7 @@ Kostentracker.module({
                     g.navigating = true;
                     // Render only once the slide is finished: DOM work must not interrupt it.
                     g.button.click();
-                    window.scrollTo(0, cache.get(g.targetId)?.scroll || 0);
+                    if (activeView()?.id === g.targetId) window.scrollTo(0, cache.get(g.targetId)?.scroll || 0);
                 };
                 g.front.addEventListener('transitionend', event => {
                     if (event.target === g.front && event.propertyName === 'transform') complete();
