@@ -85,7 +85,7 @@ Kostentracker.module({
         }
 
 
-function openServerSettings() {dependencies.show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();dependencies.setupTravelPaymentTests();renderStorageV2();renderServerBackupHistory();}
+function openServerSettings() {dependencies.show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();dependencies.setupTravelPaymentTests();renderStorageV2();backupHistoryOpen=false;backupHistoryRequest++;const host=document.getElementById('storageV2Backups');if(host)host.hidden=true;updateBackupHistoryButton();}
 async function renderPushTestStatus() {
   const node=document.getElementById('serverNotificationStatus');if(!node)return;
   if(!('Notification' in window)){node.textContent='Für Benachrichtigungen die App über ihr Home-Bildschirm-Icon öffnen.';return;}
@@ -438,34 +438,84 @@ async function pullV2(){
  for(let page=0;page<10000;page++){const result=await testServerRequest('/api/v2/changes?after='+storageV2().status().cursor);await storageV2().receive(result);if(!result.more){adoptDatabase();return;}}
  throw Error('Weitere Daten sind noch nicht abgeglichen. Bitte erneut synchronisieren.');
 }
-async function renderServerBackupHistory(){
- const host=document.getElementById('storageV2Backups');if(!host)return;host.replaceChildren();
- if(!testServerConfig?.token)return;
+let backupHistoryOpen=false,backupHistoryAll=false,backupHistoryRequest=0,backupHistoryCache=null;
+let backupPreview=null,backupPreviewRequest=0;
+function updateBackupHistoryButton(){const button=document.getElementById('storageV2HistoryToggle');if(button){button.textContent=backupHistoryOpen?'Sicherungsstände ausblenden':'Sicherungsstände anzeigen';button.setAttribute('aria-expanded',String(backupHistoryOpen));}}
+function drawBackupHistory(){
+ const host=document.getElementById('storageV2Backups');if(!host||!backupHistoryCache)return;host.replaceChildren();
+ const items=backupHistoryAll?backupHistoryCache.backups:backupHistoryCache.backups.slice(0,3);let day='';
+ for(const item of items){
+  const date=new Date(item.created),heading=date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  if(heading!==day){day=heading;const title=document.createElement('h4');title.className='backup-day';title.textContent=heading;host.appendChild(title);}
+  const button=document.createElement('button');button.type='button';button.className='backup-history-row';
+  const title=document.createElement('span');title.textContent=date.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+' · '+(item.kind==='manuell'?'Manuell':'Automatisch');
+  const hint=document.createElement('span');hint.className='backup-row-hint';hint.textContent='Änderungen ansehen ›';button.append(title,hint);
+  button.onclick=()=>restoreHistoricalBackup(item.id,heading+' · '+date.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));host.appendChild(button);
+ }
+ if(!items.length){const note=document.createElement('p');note.className='settings-note';note.textContent='Noch keine Sicherungsstände vorhanden.';host.appendChild(note);}
+ if(backupHistoryCache.backups.length>3){const button=document.createElement('button');button.type='button';button.className='backup-more';button.textContent=backupHistoryAll?'Weniger anzeigen':'Alle '+backupHistoryCache.backups.length+' Stände anzeigen';button.onclick=()=>{backupHistoryAll=!backupHistoryAll;drawBackupHistory();};host.appendChild(button);}
+ if(backupHistoryCache.legacy){const more=document.createElement('details');more.className='backup-older';const summary=document.createElement('summary');summary.textContent='Weitere Sicherungen';const button=document.createElement('button');button.type='button';button.className='backup-history-row';button.textContent='Vor der Speicherumstellung · Änderungen ansehen';button.onclick=()=>restoreHistoricalBackup('legacy','Vor der Speicherumstellung');more.append(summary,button);host.appendChild(more);}
+}
+async function renderServerBackupHistory(refresh=false){
+ const host=document.getElementById('storageV2Backups');if(!host)return;
+ if(refresh!==true&&backupHistoryOpen){backupHistoryOpen=false;backupHistoryRequest++;host.hidden=true;updateBackupHistoryButton();return;}
+ backupHistoryOpen=true;host.hidden=false;updateBackupHistoryButton();const request=++backupHistoryRequest;
+ if(!backupHistoryCache){host.textContent='Sicherungsstände werden geladen …';host.setAttribute('aria-busy','true');}
+ if(!testServerConfig?.token){host.textContent='Bitte zuerst anmelden.';return;}
  try{
-  const state=await testServerRequest('/api/v2/status');
+  const state=await testServerRequest('/api/v2/status');if(request!==backupHistoryRequest)return;
   if(!state.ready){host.textContent='Sicherungsstände erscheinen nach der ersten vollständigen Synchronisierung.';return;}
-  const result=await testServerRequest('/api/v2/backups');
-  for(const item of result.backups){const button=document.createElement('button');button.type='button';button.className='settings-secondary';button.textContent=new Date(item.created).toLocaleString('de-DE')+' · '+item.kind;button.onclick=()=>restoreHistoricalBackup(item.id);host.appendChild(button);}
-  if(state.legacy){const button=document.createElement('button');button.type='button';button.className='settings-secondary';button.textContent='Sicherung vor der Speicherumstellung';button.onclick=()=>restoreHistoricalBackup('legacy');host.appendChild(button);}
- }catch(error){host.textContent='Sicherungsstände derzeit nicht abrufbar: '+error.message;}
+  const result=await testServerRequest('/api/v2/backups');if(request!==backupHistoryRequest)return;
+  backupHistoryCache={backups:result.backups,legacy:state.legacy};drawBackupHistory();
+ }catch(error){if(request===backupHistoryRequest)host.textContent='Sicherungsstände derzeit nicht abrufbar: '+error.message;}
+ finally{if(request===backupHistoryRequest)host.removeAttribute('aria-busy');}
 }
 async function exportStorageMigrationBackup(){
  try{const data=await storageV2().migrationSnapshot();if(!data)throw Error('Auf diesem Gerät gibt es keine Sicherung vor der Umstellung.');const url=URL.createObjectURL(new Blob([data],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download='Kostentracker-vor-Speicherumstellung.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}catch(error){serverStatus(error.message);}
 }
 async function createServerBackup(){
  if(testServerBusy)return;
- try{await syncTestServer();if(storageV2().status().pending||storageV2().status().conflicts.length||serverSyncError)throw Error('Bitte zuerst alle Änderungen synchronisieren und Konflikte klären.');await testServerRequest('/api/v2/backup',{manual:true});await renderServerBackupHistory();serverStatus('Zusätzlicher Sicherungsstand erstellt.');}catch(error){serverStatus('Sicherung nicht erstellt: '+error.message);}
+ try{await syncTestServer();if(storageV2().status().pending||storageV2().status().conflicts.length||serverSyncError)throw Error('Bitte zuerst alle Änderungen synchronisieren und Konflikte klären.');await testServerRequest('/api/v2/backup',{manual:true});await renderServerBackupHistory(true);serverStatus('Zusätzlicher Sicherungsstand erstellt.');}catch(error){serverStatus('Sicherung nicht erstellt: '+error.message);}
 }
-async function restoreHistoricalBackup(id){
+function setBackupPreviewBusy(busy){const dialog=document.getElementById('backupPreviewDialog');if(dialog)dialog.dataset.busy=String(busy);for(const id of ['backupPreviewConfirm','backupPreviewCancel']){const button=document.getElementById(id);if(button)button.disabled=busy;}}
+function closeBackupPreview(){if(document.getElementById('backupPreviewDialog')?.dataset.busy==='true')return;backupPreviewRequest++;backupPreview=null;dependencies.closeAccessibleDialog('backupPreviewDialog');}
+function drawBackupPreview(data,label,message=''){
+ const diff=KostentrackerBackupDiff.compare(storageV2().data(),data),host=document.getElementById('backupPreviewChanges');host.replaceChildren();
+ document.getElementById('backupPreviewDate').textContent=label;
+ document.getElementById('backupPreviewSummary').textContent=message||(diff.total?'So würde sich dein aktueller Stand ändern:':'Dieser Sicherungsstand entspricht deinen aktuellen Daten.');
+ for(const [key,title]of [['removed','Buchungen entfernen'],['added','Buchungen wieder hinzufügen'],['changed','Buchungen ändern'],['other','Budgets, Kategorien & Einstellungen ändern']]){
+  const rows=diff[key];if(!rows.length)continue;const section=document.createElement('section');const heading=document.createElement('h3');heading.textContent=rows.length+' · '+title;section.appendChild(heading);
+  const add=(parent,row)=>{const line=document.createElement('div');line.className='backup-change';const name=document.createElement('strong');name.textContent=row.title;line.appendChild(name);if(row.detail){const detail=document.createElement('p');detail.textContent=row.detail;line.appendChild(detail);}parent.appendChild(line);};
+  rows.slice(0,8).forEach(row=>add(section,row));if(rows.length>8){const more=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Weitere '+(rows.length-8)+' Änderungen';more.appendChild(summary);rows.slice(8).forEach(row=>add(more,row));section.appendChild(more);}host.appendChild(section);
+ }
+ document.getElementById('backupPreviewConfirm').disabled=!diff.total;
+ return diff;
+}
+async function restoreHistoricalBackup(id,label='Ausgewählter Sicherungsstand'){
  if(testServerBusy)return;
- if(!confirm('Diesen Sicherungsstand wiederherstellen? Die App-Daten auf diesem Gerät werden ersetzt und danach synchronisiert. Vorher wird der aktuelle synchronisierte Serverstand zusätzlich gesichert.'))return;
+ if(!dependencies.openAccessibleDialog('backupPreviewDialog','backupPreviewTitle'))return;
+ const request=++backupPreviewRequest;backupPreview=null;document.getElementById('backupPreviewDate').textContent=label;document.getElementById('backupPreviewSummary').textContent='Änderungen werden verglichen …';document.getElementById('backupPreviewChanges').replaceChildren();document.getElementById('backupPreviewError').textContent='';document.getElementById('backupPreviewConfirm').disabled=true;
  try{
-  await syncTestServer();if(storageV2().status().pending||storageV2().status().conflicts.length||serverSyncError)throw Error('Bitte zuerst die ausstehenden Änderungen synchronisieren.');
-  testServerBusy=true;await testServerRequest('/api/v2/backup',{manual:true});
-  let data;if(id==='legacy'){const saved=await testServerRequest('/api/backup');data=saved.data;}else{const snapshot=await readV2Snapshot(id);if(!snapshot.records.length)throw Error('Dieser Sicherungsstand ist nicht verfügbar.');data=KostentrackerRecords.decode(new Map(snapshot.records.filter(row=>row.payload!==null).map(row=>[row.key,row.payload])));}
+  let data;if(id==='legacy'){const saved=await testServerRequest('/api/backup');data=saved.data;}else{const snapshot=await readV2Snapshot(id);if(!snapshot.records.length)throw Error('Dieser Sicherungsstand ist nicht mehr verfügbar.');data=KostentrackerRecords.decode(new Map(snapshot.records.filter(row=>row.payload!==null).map(row=>[row.key,row.payload])));}
+  if(request!==backupPreviewRequest||!document.getElementById('backupPreviewDialog').open)return;
   if(!data?.Haushalt||!data?.Einstellungen)throw Error('Sicherungsstand ungültig.');
-  await storageV2().replace(data);adoptDatabase();dependencies.clearUndoDelete();await storageV2().flush();location.reload();
- }catch(error){serverStatus('Wiederherstellung nicht durchgeführt: '+error.message);}finally{testServerBusy=false;renderHomeSyncStatus();}
+  backupPreview={id,label,data,baseline:KostentrackerBackupDiff.stable(storageV2().data())};drawBackupPreview(data,label);
+ }catch(error){if(request===backupPreviewRequest){document.getElementById('backupPreviewSummary').textContent='Vorschau konnte nicht geladen werden.';document.getElementById('backupPreviewError').textContent=error.message;}}
+}
+async function confirmBackupPreview(){
+ if(testServerBusy||!backupPreview||!document.getElementById('backupPreviewDialog')?.open||document.getElementById('backupPreviewDialog').dataset.busy==='true')return;
+ const selected=backupPreview;setBackupPreviewBusy(true);document.getElementById('backupPreviewError').textContent='';
+ try{
+  await syncTestServer();if(storageV2().status().pending||storageV2().status().conflicts.length||serverSyncError||!serverSyncConfirmed)throw Error('Bitte zuerst vollständig synchronisieren und offene Änderungen klären.');
+  if(selected!==backupPreview)return;
+  if(selected.baseline!==KostentrackerBackupDiff.stable(storageV2().data())){selected.baseline=KostentrackerBackupDiff.stable(storageV2().data());drawBackupPreview(selected.data,selected.label,'Dein aktueller Stand hat sich inzwischen geändert. Bitte die aktualisierte Vorschau erneut prüfen.');return;}
+  if(!KostentrackerBackupDiff.compare(storageV2().data(),selected.data).total)return;
+  testServerBusy=true;await testServerRequest('/api/v2/backup',{manual:true});
+  // Recheck after the network request: never apply a preview over newer local changes.
+  if(selected.baseline!==KostentrackerBackupDiff.stable(storageV2().data())){selected.baseline=KostentrackerBackupDiff.stable(storageV2().data());drawBackupPreview(selected.data,selected.label,'Deine Daten haben sich geändert. Bitte die Vorschau erneut prüfen.');return;}
+  await storageV2().replace(selected.data);adoptDatabase();dependencies.clearUndoDelete();await storageV2().flush();location.reload();
+ }catch(error){document.getElementById('backupPreviewError').textContent='Wiederherstellung nicht durchgeführt: '+error.message;}
+ finally{testServerBusy=false;setBackupPreviewBusy(false);if(backupPreview)document.getElementById('backupPreviewConfirm').disabled=!KostentrackerBackupDiff.compare(storageV2().data(),backupPreview.data).total;renderHomeSyncStatus();}
 }
 
 async function syncTestServer(saveSettings=false) {
@@ -562,5 +612,5 @@ if(document.readyState==='complete')startServerConnection();else window.addEvent
 document.addEventListener('kostentracker:boot-complete',syncPaymentReviewGate);
 
 
-return { exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+return { closeBackupPreview, confirmBackupPreview, exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
 });

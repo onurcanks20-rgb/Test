@@ -3161,3 +3161,23 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
  #grafikView .grafik-comparison-values strong { margin-top:2px; }
  #grafikView .grafik-comparison-delta > strong { font-size:14px; }
 }
+
+/* Sicherungsstände: kurze Liste und ausdrückliche Wiederherstellung nach Vorschau. */
+#storageV2Backups[hidden] { display:none; }
+#storageV2Backups { margin-top:18px; }
+#storageV2Backups .backup-day { margin:16px 0 4px; font-size:13px; font-weight:600; color:var(--muted); }
+#storageV2Card .backup-history-row { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:48px; padding:12px 0; margin:0; border:0; border-bottom:1px solid rgba(128,128,128,.2); border-radius:0; background:transparent; color:var(--text); font-size:14px; font-weight:500; text-align:left; }
+#storageV2Card .backup-row-hint { color:var(--accent,#549bd7); font-size:12px; font-weight:400; text-align:right; }
+#storageV2Card .backup-more { width:auto; background:transparent; color:var(--accent,#549bd7); padding:10px 0; font-size:13px; }
+.backup-older { margin-top:16px; }
+.backup-older summary,.backup-preview-dialog summary { padding:10px 0; font-size:14px; color:var(--text); cursor:pointer; }
+.backup-preview-dialog { max-width:540px; border-radius:14px; }
+.backup-preview-dialog section { margin:22px 0; }
+.backup-preview-dialog h3 { font-size:15px; line-height:1.4; margin:0 0 6px; }
+.backup-change { padding:10px 0; border-bottom:1px solid rgba(128,128,128,.2); overflow-wrap:anywhere; }
+.backup-change strong { display:block; font-size:14px; font-weight:500; line-height:1.5; }
+.backup-change p { margin:5px 0 0; font-size:13px; opacity:.75; }
+.backup-preview-dialog .backup-preview-note { font-size:13px; opacity:.75; }
+.backup-preview-dialog > button { width:100%; margin:10px 0 0; padding:12px; border-radius:9px; font-size:14px; }
+#backupPreviewError { color:#e66d65; }
+@media(max-width:360px) { #storageV2Card .backup-history-row { align-items:flex-start; flex-direction:column; gap:3px; } }
