@@ -4,7 +4,7 @@
             let mode = "system";
             let saved = null;
             try {
-                saved = JSON.parse(localStorage.getItem(Kostentracker.storage.key) || "null");
+                saved = JSON.parse(window.KostentrackerDB.read() || "null");
                 const candidate = saved?.Einstellungen?.designModus;
                 if (["dunkel", "hell", "system"].includes(candidate)) mode = candidate;
             } catch (_) {}
