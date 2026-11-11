@@ -2,6 +2,7 @@ Kostentracker.module({
   "id": "js/ui/einstellungen.js",
   "dependencies": [
     "setBackupStatus",
+    "prepareStorageSettings",
     "show",
     "speichern"
   ],
@@ -178,6 +179,7 @@ Kostentracker.module({
         function openSettingsBackup() {
             dependencies.show("settingsBackupView");
             dependencies.setBackupStatus("");
+            dependencies.prepareStorageSettings();
         }
 
         const HELP_CONTENT = {
@@ -194,8 +196,8 @@ Kostentracker.module({
     "html": "<p>Aktuelles und nächstes Gehalt, Gehaltstag</p><p>Bereiche auswählen und Reihenfolge anpassen</p><p>Große Ausgaben und Hinweise auf der Startseite</p><p>Alle gespeicherten Einträge durchsuchen und exportieren</p><p>Persönlicher Zugang, Sicherung und Benachrichtigungen</p><p>Daten sichern oder wiederherstellen</p>"
   },
   "serverSettingsView": {
-    "title": "Anmelden & Datensicherung",
-    "html": "<p>Dein persönlicher Zugangscode funktioniert wie ein Passwort. Wer ihn kennt, kann auf einem neuen Gerät auf die Daten dieses Zugangs zugreifen. Gib ihn nicht weiter.</p><p>Nach der Anmeldung prüft die App, ob eine gespeicherte Sicherung vorhanden ist. Stelle sie bei einem neuen Gerät wieder her. Bis dahin werden keine neuen Zahlungen übernommen und die Sicherung wird nicht überschrieben.</p><p>Bei einer Wiederherstellung werden die Daten auf diesem Gerät ersetzt. Bereits vorhandene lokale Einträge kannst du vorher unter Backup in eine Datei exportieren.</p><p>Trage deinen Code einmal ein. Danach öffnet sich die App direkt. Deine Daten bleiben offline verfügbar. Mit Internet werden neue Zahlungen übernommen und deine Daten auf dem Server gesichert.</p><p>Nur Testversion: Diese Buttons erzeugen lokale Testausgaben oder Prüfungen. Keine echte Bankzahlung und keine nachgewiesenen Push-Formate. Für das Korea-Beispiel eine Reise mit KRW auswählen.</p><p>Dein Kurzbefehl übermittelt Bank-Mitteilungen an deinen persönlichen Zugang. Bäckereien werden unter Freizeit → Essen / Trinken erfasst. Neue Zahlungen werden beim Öffnen der App mit Internet übernommen. Zahlungen im eindeutigen Reisezeitraum können in Reisen übernommen werden. An- und Abreisetage sowie Überschneidungen werden geprüft. Experimentelle Fremdwährungsmeldungen werden nicht ungeprüft gebucht.</p><p>Öffne die App über ihr Home-Bildschirm-Icon und erlaube Mitteilungen. Die Anmeldung richtet den Empfang von Servernachrichten ein; automatische Erinnerungen werden später ergänzt.</p>"
+    "title": "Server & Synchronisierung",
+    "html": "<p>Dein persönlicher Zugangscode funktioniert wie ein Passwort. Wer ihn kennt, kann auf einem neuen Gerät auf die Daten dieses Zugangs zugreifen. Gib ihn nicht weiter.</p><p>Nach der Anmeldung prüft die App, ob eine gespeicherte Sicherung vorhanden ist. Stelle sie bei einem neuen Gerät wieder her. Bis dahin werden keine neuen Zahlungen übernommen und die Sicherung wird nicht überschrieben.</p><p>Bei einer Wiederherstellung werden die Daten auf diesem Gerät ersetzt. Bereits vorhandene lokale Einträge kannst du vorher unter Daten & Sicherung in eine Datei exportieren.</p><p>Trage deinen Code einmal ein. Danach öffnet sich die App direkt. Deine Daten bleiben offline verfügbar. Mit Internet werden neue Zahlungen übernommen und deine Daten auf dem Server gesichert.</p><p>Nur Testversion: Diese Buttons erzeugen lokale Testausgaben oder Prüfungen. Keine echte Bankzahlung und keine nachgewiesenen Push-Formate. Für das Korea-Beispiel eine Reise mit KRW auswählen.</p><p>Dein Kurzbefehl übermittelt Bank-Mitteilungen an deinen persönlichen Zugang. Bäckereien werden unter Freizeit → Essen / Trinken erfasst. Neue Zahlungen werden beim Öffnen der App mit Internet übernommen. Zahlungen im eindeutigen Reisezeitraum können in Reisen übernommen werden. An- und Abreisetage sowie Überschneidungen werden geprüft. Experimentelle Fremdwährungsmeldungen werden nicht ungeprüft gebucht.</p><p>Öffne die App über ihr Home-Bildschirm-Icon und erlaube Mitteilungen. Die Anmeldung richtet den Empfang von Servernachrichten ein; automatische Erinnerungen werden später ergänzt.</p>"
   },
   "settingsBudgetView": {
     "title": "Budget & Gehalt",
@@ -218,8 +220,8 @@ Kostentracker.module({
     "html": "<p>Wähle, ob der Kostentracker dunkel, hell oder automatisch passend zu deinem iPhone dargestellt wird.</p><p>Oben kannst du alle Farben gleichzeitig setzen. Darunter lässt sich jede Aktion bei Bedarf einzeln anpassen.</p><p>„Alle Buttons, Schalter & Haken“ setzt Hinzufügen/Speichern, Bearbeiten, Verschieben sowie aktive Schalter und Auswahlhaken auf dieselbe Farbe. Darunter kannst du einzelne Farben wieder abweichend wählen. Erst mit „Farben speichern“ wird die Auswahl dauerhaft übernommen. Löschen bleibt bewusst rot.</p>"
   },
   "settingsBackupView": {
-    "title": "Backup",
-    "html": "<p>Sichere alle Einträge und Einstellungen in einer Datei. Diese kannst du später auf diesem oder einem neuen Gerät wieder einspielen.</p><p>Beim Wiederherstellen werden die aktuell gespeicherten App-Daten durch das gewählte Backup ersetzt.</p><p>Löscht alle Ausgaben, Einnahmen, Fixkosten, Versicherungen sowie Spar- und Investitionseinträge aus allen Zeiträumen, einschließlich der Reiseeinträge. Länder, Kategorien, Budgets und Einstellungen bleiben erhalten. Erstelle vorher ein Backup, wenn du die Einträge später wiederherstellen möchtest.</p>"
+    "title": "Daten & Sicherung",
+    "html": "<p>Hier findest du deine Server-Sicherungsstände und die Datei-Backups. Ein Sicherungsstand zeigt beim Antippen zuerst eine Änderungsvorschau. Erst über „Diesen Stand wiederherstellen“ wird der gesamte Stand übernommen und mit dem Server abgeglichen. Der aktuelle Stand wird vorher zusätzlich gesichert.</p><p>Automatisch entsteht beim erfolgreichen Abgleich höchstens ein Stand pro UTC-Tag. Manuelle Stände kannst du zusätzlich erstellen. Die neuesten 14 bleiben erhalten.</p><p>Unter Server & Synchronisierung verwaltest du Zugang und Verbindung.</p><p>Sichere alle Einträge und Einstellungen in einer Datei. Diese kannst du später auf diesem oder einem neuen Gerät wieder einspielen.</p><p>Beim Wiederherstellen werden die aktuell gespeicherten App-Daten durch das gewählte Backup ersetzt.</p><p>Löscht alle Ausgaben, Einnahmen, Fixkosten, Versicherungen sowie Spar- und Investitionseinträge aus allen Zeiträumen, einschließlich der Reiseeinträge. Länder, Kategorien, Budgets und Einstellungen bleiben erhalten. Erstelle vorher ein Backup, wenn du die Einträge später wiederherstellen möchtest.</p>"
   },
   "globalArchivView": {
     "title": "Archiv",

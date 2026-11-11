@@ -85,7 +85,7 @@ Kostentracker.module({
         }
 
 
-function openServerSettings() {dependencies.show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();dependencies.setupTravelPaymentTests();renderStorageV2();backupHistoryOpen=false;backupHistoryRequest++;const host=document.getElementById('storageV2Backups');if(host)host.hidden=true;updateBackupHistoryButton();}
+function openServerSettings() {dependencies.show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();dependencies.setupTravelPaymentTests();}
 async function renderPushTestStatus() {
   const node=document.getElementById('serverNotificationStatus');if(!node)return;
   if(!('Notification' in window)){node.textContent='Für Benachrichtigungen die App über ihr Home-Bildschirm-Icon öffnen.';return;}
@@ -106,6 +106,7 @@ function updateServerLoginControls() {
   if(token)token.disabled=testServerBusy;
   document.getElementById('serverRestoreNotice')?.classList.toggle('hidden',!serverBackupRequired);
   document.getElementById('serverAccountActions')?.classList.toggle('hidden',!testServerConfig.token);
+  document.getElementById('storageServerRestoreActions')?.classList.toggle('hidden',!testServerConfig.token);
   const dialog=document.getElementById('serverRestoreDialog');if(dialog)dialog.dataset.busy=testServerBusy?'true':'false';
   for(const id of ['serverRestoreConfirm','serverRestoreLater']){const node=document.getElementById(id);if(node)node.disabled=testServerBusy;}
 }
@@ -140,7 +141,7 @@ function renderHomeSyncStatus() {
   }
   node.textContent=text;node.dataset.state=state;node.setAttribute('aria-label',text+' – Anmeldung öffnen');
 }
-function serverStatus(message) {serverLastStatus=message;const node=document.getElementById('testServerStatus');if(node)node.textContent=message;updateServerLoginControls();renderHomeSyncStatus();}
+function serverStatus(message) {serverLastStatus=message;const storageNote=document.getElementById('storageV2ActionStatus');if(storageNote)storageNote.textContent=message;const node=document.getElementById('testServerStatus');if(node)node.textContent=message;updateServerLoginControls();renderHomeSyncStatus();}
 function renderTestServerSettings() {
   renderServerPaymentReview();
   const node=document.getElementById('testServerToken');if(node)node.value=testServerConfig.token||'';
@@ -406,10 +407,15 @@ function importTestServerPayments(payments) {
   renderServerPaymentReview();dependencies.refreshReiseImportedViews();
   return count;
 }
+function prepareStorageSettings(){
+ const token=document.getElementById('testServerToken');if(token)token.value=testServerConfig.token||'';
+ backupHistoryOpen=false;backupHistoryRequest++;const host=document.getElementById('storageV2Backups');if(host)host.hidden=true;updateBackupHistoryButton();renderStorageV2();updateServerLoginControls();const note=document.getElementById('storageV2ActionStatus');if(note)note.textContent=serverLastStatus;
+}
 function storageV2(){return context.storage.database;}
 function adoptDatabase(){context.repository.view=storageV2().data();context.storage.lastSaved=storageV2().read();}
 function renderStorageV2(){
  const state=storageV2().status(),node=document.getElementById('storageV2Status');
+ const connected=!!testServerConfig?.token;document.getElementById('storageV2LoginNotice')?.classList.toggle('hidden',connected);const create=document.getElementById('storageV2Create');if(create)create.disabled=!connected||testServerBusy;
  if(node)node.textContent=`Auf diesem Gerät: ${(state.bytes/1024).toLocaleString('de-DE',{maximumFractionDigits:1})} KB · ${state.pending} Änderungen ausstehend`+(state.error?' · Lokales Speichern prüfen':'');
  const host=document.getElementById('storageV2Conflicts');if(!host)return;host.replaceChildren();
  state.conflicts.forEach((item,index)=>{
@@ -454,7 +460,9 @@ function drawBackupHistory(){
  }
  if(!items.length){const note=document.createElement('p');note.className='settings-note';note.textContent='Noch keine Sicherungsstände vorhanden.';host.appendChild(note);}
  if(backupHistoryCache.backups.length>3){const button=document.createElement('button');button.type='button';button.className='backup-more';button.textContent=backupHistoryAll?'Weniger anzeigen':'Alle '+backupHistoryCache.backups.length+' Stände anzeigen';button.onclick=()=>{backupHistoryAll=!backupHistoryAll;drawBackupHistory();};host.appendChild(button);}
- if(backupHistoryCache.legacy){const more=document.createElement('details');more.className='backup-older';const summary=document.createElement('summary');summary.textContent='Weitere Sicherungen';const button=document.createElement('button');button.type='button';button.className='backup-history-row';button.textContent='Vor der Speicherumstellung · Änderungen ansehen';button.onclick=()=>restoreHistoricalBackup('legacy','Vor der Speicherumstellung');more.append(summary,button);host.appendChild(more);}
+ const more=document.createElement('details');more.className='backup-older';const summary=document.createElement('summary');summary.textContent='Weitere Sicherungen';more.appendChild(summary);
+ if(backupHistoryCache.legacy){const button=document.createElement('button');button.type='button';button.className='backup-history-row';button.textContent='Vor der Speicherumstellung · Änderungen ansehen';button.onclick=()=>restoreHistoricalBackup('legacy','Vor der Speicherumstellung');more.appendChild(button);}
+ const original=document.createElement('button');original.type='button';original.className='backup-history-row';original.textContent='Daten vor der Umstellung als Datei exportieren';original.onclick=()=>exportStorageMigrationBackup();more.appendChild(original);host.appendChild(more);
 }
 async function renderServerBackupHistory(refresh=false){
  const host=document.getElementById('storageV2Backups');if(!host)return;
@@ -612,5 +620,5 @@ if(document.readyState==='complete')startServerConnection();else window.addEvent
 document.addEventListener('kostentracker:boot-complete',syncPaymentReviewGate);
 
 
-return { closeBackupPreview, confirmBackupPreview, exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+return { prepareStorageSettings, closeBackupPreview, confirmBackupPreview, exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
 });
