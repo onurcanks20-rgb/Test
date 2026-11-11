@@ -27,15 +27,16 @@
     }
     const storage = Object.freeze({
         key: STORAGE_KEY,
+        database: window.KostentrackerDB,
         get lastSaved() { return lastSaved; },
         set lastSaved(value) { lastSaved = value; },
         getItem(key = STORAGE_KEY) {
             if (key !== STORAGE_KEY) throw new Error("Falscher Datenspeicher");
-            return localStorage.getItem(STORAGE_KEY);
+            return window.KostentrackerDB.read();
         },
         setItem(key, serialized) {
             if (key !== STORAGE_KEY) throw new Error("Falscher Datenspeicher");
-            localStorage.setItem(STORAGE_KEY, serialized);
+            window.KostentrackerDB.write(serialized);
         }
     });
 

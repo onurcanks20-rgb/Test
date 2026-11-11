@@ -50,7 +50,7 @@ Kostentracker.module({
             return true;
         }
 
-        function deleteAllAppEntries() {
+        async function deleteAllAppEntries() {
             if (!confirm("Alle Einträge in der gesamten App löschen?\n\nAuch Einnahmen, Fixkosten, Versicherungen, geplante Ausgaben, Spar-/Investitionseinträge und Reiseeinträge werden aus allen Zeiträumen entfernt. Länder, Kategorien, Budgets und Einstellungen bleiben erhalten.\n\nDies kann nur mit einem zuvor gespeicherten Backup rückgängig gemacht werden.")) return;
             const status = document.getElementById("deleteAllEntriesStatus");
             try {
@@ -71,9 +71,10 @@ Kostentracker.module({
                     if (Array.isArray(cleared["Laufende Kosten"][key])) cleared["Laufende Kosten"][key] = [];
                 }
                 // Commit before replacing the in-memory data, so storage failure loses nothing.
-                context.storage.setItem(context.storage.key, JSON.stringify(cleared));
+                await context.storage.database.replace(cleared);
                 context.repository.view = cleared;
                 context.storage.lastSaved = JSON.stringify(cleared);
+                dependencies.scheduleTestServerSync();
                 dependencies.clearUndoDelete();
             } catch (error) {
                 if (status) status.textContent = "Die Einträge konnten nicht gelöscht werden. Deine Daten bleiben erhalten.";
@@ -160,9 +161,10 @@ Kostentracker.module({
                 }
 
                 const neueDaten = parsed.daten ?? parsed;
-                context.storage.setItem(context.storage.key, JSON.stringify(neueDaten));
+                await context.storage.database.replace(neueDaten);
                 context.repository.view = neueDaten;
                 context.storage.lastSaved = JSON.stringify(neueDaten);
+                dependencies.scheduleTestServerSync();
                 dependencies.clearUndoDelete();
                 setBackupStatus("Backup wurde wiederhergestellt. Die App wird neu geladen …");
                 setTimeout(() => location.reload(), 400);
