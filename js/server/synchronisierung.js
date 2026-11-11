@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/server/synchronisierung.js",
   "dependencies": [
+    "hasUnsavedInputs", "clearUndoDelete",
     "showDetailedPaymentNotice", "resumePaymentImportedNotice",
     "merchantDestination",
     "merchantCategories",
@@ -84,7 +85,7 @@ Kostentracker.module({
         }
 
 
-function openServerSettings() {dependencies.show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();dependencies.setupTravelPaymentTests();}
+function openServerSettings() {dependencies.show('serverSettingsView');renderTestServerSettings();renderPushTestStatus();dependencies.setupTravelPaymentTests();renderStorageV2();renderServerBackupHistory();}
 async function renderPushTestStatus() {
   const node=document.getElementById('serverNotificationStatus');if(!node)return;
   if(!('Notification' in window)){node.textContent='Für Benachrichtigungen die App über ihr Home-Bildschirm-Icon öffnen.';return;}
@@ -122,6 +123,7 @@ function closeServerRestorePrompt() {
   dependencies.closeAccessibleDialog('serverRestoreDialog');
 }
 function renderHomeSyncStatus() {
+  renderStorageV2();
   const node=document.getElementById('homeSyncStatus');if(!node)return;
   let state='local',text='Nur auf diesem Gerät';
   if(testServerConfig?.token){
@@ -129,8 +131,10 @@ function renderHomeSyncStatus() {
     if(serverBackupRequired){state='restore';text='Daten wiederherstellen';}
     else if(navigator.onLine===false){state='offline';text='Offline · Synchronisierung folgt';}
     else if(testServerBusy){state='busy';text='Wird synchronisiert …';}
+    else if(storageV2().status().error){state='error';text='Lokales Speichern prüfen';}
+    else if(storageV2().status().conflicts.length){state='review';text='Änderungen abgleichen';}
     else if(serverSyncError){state='error';text='Noch nicht synchronisiert';}
-    else if(serverSyncedRevision<serverSyncRevision||!serverSyncConfirmed){state='pending';text=serverSyncConfirmed?'Übertragung ausstehend':'Verbindung wird geprüft';}
+    else if(storageV2().status().pending||serverSyncedRevision<serverSyncRevision||!serverSyncConfirmed){state='pending';text=serverSyncConfirmed?'Übertragung ausstehend':'Verbindung wird geprüft';}
     else if(reviews){state='review';text=reviews===1?'Eine Zahlung prüfen':reviews+' Zahlungen prüfen';}
     else{state='synced';text='Alles synchronisiert';}
   }
@@ -161,7 +165,7 @@ async function testServerRequest(path,value,token=testServerConfig?.token) {
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try {
     const response=await fetch(TEST_SERVER_URL+path,{method:value===undefined?'GET':'POST',cache:'no-store',signal:controller.signal,
-      headers:{Authorization:'Bearer '+token,...(value===undefined?{}:{'Content-Type':'application/json'})},
+      headers:{Authorization:'Bearer '+token,'X-Kostentracker-Storage':'2',...(value===undefined?{}:{'Content-Type':'application/json'})},
       ...(value===undefined?{}:{body:JSON.stringify(value)})});
     const data=await response.json();if(!response.ok) throw new Error(data.error||'Serverfehler '+response.status);return data;
   } finally {clearTimeout(timer);}
@@ -402,35 +406,105 @@ function importTestServerPayments(payments) {
   renderServerPaymentReview();dependencies.refreshReiseImportedViews();
   return count;
 }
+function storageV2(){return context.storage.database;}
+function adoptDatabase(){context.repository.view=storageV2().data();context.storage.lastSaved=storageV2().read();}
+function renderStorageV2(){
+ const state=storageV2().status(),node=document.getElementById('storageV2Status');
+ if(node)node.textContent=`Auf diesem Gerät: ${(state.bytes/1024).toLocaleString('de-DE',{maximumFractionDigits:1})} KB · ${state.pending} Änderungen ausstehend`+(state.error?' · Lokales Speichern prüfen':'');
+ const host=document.getElementById('storageV2Conflicts');if(!host)return;host.replaceChildren();
+ state.conflicts.forEach((item,index)=>{
+  const row=document.createElement('div');row.className='settings-page-card';
+  const title=document.createElement('strong');title.textContent='Änderung prüfen: '+KostentrackerRecords.label(item.key,storageV2().records().get(item.key)||item.remote.payload);row.appendChild(title);
+  const note=document.createElement('p');note.className='settings-note';note.textContent='Dieser Eintrag wurde auch auf dem Server geändert. Beide Fassungen bleiben bis zu deiner Entscheidung erhalten.';row.appendChild(note);
+  const describe=payload=>{if(payload===null)return 'Gelöscht';const record=JSON.parse(payload);if(record.type!=='value')return record.type==='array'?'Liste vorhanden':'Bereich vorhanden';const value=record.value;if(!value||typeof value!=='object')return String(value??'Leer');return [value.text||value.name,value.betrag!=null?Number(value.betrag).toLocaleString('de-DE',{style:'currency',currency:'EUR'}):'',value.datum||''].filter(Boolean).join(' · ')||'Gespeicherter Eintrag';};
+  for(const [label,payload]of [['Auf diesem Gerät',storageV2().records().get(item.key)??null],['Auf dem Server',item.remote.payload]]){const line=document.createElement('p');line.className='settings-note';line.textContent=label+': '+describe(payload);row.appendChild(line);}
+  for(const [keep,label]of [[true,'Meine Änderung verwenden'],[false,'Serverstand verwenden']]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=()=>resolveStorageConflict(index,keep);row.appendChild(button);}host.appendChild(row);
+ });
+}
+async function resolveStorageConflict(index,keepLocal){
+ if(testServerBusy)return;const item=storageV2().status().conflicts[index];if(!item)return;
+ if(!confirm(keepLocal?'Deine Änderung für diesen Eintrag verwenden?':'Den Serverstand für diesen Eintrag übernehmen?'))return;
+ try{await storageV2().resolve(item.key,keepLocal);adoptDatabase();dependencies.renderHomeUebersicht();dependencies.refreshReiseImportedViews();renderStorageV2();scheduleTestServerSync();}catch(error){serverStatus('Änderung konnte nicht übernommen werden: '+error.message);}
+}
+async function readV2Snapshot(backupId){
+ const records=[];let after='',cursor=null;
+ for(let page=0;page<10000;page++){
+  const path=backupId?'/api/v2/backup-records?id='+encodeURIComponent(backupId)+'&after='+encodeURIComponent(after):'/api/v2/snapshot?after='+encodeURIComponent(after);
+  const result=await testServerRequest(path);if(cursor===null)cursor=result.cursor;records.push(...result.records);if(!result.next)return {records,cursor};after=result.next;
+ }
+ throw Error('Zu viele Datenseiten. Bitte erneut versuchen.');
+}
+async function pullV2(){
+ for(let page=0;page<10000;page++){const result=await testServerRequest('/api/v2/changes?after='+storageV2().status().cursor);await storageV2().receive(result);if(!result.more){adoptDatabase();return;}}
+ throw Error('Weitere Daten sind noch nicht abgeglichen. Bitte erneut synchronisieren.');
+}
+async function renderServerBackupHistory(){
+ const host=document.getElementById('storageV2Backups');if(!host)return;host.replaceChildren();
+ if(!testServerConfig?.token)return;
+ try{
+  const state=await testServerRequest('/api/v2/status');
+  if(!state.ready){host.textContent='Sicherungsstände erscheinen nach der ersten vollständigen Synchronisierung.';return;}
+  const result=await testServerRequest('/api/v2/backups');
+  for(const item of result.backups){const button=document.createElement('button');button.type='button';button.className='settings-secondary';button.textContent=new Date(item.created).toLocaleString('de-DE')+' · '+item.kind;button.onclick=()=>restoreHistoricalBackup(item.id);host.appendChild(button);}
+  if(state.legacy){const button=document.createElement('button');button.type='button';button.className='settings-secondary';button.textContent='Sicherung vor der Speicherumstellung';button.onclick=()=>restoreHistoricalBackup('legacy');host.appendChild(button);}
+ }catch(error){host.textContent='Sicherungsstände derzeit nicht abrufbar: '+error.message;}
+}
+async function exportStorageMigrationBackup(){
+ try{const data=await storageV2().migrationSnapshot();if(!data)throw Error('Auf diesem Gerät gibt es keine Sicherung vor der Umstellung.');const url=URL.createObjectURL(new Blob([data],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download='Kostentracker-vor-Speicherumstellung.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}catch(error){serverStatus(error.message);}
+}
+async function createServerBackup(){
+ if(testServerBusy)return;
+ try{await syncTestServer();if(storageV2().status().pending||storageV2().status().conflicts.length||serverSyncError)throw Error('Bitte zuerst alle Änderungen synchronisieren und Konflikte klären.');await testServerRequest('/api/v2/backup',{manual:true});await renderServerBackupHistory();serverStatus('Zusätzlicher Sicherungsstand erstellt.');}catch(error){serverStatus('Sicherung nicht erstellt: '+error.message);}
+}
+async function restoreHistoricalBackup(id){
+ if(testServerBusy)return;
+ if(!confirm('Diesen Sicherungsstand wiederherstellen? Die App-Daten auf diesem Gerät werden ersetzt und danach synchronisiert. Vorher wird der aktuelle synchronisierte Serverstand zusätzlich gesichert.'))return;
+ try{
+  await syncTestServer();if(storageV2().status().pending||storageV2().status().conflicts.length||serverSyncError)throw Error('Bitte zuerst die ausstehenden Änderungen synchronisieren.');
+  testServerBusy=true;await testServerRequest('/api/v2/backup',{manual:true});
+  let data;if(id==='legacy'){const saved=await testServerRequest('/api/backup');data=saved.data;}else{const snapshot=await readV2Snapshot(id);if(!snapshot.records.length)throw Error('Dieser Sicherungsstand ist nicht verfügbar.');data=KostentrackerRecords.decode(new Map(snapshot.records.filter(row=>row.payload!==null).map(row=>[row.key,row.payload])));}
+  if(!data?.Haushalt||!data?.Einstellungen)throw Error('Sicherungsstand ungültig.');
+  await storageV2().replace(data);adoptDatabase();dependencies.clearUndoDelete();await storageV2().flush();location.reload();
+ }catch(error){serverStatus('Wiederherstellung nicht durchgeführt: '+error.message);}finally{testServerBusy=false;renderHomeSyncStatus();}
+}
+
 async function syncTestServer(saveSettings=false) {
-  if(testServerBusy) {testServerPending=true;return;}
+  if(testServerBusy){testServerPending=true;return;}
+  if(dependencies.hasUnsavedInputs?.()){serverStatus('Deine Eingabe bleibt offen. Synchronisierung folgt nach dem Abschließen.');clearTimeout(testServerTimer);testServerTimer=setTimeout(()=>syncTestServer(false),5000);return;}
   try {
-    testServerBusy=true;serverStatus(saveSettings?'Anmeldung wird geprüft …':'Daten werden synchronisiert …');
-    if(saveSettings) await saveTestServerSettings();else {
-      if(!testServerConfig?.token){serverStatus('Noch nicht angemeldet.');return;}
-      bindTestServerUser(await testServerRequest('/api/config'));
+    testServerBusy=true;serverStatus('Daten werden synchronisiert …');
+    if(saveSettings)await saveTestServerSettings();else{if(!testServerConfig?.token){serverStatus('Noch nicht angemeldet.');return;}bindTestServerUser(await testServerRequest('/api/config'));}
+    const db=storageV2();context.storage.setItem(context.storage.key,JSON.stringify(context.repository.view));await db.flush();
+    const state=await testServerRequest('/api/v2/status');
+    if((localStorage.getItem('kostenApp_test_backup_check')===testServerBoundUser||!db.status().hadLegacy&&!db.status().confirmedServer)&&(state.ready||state.legacy)){
+      serverBackupRequired=true;serverStatus('Bitte vorhandene Daten wiederherstellen. Lokale Daten werden nicht automatisch darübergeschrieben.');showServerRestorePrompt(saveSettings);return;
     }
-    // A fresh device must not overwrite an existing personal server backup.
-    if(localStorage.getItem('kostenApp_test_backup_check')===testServerBoundUser) {
-      const saved=await testServerRequest('/api/backup');
-      if(saved.data) {serverBackupRequired=true;serverStatus('Bitte deine Daten wiederherstellen, um neue Zahlungen zu übernehmen.');showServerRestorePrompt(saveSettings);return;}
-      localStorage.removeItem('kostenApp_test_backup_check');
-      serverBackupRequired=false;serverRestorePromptSeen=false;updateServerLoginControls();
+    await testServerRequest('/api/v2/begin',{deviceId:db.status().deviceId});
+    localStorage.removeItem('kostenApp_test_backup_check');serverBackupRequired=false;serverRestorePromptSeen=false;
+    if(state.ready)await pullV2();
+    let count=0;
+    // Confirm imports only after their data and retry operations reached IndexedDB.
+    for(let page=0;page<10;page++){
+      const result=await testServerRequest('/api/payments');count+=importTestServerPayments(result.payments);await db.flush();
+      if(result.payments.length)await testServerRequest('/api/payments/ack',{ids:result.payments.map(p=>p.id)});
+      if(result.payments.length<100)break;
     }
-    let count=0;for(let page=0;page<10;page++) {
-      const result=await testServerRequest('/api/payments');
-      count+=importTestServerPayments(result.payments);
-      if(result.payments.length) dependencies.renderHomeUebersicht();
-      if(result.payments.length) await testServerRequest('/api/payments/ack',{ids:result.payments.map(p=>p.id)});
-      if(result.payments.length<100) break;
+    for(let round=0;round<150;round++){
+      await db.flush();let size=0;const operations=[];
+      for(const op of db.batch(4)){const bytes=new TextEncoder().encode(JSON.stringify(op)).length;if(operations.length&&size+bytes>500000)break;operations.push(op);size+=bytes;}
+      if(!operations.length)break;
+      const result=await testServerRequest('/api/v2/push',{deviceId:db.status().deviceId,operations});
+      await db.accept(result.accepted);if(result.conflicts.length)await db.rememberConflicts(result.conflicts);
     }
-    dependencies.renderHomeUebersicht();
-    const uploadRevision=serverSyncRevision;
-    await testServerRequest('/api/backup',{data:context.repository.view});
-    serverSyncedRevision=uploadRevision;serverSyncConfirmed=true;serverSyncError=false;
-    serverStatus('Du bist angemeldet. Deine Daten sind aktuell.'+(count?' '+count+' neue Ausgabe'+(count===1?'':'n')+' übernommen.':'')+((context.repository.view.Einstellungen?.serverPendingReview?.length||0)?' Zahlungen zur Prüfung offen.':''));
-  } catch(error) {serverSyncError=true;serverStatus('Noch nicht synchronisiert: '+(error.name==='AbortError'?'Zeitüberschreitung. Später erneut verbinden.':error.message));}
-  finally {testServerBusy=false;updateServerLoginControls();renderHomeSyncStatus();if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
+    if(!state.ready){
+      if(db.status().pending){testServerPending=true;serverStatus('Erste Datenübernahme läuft weiter. Die Daten bleiben lokal gespeichert.');return;}
+      await testServerRequest('/api/v2/finish',{deviceId:db.status().deviceId});
+    }
+    await pullV2();await db.markServerReady();if(!dependencies.hasUnsavedInputs?.()){dependencies.renderHomeUebersicht();dependencies.refreshReiseImportedViews();}
+    if(!db.status().pending&&!db.status().conflicts.length){await testServerRequest('/api/v2/backup',{manual:false});await db.archiveLegacy();serverSyncedRevision=serverSyncRevision;serverSyncConfirmed=true;serverSyncError=false;serverStatus('Du bist angemeldet. Deine Daten sind aktuell.'+(count?' '+count+' neue Zahlungen übernommen.':''));}
+    else{serverSyncConfirmed=false;serverStatus(db.status().conflicts.length?'Bitte die Änderungen unter Datenspeicher abgleichen.':'Weitere Änderungen werden übertragen.');if(!db.status().conflicts.length)testServerPending=true;}
+  }catch(error){serverSyncError=true;serverStatus('Noch nicht synchronisiert: '+(error.name==='AbortError'?'Zeitüberschreitung. Deine lokalen Änderungen bleiben gespeichert.':error.message));}
+  finally{testServerBusy=false;updateServerLoginControls();renderHomeSyncStatus();if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
 }
 function pushKeyBytes(value) {return Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4)),c=>c.charCodeAt(0));}
 async function activateTestServerPush() {
@@ -465,10 +539,10 @@ async function restoreTestServerBackup(confirmed=false) {
   const errorNode=document.getElementById('serverRestoreError');if(errorNode)errorNode.textContent='';
   try {
     await saveTestServerSettings();
-    const saved=await testServerRequest('/api/backup');
-    if(!saved.data)throw new Error('Für diesen Zugang gibt es noch keine gespeicherte Sicherung.');
-    if(!saved.data.Haushalt||typeof saved.data.Haushalt!=='object'||!saved.data.Einstellungen||typeof saved.data.Einstellungen!=='object')throw new Error('Die gespeicherte Sicherung ist nicht gültig. Deine aktuellen Daten bleiben erhalten.');
-    context.storage.setItem(context.storage.key,JSON.stringify(saved.data));
+    const status=await testServerRequest('/api/v2/status');
+    if(status.ready){const snapshot=await readV2Snapshot();await storageV2().resetToServer(snapshot.records,snapshot.cursor);}
+    else{const saved=await testServerRequest('/api/backup');if(!saved.data?.Haushalt||!saved.data?.Einstellungen)throw Error('Keine gültige Sicherung vorhanden.');await storageV2().replace(saved.data);}
+    adoptDatabase();await storageV2().flush();
     localStorage.removeItem('kostenApp_test_backup_check');
     serverBackupRequired=false;testServerBusy=false;updateServerLoginControls();
     dependencies.closeAccessibleDialog('serverRestoreDialog');
@@ -479,6 +553,7 @@ async function restoreTestServerBackup(confirmed=false) {
   } finally {testServerBusy=false;updateServerLoginControls();renderHomeSyncStatus();}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initializePaymentReviewGate,{once:true});else initializePaymentReviewGate();
+window.addEventListener('kostentracker:storage-status',renderHomeSyncStatus);
 window.addEventListener('offline',renderHomeSyncStatus);
 window.addEventListener('online',()=>{renderHomeSyncStatus();syncTestServer(false);});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){renderHomeSyncStatus();renderServerPaymentReview();syncTestServer(false);}});
@@ -487,5 +562,5 @@ if(document.readyState==='complete')startServerConnection();else window.addEvent
 document.addEventListener('kostentracker:boot-complete',syncPaymentReviewGate);
 
 
-return { simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+return { exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
 });
