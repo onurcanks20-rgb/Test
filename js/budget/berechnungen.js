@@ -5,7 +5,9 @@ Kostentracker.module({
     "laufendeKostenImZeitraum",
     "parseBetrag",
     "versicherungenDiesenMonat",
-    "versicherungsZahlungenImZeitraum"
+    "versicherungsZahlungenImZeitraum",
+    "rundeCent",
+    "summeBetraege"
   ],
   "session": [],
   "read": [],
@@ -18,10 +20,7 @@ Kostentracker.module({
 
         function berechneMonat(monatAktuell) {
 
-            return dependencies.versicherungenDiesenMonat(monatAktuell).reduce((summe, v) => {
-                let betrag = dependencies.parseBetrag(v.betrag);
-                return summe + (isNaN(betrag) ? 0 : betrag);
-            }, 0);
+            return dependencies.summeBetraege(dependencies.versicherungenDiesenMonat(monatAktuell));
         }
 
         function berechneSimpleMonat(liste, monatAktuell) {
@@ -50,19 +49,17 @@ Kostentracker.module({
 
             });
 
-            return summe;
+            return dependencies.rundeCent(summe);
         }
 
         function berechneMonatGesamt() {
             const zeitraum = dependencies.getGehaltszeitraum();
 
-            const laufende = dependencies.laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende)
-                .reduce((sum, e) => sum + e.betrag, 0);
+            const laufende = dependencies.summeBetraege(dependencies.laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende));
 
-            const versicherungen = dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende)
-                .reduce((sum, e) => sum + e.betrag, 0);
+            const versicherungen = dependencies.summeBetraege(dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende));
 
-            return laufende + versicherungen;
+            return dependencies.rundeCent(laufende + versicherungen);
         }
 
 return { berechneMonat, berechneSimpleMonat, berechneMonatGesamt };

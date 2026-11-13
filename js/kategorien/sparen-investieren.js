@@ -25,7 +25,9 @@ Kostentracker.module({
     "renderHomeUebersicht",
     "renderUebersicht",
     "speichern",
-    "versicherungsZahlungenImZeitraum"
+    "versicherungsZahlungenImZeitraum",
+    "rundeCent",
+    "summeBetraege"
   ],
   "session": [
     "state"
@@ -51,26 +53,26 @@ Kostentracker.module({
 
         function sparenInvestierenSummen(zeitraum) {
             const aktiv = sparenInvestierenAktivImZeitraum(zeitraum.start, zeitraum.ende);
-            const investieren = aktiv.filter(e => e.typ === "investieren").reduce((s,e)=>s+e.betrag,0);
-            const sparenPlan = aktiv.filter(e => e.typ === "sparen").reduce((s,e)=>s+e.betrag,0);
+            const investieren = dependencies.summeBetraege(aktiv.filter(e => e.typ === "investieren"));
+            const sparenPlan = dependencies.summeBetraege(aktiv.filter(e => e.typ === "sparen"));
             
-return { aktiv, investieren, sparenPlan, gesamt: investieren + sparenPlan };
+return { aktiv, investieren, sparenPlan, gesamt: dependencies.rundeCent(investieren + sparenPlan) };
         }
 
         function berechneSparBudgetStatus(zeitraum) {
             const start = dependencies.getStartgehalt(zeitraum);
-            const einnahmen = dependencies.einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
-            const fix = dependencies.laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
-            const vers = dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
-            const geplant = dependencies.geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
-            const alltag = dependencies.alltagImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const einnahmen = dependencies.summeBetraege(dependencies.einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende));
+            const fix = dependencies.summeBetraege(dependencies.laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende));
+            const vers = dependencies.summeBetraege(dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende));
+            const geplant = dependencies.summeBetraege(dependencies.geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende));
+            const alltag = dependencies.summeBetraege(dependencies.alltagImZeitraum(zeitraum.start, zeitraum.ende));
             const si = sparenInvestierenSummen(zeitraum);
-            const rohFrei = start + einnahmen - fix - vers - geplant - si.investieren - si.sparenPlan - alltag;
+            const rohFrei = dependencies.rundeCent(start + einnahmen - fix - vers - geplant - si.investieren - si.sparenPlan - alltag);
             // Frei verfügbar zeigt die echte Über- oder Unterschreitung des Alltagsbudgets.
             // Die Rücklage läuft parallel dagegen: -100 € frei bedeutet bei 300 € Rücklage noch 200 € gespart.
             // Wird stärker überzogen als die Rücklage groß ist, darf auch "Gespart" negativ werden.
             const sparVerbrauch = Math.max(0, -rohFrei);
-            const gespart = si.sparenPlan - sparVerbrauch;
+            const gespart = dependencies.rundeCent(si.sparenPlan - sparVerbrauch);
             const frei = rohFrei;
             return { ...si, gespart, sparVerbrauch, frei, rohFrei };
         }

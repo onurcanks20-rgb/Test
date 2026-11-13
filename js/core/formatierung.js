@@ -153,9 +153,30 @@ Kostentracker.module({
             return number.toFixed(2).replace(".", ",");
         }
 
+        // Rundet auf ganze Cent. Kommazahlen-Reste wie 0.1 + 0.2 = 0.30000000000000004
+        // oder -0.0000000001 werden so zu 0.3 bzw. 0 (und nie zu "-0,00 €").
+        function rundeCent(value) {
+            const number = Number(value);
+            if (!Number.isFinite(number)) return 0;
+            return Math.round(number * 100) / 100 || 0;
+        }
+
+        // Summiert Beträge in ganzen Cent, damit Vergleiche wie "< 0" exakt bleiben.
+        // wert: optionale Funktion, die aus einem Eintrag den Betrag liest (Standard: e.betrag).
+        function summeBetraege(liste, wert = e => e?.betrag) {
+            if (!Array.isArray(liste)) return 0;
+            let cent = 0;
+            for (const eintrag of liste) {
+                const betrag = parseBetrag(wert(eintrag));
+                if (Number.isFinite(betrag)) cent += Math.round(betrag * 100);
+            }
+            return cent / 100 || 0;
+        }
+
         function formatBetragText(betrag) {
             let value = parseBetrag(betrag);
             if (!Number.isFinite(value)) value = 0;
+            value = rundeCent(value);
             return value.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
         }
 
@@ -311,5 +332,5 @@ function istInLetztenTagen(datum, tage = 7) {
             document.getElementById(wrapperId)?.classList.toggle('hidden',document.getElementById(selectId)?.value==='monatlich');
         }
 
-return { clearEntryTime, entryTimeSnapshot, validEntryClock, localClock, entryClock, timeFields, readEntryTime, importedEntryTime, compareEntriesNewest, renderEntryTime, renderEntryTimeInput, prepareEntryTime, toggleIncomeTime, daysBetween, getAktuellerMonat, heuteISO, tagAusDatum, datumAusTagAktuellerMonat, parseISODate, startOfToday, addDays, isoAusDate, formatKurzDatum, generateId, getSearchTerm, matchesSearch, datumZeitwert, createItem, escapeHtml, formatDatum, getMonatName, parseBetrag, formatInputBetrag, formatBetragText, formatBetrag, bindOnce, formatText, formatDateGroupLabel, appendDateGroupHeader, datumAlsLokalenTag, istInLetztenTagen };
+return { rundeCent, summeBetraege, clearEntryTime, entryTimeSnapshot, validEntryClock, localClock, entryClock, timeFields, readEntryTime, importedEntryTime, compareEntriesNewest, renderEntryTime, renderEntryTimeInput, prepareEntryTime, toggleIncomeTime, daysBetween, getAktuellerMonat, heuteISO, tagAusDatum, datumAusTagAktuellerMonat, parseISODate, startOfToday, addDays, isoAusDate, formatKurzDatum, generateId, getSearchTerm, matchesSearch, datumZeitwert, createItem, escapeHtml, formatDatum, getMonatName, parseBetrag, formatInputBetrag, formatBetragText, formatBetrag, bindOnce, formatText, formatDateGroupLabel, appendDateGroupHeader, datumAlsLokalenTag, istInLetztenTagen };
 });

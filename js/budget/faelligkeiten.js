@@ -3,7 +3,9 @@ Kostentracker.module({
   "dependencies": [
     "getGehaltszeitraum",
     "laufendeKostenImZeitraum",
-    "versicherungsZahlungenImZeitraum"
+    "versicherungsZahlungenImZeitraum",
+    "rundeCent",
+    "summeBetraege"
   ],
   "session": [],
   "read": [],
@@ -28,8 +30,8 @@ Kostentracker.module({
 
             const alle = [...laufende, ...versicherungen].sort((a, b) => a.datum - b.datum);
 
-            const summeLaufend = laufende.reduce((sum, e) => sum + e.betrag, 0);
-            const summeVersicherungen = versicherungen.reduce((sum, e) => sum + e.betrag, 0);
+            const summeLaufend = dependencies.summeBetraege(laufende);
+            const summeVersicherungen = dependencies.summeBetraege(versicherungen);
 
             return {
                 zeitraum,
@@ -38,7 +40,7 @@ Kostentracker.module({
                 alle,
                 summeLaufend,
                 summeVersicherungen,
-                gesamt: summeLaufend + summeVersicherungen
+                gesamt: dependencies.rundeCent(summeLaufend + summeVersicherungen)
             };
         }
 

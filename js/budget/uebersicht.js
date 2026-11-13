@@ -36,7 +36,9 @@ Kostentracker.module({
     "openStartQuickAdd",
     "updateDropdown",
     "initExistingReiseCurrency",
-    "resetAddReminderForPanel"
+    "resetAddReminderForPanel",
+    "rundeCent",
+    "summeBetraege"
   ],
   "session": [
     "state",
@@ -58,16 +60,16 @@ Kostentracker.module({
 
         function renderUebersicht() {
             const z = dependencies.getGehaltszeitraum();
-            const h = dependencies.haushaltImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
-            const fr = dependencies.freizeitImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
-            const f = dependencies.laufendeKostenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
-            const v = dependencies.versicherungsZahlungenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
-            const ei = dependencies.einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
-            const gp = dependencies.geplanteAusgabenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const h = dependencies.summeBetraege(dependencies.haushaltImZeitraum(z.start, z.ende));
+            const fr = dependencies.summeBetraege(dependencies.freizeitImZeitraum(z.start, z.ende));
+            const f = dependencies.summeBetraege(dependencies.laufendeKostenImZeitraum(z.start, z.ende));
+            const v = dependencies.summeBetraege(dependencies.versicherungsZahlungenImZeitraum(z.start, z.ende));
+            const ei = dependencies.summeBetraege(dependencies.einnahmenZahlungenImZeitraum(z.start, z.ende));
+            const gp = dependencies.summeBetraege(dependencies.geplanteAusgabenImZeitraum(z.start, z.ende));
             const sparStatus = dependencies.berechneSparBudgetStatus(z);
             const set=(id,val)=>{const el=document.getElementById(id); if(el) el.innerHTML=dependencies.formatBetrag(val);};
             set("overviewHaushalt",h); set("overviewFreizeit",fr); set("overviewFixkosten",f); set("overviewVersicherungen",v); set("overviewGeplant",gp); set("overviewReisen",dependencies.reisenGesamt());
-            set("overviewSparenInvestieren", sparStatus.investieren + sparStatus.gespart);
+            set("overviewSparenInvestieren", dependencies.rundeCent(sparStatus.investieren + sparStatus.gespart));
             const siSub = document.getElementById("overviewSparenInvestierenSub");
             if (siSub) siSub.innerHTML = `Investiert ${dependencies.formatBetrag(sparStatus.investieren)} · Gespart ${dependencies.formatBetrag(sparStatus.gespart)} von ${dependencies.formatBetrag(sparStatus.sparenPlan)}`;
             const einnahmenEl = document.getElementById("overviewEinnahmen");
@@ -119,9 +121,9 @@ Kostentracker.module({
             const laufendeImGehalt = dependencies.laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende);
             const versicherungenImGehalt = dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende);
 
-            const laufend = laufendeImGehalt.reduce((sum, e) => sum + e.betrag, 0);
-            const versicherungen = versicherungenImGehalt.reduce((sum, e) => sum + e.betrag, 0);
-            const gesamt = laufend + versicherungen;
+            const laufend = dependencies.summeBetraege(laufendeImGehalt);
+            const versicherungen = dependencies.summeBetraege(versicherungenImGehalt);
+            const gesamt = dependencies.rundeCent(laufend + versicherungen);
 
             const gesamtEl = document.getElementById("homeKostenGesamt");
             const laufendEl = document.getElementById("homeKostenLaufend");

@@ -20,7 +20,9 @@ Kostentracker.module({
     "parseBetrag",
     "parseISODate",
     "startOfToday",
-    "versicherungsZahlungenImZeitraum"
+    "versicherungsZahlungenImZeitraum",
+    "rundeCent",
+    "summeBetraege"
   ],
   "session": [
     "state"
@@ -57,7 +59,7 @@ Kostentracker.module({
         }
 
         function wochenAlltagSumme(von, bis) {
-            return alltagImZeitraum(von, bis).reduce((sum, entry) => sum + entry.betrag - geplanterWochenAnteil(entry), 0);
+            return dependencies.rundeCent(alltagImZeitraum(von, bis).reduce((sum, entry) => sum + entry.betrag - geplanterWochenAnteil(entry), 0));
         }
 
         function openWeekPreview() {
@@ -68,14 +70,14 @@ Kostentracker.module({
 
             const zeitraum = dependencies.getGehaltszeitraum();
             const start = dependencies.getStartgehalt(zeitraum);
-            const laufendSum = dependencies.laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
-            const versSum = dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
-            const einnahmenSum = dependencies.einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
-            const geplantSum = dependencies.geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
-            const gebuchtReserviert = alltagImZeitraum(zeitraum.start, zeitraum.ende).reduce((sum, entry) => sum + geplanterWochenAnteil(entry), 0);
+            const laufendSum = dependencies.summeBetraege(dependencies.laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende));
+            const versSum = dependencies.summeBetraege(dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende));
+            const einnahmenSum = dependencies.summeBetraege(dependencies.einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende));
+            const geplantSum = dependencies.summeBetraege(dependencies.geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende));
+            const gebuchtReserviert = dependencies.summeBetraege(alltagImZeitraum(zeitraum.start, zeitraum.ende), geplanterWochenAnteil);
             const sparStatus = dependencies.berechneSparBudgetStatus(zeitraum);
-            const sparenInvestierenGesamt = sparStatus.investieren + sparStatus.sparenPlan;
-            const alltagGesamt = alltagImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const sparenInvestierenGesamt = dependencies.rundeCent(sparStatus.investieren + sparStatus.sparenPlan);
+            const alltagGesamt = dependencies.summeBetraege(alltagImZeitraum(zeitraum.start, zeitraum.ende));
             const freiJetzt = sparStatus.frei;
 
             const heute = dependencies.startOfToday();
@@ -85,7 +87,7 @@ Kostentracker.module({
             const wochenEnde = kalenderSonntag > zeitraum.ende ? new Date(zeitraum.ende) : kalenderSonntag;
 
             const alltagVorWoche = wochenAlltagSumme(zeitraum.start, dependencies.addDays(wochenStart, -1));
-            const verfuegbarZuWochenbeginn = start + einnahmenSum - laufendSum - versSum - alltagVorWoche - geplantSum - gebuchtReserviert - sparenInvestierenGesamt;
+            const verfuegbarZuWochenbeginn = dependencies.rundeCent(start + einnahmenSum - laufendSum - versSum - alltagVorWoche - geplantSum - gebuchtReserviert - sparenInvestierenGesamt);
             const tageInAktuellerWoche = Math.max(1, Math.round((wochenEnde - wochenStart) / 86400000) + 1);
             const verbleibendeTageAbWochenstart = Math.max(1, Math.round((zeitraum.ende - wochenStart) / 86400000) + 1);
             const wochenBudgetStart = verfuegbarZuWochenbeginn * (tageInAktuellerWoche / verbleibendeTageAbWochenstart);
@@ -169,20 +171,20 @@ Kostentracker.module({
             const start = dependencies.getStartgehalt(zeitraum);
             const haushalt = dependencies.haushaltImZeitraum(zeitraum.start, zeitraum.ende);
             const freizeit = dependencies.freizeitImZeitraum(zeitraum.start, zeitraum.ende);
-            const haushaltSum = haushalt.reduce((s,e)=>s+e.betrag,0);
-            const freizeitSum = freizeit.reduce((s,e)=>s+e.betrag,0);
+            const haushaltSum = dependencies.summeBetraege(haushalt);
+            const freizeitSum = dependencies.summeBetraege(freizeit);
             const laufende = dependencies.laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende);
             const vers = dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende);
-            const laufendSum = laufende.reduce((s,e)=>s+e.betrag,0);
-            const versSum = vers.reduce((s,e)=>s+e.betrag,0);
-            const einnahmenSum = dependencies.einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
-            const geplantSum = dependencies.geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
-            const gebuchtReserviert = alltagImZeitraum(zeitraum.start, zeitraum.ende).reduce((sum, entry) => sum + geplanterWochenAnteil(entry), 0);
+            const laufendSum = dependencies.summeBetraege(laufende);
+            const versSum = dependencies.summeBetraege(vers);
+            const einnahmenSum = dependencies.summeBetraege(dependencies.einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende));
+            const geplantSum = dependencies.summeBetraege(dependencies.geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende));
+            const gebuchtReserviert = dependencies.summeBetraege(alltagImZeitraum(zeitraum.start, zeitraum.ende), geplanterWochenAnteil);
             const sparStatus = dependencies.berechneSparBudgetStatus(zeitraum);
             const investierenSum = sparStatus.investieren;
             const sparenPlanSum = sparStatus.sparenPlan;
             const gespartAktuell = sparStatus.gespart;
-            const sparenInvestierenGesamt = investierenSum + sparenPlanSum;
+            const sparenInvestierenGesamt = dependencies.rundeCent(investierenSum + sparenPlanSum);
             const verfuegbar = sparStatus.frei;
 
             const set = (id, val) => { const el=document.getElementById(id); if(el) el.innerHTML=dependencies.formatBetrag(val); };
@@ -219,7 +221,7 @@ Kostentracker.module({
             const alltagVorWoche = wochenAlltagSumme(zeitraum.start, dependencies.addDays(wochenStart, -1));
 
             // Das Geld, das zu Beginn dieser Woche noch fuer Alltag zur Verfuegung stand.
-            const verfuegbarZuWochenbeginn = start + einnahmenSum - laufendSum - versSum - alltagVorWoche - geplantSum - gebuchtReserviert - sparenInvestierenGesamt;
+            const verfuegbarZuWochenbeginn = dependencies.rundeCent(start + einnahmenSum - laufendSum - versSum - alltagVorWoche - geplantSum - gebuchtReserviert - sparenInvestierenGesamt);
 
             const tageInAktuellerWoche = Math.max(1, Math.round((wochenEnde - wochenStart) / 86400000) + 1);
             const verbleibendeTageAbWochenstart = Math.max(1, Math.round((zeitraum.ende - wochenStart) / 86400000) + 1);
