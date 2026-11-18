@@ -3183,15 +3183,14 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 @media(max-width:360px) { #storageV2Card .backup-history-row { align-items:flex-start; flex-direction:column; gap:3px; } }
 
 /* Optional recurring lifecycle controls. */
-.recurring-options { margin:16px 0; padding:14px; border:1px solid var(--alltag-border,rgba(128,128,128,.22)); border-radius:12px; min-width:0; }
+.recurring-options { margin:10px 0; padding:12px; border:1px solid var(--alltag-border,rgba(128,128,128,.22)); border-radius:12px; min-width:0; }
 .recurring-options.hidden { display:none!important; }
 .recurring-options summary { cursor:pointer; font-size:14px; font-weight:600; line-height:1.45; }
-.recurring-options .info-text { font-size:12px; line-height:1.5; opacity:.72; margin:10px 0 14px; }
-.recurring-options h4 { margin:18px 0 8px; font-size:14px; }
+.recurring-options h4 { margin:12px 0 4px; font-size:14px; }
 .recurring-options .booking-field-label { display:block; margin:8px 0 6px; font-size:13px; }
 .recurring-options .booking-control { display:block; width:100%; min-width:0; box-sizing:border-box; background:#fff!important; color:#111!important; color-scheme:light!important; min-height:44px; margin:6px 0 0; }
-.recurring-change-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 10px; margin-bottom:14px; }
-.recurring-options :is(.recurring-add,.recurring-remove) { font:inherit; font-size:13px; cursor:pointer; padding:10px 0; background:transparent; border:0; color:var(--accent,#559bd5); text-align:left; }
+.recurring-change-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 10px; margin-bottom:6px; }
+.recurring-options :is(.recurring-add,.recurring-remove) { margin:0; min-height:0; width:auto; box-shadow:none; font:inherit; font-size:13px; cursor:pointer; padding:10px 0; background:transparent; border:0; color:var(--accent,#559bd5); text-align:left; }
 .recurring-options .recurring-remove { grid-column:1/-1; padding:4px 0; color:#e87777; }
 .recurring-error { color:#e87777; font-size:13px; line-height:1.45; margin:8px 0 0; }
 .recurring-error:empty { display:none; }
