@@ -64,6 +64,13 @@ Kostentracker.module({
   const heading=document.createElement('h3');heading.textContent='Vorschau';preview.appendChild(heading);
   const list=document.createElement('div');list.className='booking-editor-preview-list';preview.appendChild(list);
   const actions=card.querySelector('.booking-editor-actions');card.insertBefore(preview,actions);
+  for(const label of card.querySelectorAll('label')){
+   if(label.children.length)continue;
+   label.textContent=label.textContent.replace(/\s*\(optional\)/g,'').replace('Vertragsinfo','Vertragsdaten').replace('Zeitfenster zur Fälligkeit','Zuordnung').replace(' · danach monatlich','');
+  }
+  for(const label of card.querySelectorAll('.entry-date-time label > span'))label.textContent=label.textContent.replace(/\s*\(optional\)/g,'');
+  const reminder=card.querySelector('.reminder-toggle > span:first-child');if(reminder)reminder.textContent=reminder.textContent.replace(/^🔔\s*/u,'');
+
   let mode='general',bar=null,price=null,ending=null;
   const original=d.parseBetrag(input.value),previewCurrency=(input.labels?.[0]?.textContent||'').match(/\(([A-Z]{3})\)/)?.[1]||'EUR';
   const isRecurring=()=>!!options&&!options.classList.contains('hidden');
@@ -82,7 +89,7 @@ Kostentracker.module({
    if(options){options.classList.toggle('editor-lifecycle-hidden',mode==='general');options.open=true;}
    price?.classList.toggle('hidden',mode!=='price');ending?.classList.toggle('hidden',mode!=='end');
    for(const button of bar?.children||[]){button.classList.toggle('active',button.dataset.mode===mode);button.setAttribute('aria-pressed',String(button.dataset.mode===mode));}
-   const title=dialog.querySelector('.booking-editor-section');if(title)title.textContent=mode==='price'?'Betrag ändern':mode==='end'?(type==='fixkosten'?'Abo beenden':'Wiederholung beenden'):'Buchung bearbeiten';
+   const title=dialog.querySelector('.booking-editor-section');if(title){title.hidden=mode==='general';title.textContent=mode==='price'?'Betrag ändern':mode==='end'?(type==='fixkosten'?'Abo beenden':'Wiederholung beenden'):'Buchung bearbeiten';}
    save.textContent=mode==='price'?'Änderung speichern':mode==='end'?'Enddatum speichern':'Speichern';
    update();
   }
