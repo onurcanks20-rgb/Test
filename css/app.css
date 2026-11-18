@@ -3206,155 +3206,51 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
     background:transparent;
 }
 
-/* Booking editor: flat page layout based on the reference. */
-.booking-edit-dialog { --editor-surface:#000;--editor-muted:#a3a3aa;--editor-secondary:#19191b;box-sizing:border-box;position:fixed;inset:0;margin:0 auto;width:100%;max-width:520px;height:100%;height:100dvh;max-height:100%;max-height:100dvh;padding:0 18px;border:0;border-radius:0;background:var(--editor-surface);color:var(--text);overflow:hidden;z-index:20002;box-shadow:none; }
-.booking-edit-dialog:not([open]) { display:none; }
-.booking-edit-dialog[open] { display:flex;flex-direction:column; }
-.booking-edit-dialog::backdrop { background:#000; }
-:root[data-theme="light"] .booking-edit-dialog { --editor-surface:#f2f2f7;--editor-muted:#686870;--editor-secondary:#fff; }
-:root[data-theme="light"] .booking-edit-dialog::backdrop { background:#f2f2f7; }
-.booking-editor-scroll { flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding-top:max(12px,env(safe-area-inset-top));scrollbar-width:thin; }
-.booking-editor-header { display:flex;align-items:center;gap:8px;margin:0;padding:8px 0 14px;border:0;background:transparent; }
-.booking-editor-header > div { flex:1;min-width:0; }
-.booking-editor-header h2 { margin:0;font-size:20px;line-height:1.2;font-weight:700;letter-spacing:-.02em;overflow-wrap:anywhere; }
-.booking-editor-header p { margin:3px 0 0;font-size:12px;line-height:1.35;color:var(--editor-muted); }
-#bookingEditTitle:focus { outline:none; }
-#bookingEditClose { display:grid;place-items:center;flex:0 0 32px;width:32px;min-height:40px;height:40px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--primary); }
-#bookingEditClose .alltag-icon { width:22px;height:22px; }
-.booking-editor-current { display:flex;align-items:center;gap:10px;min-height:42px;margin:0 0 16px;padding:8px 12px;box-sizing:border-box;border:0;border-radius:6px;background:var(--editor-secondary);font-size:13px;line-height:1.4; }
-.booking-editor-current .alltag-icon { flex:0 0 22px;width:22px;height:22px;color:var(--primary); }
-.booking-editor-current strong { margin-left:auto;font-size:14px;font-weight:600;white-space:nowrap; }
-.booking-editor-section { margin:0 0 12px;font-size:18px;line-height:1.3;font-weight:700; }
-#bookingEditDialog .booking-editor-card { display:block;position:static;float:none;box-sizing:border-box;width:100%;max-width:none;min-width:0;min-height:0;margin:0!important;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;transform:none; }
-#bookingEditDialog :is(.booking-edit-form,.reise-edit-form) { display:flex;flex-direction:column;gap:0;width:100%;min-width:0; }
-#bookingEditDialog .booking-field-label { display:block;margin:10px 0 5px;font-size:12px;line-height:1.4;font-weight:500;opacity:1;color:var(--editor-muted); }
-#bookingEditDialog .booking-field-label:first-child { margin-top:0; }
-#bookingEditDialog :is(input,select,textarea):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]) { box-sizing:border-box;display:block;width:100%;min-width:0;height:40px;min-height:40px;max-height:40px;margin:0;padding:7px 10px;border:1px solid rgba(0,0,0,.13);border-radius:6px;background:#fff!important;color:#111!important;color-scheme:light!important;font-size:16px;line-height:24px;opacity:1;-webkit-text-fill-color:#111; }
-#bookingEditDialog input[type="date"] { appearance:none;-webkit-appearance:none;text-align:left; }
-#bookingEditDialog input[type="date"]::-webkit-date-and-time-value { text-align:left;min-height:24px; }
-#bookingEditDialog .entry-date-time { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:10px 0; }
-#bookingEditDialog .entry-date-time label { min-width:0;margin:0;opacity:1; }
-#bookingEditDialog .entry-date-time :is(label > span,.entry-time-field > label) { display:block;margin:0 0 5px;font-size:12px;line-height:1.4;font-weight:500;opacity:1;color:var(--editor-muted); }
-#bookingEditDialog .entry-time-input input { padding-right:36px; }
-#bookingEditDialog .entry-time-clear { width:32px;min-height:32px;height:32px;margin:0;padding:0; }
-#bookingEditDialog .reminder-control { margin:12px 0 4px;padding:0;border:0;border-radius:0;background:transparent; }
-#bookingEditDialog .reminder-toggle { display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;margin:0;padding:6px 0;min-height:44px;border:0;background:transparent;color:var(--text);font-size:13px;text-align:left; }
-#bookingEditDialog .reminder-toggle > span:first-child { font-weight:500; }
-#bookingEditDialog .info-text { margin:5px 0 8px;font-size:12px;line-height:1.4;color:var(--editor-muted); }
-#bookingEditDialog .recurring-options { margin:12px 0 4px;padding:10px 0 0;border:0;border-top:1px solid rgba(128,128,128,.22);border-radius:0; }
-#bookingEditDialog .recurring-options summary { font-size:13px; }
-#bookingEditDialog .recurring-options .booking-field-label { margin-top:8px; }
-#bookingEditDialog .booking-editor-actions { display:flex;flex-direction:column;gap:2px;position:static;margin:18px 0 8px;padding:0;border:0;background:transparent; }
-#bookingEditDialog .booking-editor-actions button { display:block;width:100%;min-width:0;min-height:42px;height:auto;margin:0;padding:10px;border:0;border-radius:6px;font-size:14px;line-height:1.4;font-weight:600; }
-#bookingEditDialog .booking-editor-primary { background:var(--action-add,var(--primary));color:#fff; }
-#bookingEditDialog .booking-editor-actions .booking-editor-secondary { background:transparent;color:var(--text);font-weight:500; }
-.booking-editor-nav { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:0 0 auto;gap:8px;margin-top:4px;padding:10px 0 max(10px,env(safe-area-inset-bottom));border-top:1px solid rgba(128,128,128,.25);background:var(--editor-surface); }
-.booking-editor-nav button { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:44px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--editor-muted);font-size:11px;line-height:1.2;font-weight:400; }
-.booking-editor-nav button.active { color:var(--primary); }
-.booking-editor-nav .alltag-icon { width:24px;height:24px; }
-#bookingEditDialog :is(button,input,select,textarea):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
-.booking-editor-fallback { position:fixed;inset:0;z-index:20001;background:var(--bg,#000); }
-@media(max-width:360px) { .booking-edit-dialog { padding:0 14px; }#bookingEditDialog .entry-date-time { grid-template-columns:minmax(0,1fr); } }
-
-#bookingEditDialog .booking-editor-extra { margin:14px 0 0;padding:0;border:0; }
-#bookingEditDialog .booking-editor-extra > summary { min-height:40px;padding:10px 0;box-sizing:border-box;cursor:pointer;font-size:13px;line-height:20px;font-weight:500;color:var(--editor-muted); }
-#bookingEditDialog .booking-editor-extra-body { padding:2px 0 8px; }
-#bookingEditDialog .booking-editor-modes { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 16px; }
-#bookingEditDialog .booking-editor-modes button { width:100%;min-height:38px;margin:0;padding:8px 4px;border:1px solid rgba(128,128,128,.25);border-radius:6px;background:transparent;color:var(--editor-muted);font-size:12px;line-height:1.3;font-weight:500; }
-#bookingEditDialog .booking-editor-modes button.active { border-color:var(--primary);color:var(--primary); }
-#bookingEditDialog .editor-lifecycle-hidden { display:none!important; }
-#bookingEditDialog .recurring-options { margin:0;padding:0;border:0; }
-#bookingEditDialog .recurring-options > summary { display:none; }
-#bookingEditDialog .recurring-change-row { display:flex;flex-direction:column;gap:0;margin:0 0 10px; }
-#bookingEditDialog .recurring-change-row > label:first-child { order:2; }
-#bookingEditDialog .recurring-change-row > label:nth-child(2) { order:1; }
-#bookingEditDialog .recurring-change-row > button { order:3;align-self:flex-start;margin-top:4px; }
-#bookingEditDialog .booking-editor-preview { margin:16px 0 0; }
-#bookingEditDialog .booking-editor-preview h3 { margin:0 0 8px;font-size:17px;line-height:1.3; }
-#bookingEditDialog .booking-editor-preview-list { padding:0 12px;border-radius:6px;background:var(--editor-secondary); }
-#bookingEditDialog .booking-editor-preview-list > div { display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:9px 0;border-bottom:1px solid rgba(128,128,128,.2);font-size:13px;line-height:1.4; }
-#bookingEditDialog .booking-editor-preview-list > div:last-child { border:0; }
-#bookingEditDialog .booking-editor-preview-list strong { font-weight:500;text-align:right; }
-#bookingEditDialog .booking-editor-preview-list > div:last-child strong { color:var(--primary); }
-
-/* Final editor proportions: quiet type, small tabs and no helper paragraphs. */
-.booking-edit-dialog { max-width:480px;padding:0 20px; }
-.booking-editor-header { gap:6px;padding:6px 0 12px; }
-.booking-editor-header h2 { font-size:18px;line-height:1.25;letter-spacing:-.02em; }
-.booking-editor-header p { margin-top:2px;font-size:11px; }
-#bookingEditClose { flex-basis:26px;width:26px;height:36px;min-height:36px; }
-#bookingEditClose .alltag-icon { width:19px;height:19px; }
-.booking-editor-current { min-height:36px;margin:0 0 12px;padding:6px 10px;gap:8px;border-radius:5px;font-size:12px; }
-.booking-editor-current .alltag-icon { flex-basis:19px;width:19px;height:19px; }
-.booking-editor-current strong { font-size:12px;font-weight:600; }
-.booking-editor-section { margin:0 0 10px;font-size:16px;line-height:1.3; }
-#bookingEditDialog .booking-editor-modes { gap:14px;margin:0 0 12px;border-bottom:1px solid rgba(128,128,128,.2); }
-#bookingEditDialog .booking-editor-modes button { min-height:34px;padding:7px 0;border:0;border-bottom:2px solid transparent;border-radius:0;font-size:12px;font-weight:400;white-space:nowrap; }
-#bookingEditDialog .booking-editor-modes button.active { border-bottom-color:var(--primary);font-weight:500; }
-#bookingEditDialog .booking-field-label { margin:9px 0 4px;font-size:11.5px;line-height:16px; }
-#bookingEditDialog :is(input,select,textarea):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]) { height:36px;min-height:36px;max-height:36px;padding:5px 9px;border-radius:5px;font-size:16px;line-height:24px; }
-#bookingEditDialog input[type="date"]::-webkit-date-and-time-value { line-height:24px; }
-#bookingEditDialog .info-text { display:none; }
-#bookingEditDialog .entry-date-time { gap:9px;margin:9px 0; }
-#bookingEditDialog .entry-date-time :is(label > span,.entry-time-field > label) { margin:0 0 4px;font-size:11.5px;line-height:16px; }
-#bookingEditDialog .booking-editor-extra { margin:9px 0 0;border-top:1px solid rgba(128,128,128,.18); }
-#bookingEditDialog .booking-editor-extra > summary { min-height:34px;padding:8px 0;font-size:12px;line-height:18px; }
-#bookingEditDialog .booking-editor-extra-body { padding:0 0 5px; }
-#bookingEditDialog .reminder-toggle { min-height:38px;padding:4px 0;font-size:12px; }
-#bookingEditDialog .booking-editor-actions { margin:14px 0 8px;gap:1px; }
-#bookingEditDialog .booking-editor-actions button { min-height:38px;padding:9px;border-radius:5px;font-size:13px;line-height:20px; }
-#bookingEditDialog .booking-editor-actions .booking-editor-secondary { padding:7px;min-height:34px;font-size:13px; }
-#bookingEditDialog .booking-editor-preview { margin:12px 0 0; }
-#bookingEditDialog .booking-editor-preview h3 { margin-bottom:7px;font-size:16px; }
-#bookingEditDialog .booking-editor-preview-list > div { padding:8px 0;font-size:12px; }
-#bookingEditDialog .recurring-options .recurring-add,#bookingEditDialog .recurring-options .recurring-remove { font-size:12px;padding:6px 0; }
-@media(max-width:360px) { .booking-edit-dialog { padding:0 16px; }.booking-editor-header h2 { font-size:18px; }#bookingEditDialog .booking-editor-modes { gap:8px; } }
-
-/* Keep the editor header below the iPhone status area, independently of scrolling. */
-#bookingEditDialog { padding-top:calc(env(safe-area-inset-top,0px) + 24px); }
-#bookingEditDialog > .booking-editor-header { flex:0 0 auto;padding-top:0;padding-bottom:16px;background:var(--editor-surface); }
-#bookingEditDialog > .booking-editor-scroll { padding-top:0; }
-
-/* New Fixkosten price page. No booking-editor/booking-control layout is reused. */
-#fixPriceDialog { --fp-bg:#000;--fp-card:#19191b;--fp-muted:#a3a3aa;box-sizing:border-box;position:fixed;inset:0;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 24px) 18px 0;width:100%;max-width:480px;height:100dvh;max-height:100dvh;border:0;border-radius:0;overflow:hidden;background:var(--fp-bg);color:var(--text); }
-#fixPriceDialog:not([open]) { display:none; }
-#fixPriceDialog[open] { display:flex;flex-direction:column; }
-#fixPriceDialog::backdrop { background:#000; }
-:root[data-theme="light"] #fixPriceDialog { --fp-bg:#f2f2f7;--fp-card:#fff;--fp-muted:#686870; }
-:root[data-theme="light"] #fixPriceDialog::backdrop { background:#f2f2f7; }
-#fixPriceDialog .fix-price-head { flex:none;display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:0; }
-#fixPriceDialog .fix-price-head button { display:grid;place-items:center;flex:0 0 30px;width:30px;min-height:40px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--primary); }
-#fixPriceDialog svg { width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round; }
-#fixPriceDialog h2 { margin:0;font-size:19px;line-height:1.2;font-weight:700;letter-spacing:-.02em; }
-#fixPriceDialog .fix-price-head p { margin:3px 0 0;color:var(--fp-muted);font-size:12px;line-height:1.3; }
-#fixPriceName:focus { outline:none; }
-#fixPriceDialog .fix-price-scroll { flex:1;min-height:0;overflow:auto;overscroll-behavior:contain; }
-#fixPriceDialog .fix-price-current { display:flex;align-items:center;gap:10px;min-height:40px;padding:8px 11px;margin:0 0 16px;border-radius:5px;background:var(--fp-card);font-size:13px; }
-#fixPriceDialog .fix-price-current svg { color:var(--primary); }
-#fixPriceDialog .fix-price-current strong { margin-left:auto;font-size:13px;font-weight:600; }
-#fixPriceDialog h3 { margin:0 0 12px;font-size:17px;line-height:1.3;font-weight:700; }
-#fixPriceDialog .fix-price-form { display:block;width:100%;min-width:0;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none; }
-#fixPriceDialog label { display:block;margin:10px 0 5px;font-size:12px;line-height:1.35;color:var(--text);opacity:1; }
-#fixPriceDialog label:first-child { margin-top:0; }
-#fixPriceDialog input { box-sizing:border-box;display:block;width:100%;min-width:0;height:36px;min-height:36px;max-height:36px;margin:0;padding:5px 10px;border:1px solid #dedede;border-radius:5px;background:#fff;color:#111;color-scheme:light;font-size:16px;line-height:24px;-webkit-text-fill-color:#111; }
-#fixPriceDialog input[type="date"] { appearance:none;-webkit-appearance:none;text-align:left; }
-#fixPriceDialog input[type="date"]::-webkit-date-and-time-value { text-align:left;min-height:24px; }
-#fixPricePreview { margin:18px 0 0; }
-#fixPriceDialog .fix-price-table { padding:0 10px;border-radius:5px;background:var(--fp-card); }
-#fixPriceDialog .fix-price-table > div { display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(128,128,128,.25);font-size:12px;line-height:1.4; }
-#fixPriceDialog .fix-price-table > div:last-child { border:0; }
-#fixPriceDialog .fix-price-table strong { font-weight:500;white-space:nowrap; }
-#fixPriceAfterAmount { color:var(--primary); }
-#fixPriceError { margin:8px 0 0;color:#e87777;font-size:12px;line-height:1.4; }
-#fixPriceError:empty { display:none; }
-#fixPriceDialog .fix-price-actions { margin:20px 0 12px; }
-#fixPriceDialog .fix-price-actions button { display:block;width:100%;min-height:38px;margin:0;padding:9px;border:0;border-radius:5px;font-size:13px;line-height:20px;font-weight:600; }
-#fixPriceDialog .fix-price-save { background:var(--action-add);color:#fff; }
-#fixPriceDialog .fix-price-actions .fix-price-text { margin-top:4px;background:transparent;color:var(--text);font-weight:500; }
-#fixPriceDialog .fix-price-actions .fix-price-details { min-height:32px;padding:6px;background:transparent;color:var(--fp-muted);font-size:11px;font-weight:400; }
-#fixPriceDialog .fix-price-nav { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;padding:10px 0 max(10px,env(safe-area-inset-bottom));border-top:1px solid rgba(128,128,128,.25);background:var(--fp-bg); }
-#fixPriceDialog .fix-price-nav button { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:44px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--fp-muted);font-size:11px;font-weight:400; }
-#fixPriceDialog .fix-price-nav .active { color:var(--primary); }
-#fixPriceDialog :is(input,button):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
-.fix-price-curtain { position:fixed;inset:0;z-index:20003;background:var(--bg); }
-#fixPriceDialog { z-index:20004; }
+/* New reference page. Scoped independently from the old form layouts. */
+#freshCostDialog { --fc-bg:#000;--fc-card:#171719;--fc-muted:#a0a0a7;box-sizing:border-box;position:fixed;inset:0;margin:0 auto;width:100%;max-width:480px;height:100dvh;max-height:100dvh;padding:calc(env(safe-area-inset-top,0px) + 22px) 18px 0;border:0;border-radius:0;background:var(--fc-bg);color:var(--text);overflow:hidden; }
+#freshCostDialog:not([open]) { display:none; }
+#freshCostDialog[open] { display:flex;flex-direction:column; }
+#freshCostDialog::backdrop { background:#000; }
+:root[data-theme="light"] #freshCostDialog { --fc-bg:#f2f2f7;--fc-card:#fff;--fc-muted:#686870; }
+:root[data-theme="light"] #freshCostDialog::backdrop { background:#f2f2f7; }
+#freshCostDialog .fc-head { display:flex;align-items:center;gap:8px;flex:none;padding:0;margin:0 0 16px; }
+#freshCostDialog .fc-head > div { flex:1;min-width:0; }
+#freshCostDialog .fc-head h2 { margin:0;font-size:19px;line-height:1.25;font-weight:700;letter-spacing:-.02em; }
+#freshCostDialog .fc-head p { margin:3px 0 0;font-size:12px;line-height:1.3;color:var(--fc-muted); }
+#freshCostName:focus { outline:none; }
+#freshCostDialog .fc-back { display:grid;place-items:center;flex:0 0 28px;width:28px;min-height:40px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--primary); }
+#freshCostDialog .alltag-icon { width:22px;height:22px; }
+#freshCostDialog .fc-head details { position:relative;flex:none; }
+#freshCostDialog .fc-head summary { display:grid;place-items:center;list-style:none;width:32px;min-height:40px;cursor:pointer;color:var(--fc-muted);font-size:16px; }
+#freshCostDialog .fc-head summary::-webkit-details-marker { display:none; }
+#freshCostDialog .fc-menu { position:absolute;right:0;top:42px;z-index:2;min-width:180px;padding:6px;border:1px solid rgba(128,128,128,.3);border-radius:8px;background:var(--fc-card); }
+#freshCostDialog .fc-menu button { display:block;width:100%;min-height:40px;margin:0;padding:8px;text-align:left;border:0;border-radius:4px;background:transparent;color:var(--text);font-size:13px; }
+#freshCostDialog .fc-content { display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;flex:1;min-height:0;transform:none;transition:none;width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:auto;overscroll-behavior:contain; }
+#freshCostDialog .fc-summary { display:flex;align-items:center;flex:none;gap:10px;min-height:40px;margin:0 0 16px;padding:8px 10px;border-radius:5px;background:var(--fc-card);font-size:13px; }
+#freshCostDialog .fc-summary svg { flex:none;color:var(--primary); }
+#freshCostDialog .fc-summary strong { margin-left:auto;font-size:13px;font-weight:600;white-space:nowrap; }
+#freshCostDialog h3 { margin:0 0 12px;font-size:17px;line-height:1.3;font-weight:700; }
+#freshCostDialog label { display:block;margin:10px 0 5px;font-size:12px;line-height:1.4;opacity:1;color:var(--text); }
+#freshCostDialog label:first-child { margin-top:0; }
+#freshCostDialog input { display:block;box-sizing:border-box;width:100%;min-width:0;height:36px;min-height:36px;max-height:36px;margin:0;padding:5px 10px;border:1px solid #ddd;border-radius:5px;background:#fff;color:#111;color-scheme:light;-webkit-text-fill-color:#111;font-size:16px;line-height:24px; }
+#freshCostDialog input[type="date"] { appearance:none;-webkit-appearance:none;text-align:left; }
+#freshCostDialog input[type="date"]::-webkit-date-and-time-value { text-align:left;min-height:24px; }
+#freshCostDialog .fc-preview { flex:none;margin:20px 0 0; }
+#freshCostDialog .fc-preview h3 { margin-bottom:8px; }
+#freshCostDialog .fc-table { padding:0 10px;background:var(--fc-card);border-radius:5px; }
+#freshCostDialog .fc-table > div { display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(128,128,128,.22);font-size:12px;line-height:1.4; }
+#freshCostDialog .fc-table > div:last-child { border:0; }
+#freshCostDialog .fc-table strong { font-weight:500;text-align:right; }
+#freshAfterValue { color:var(--primary); }
+#freshCostDialog .fc-actions { flex:none;margin-top:auto;padding:20px 0 10px; }
+#freshCostError { margin:0 0 8px;font-size:12px;line-height:1.4;color:#e87777; }
+#freshCostError:empty { display:none; }
+#freshCostDialog .fc-actions button { display:block;width:100%;min-height:40px;margin:0;padding:10px;border:0;border-radius:5px;background:var(--action-add);color:#fff;font-size:13px;line-height:20px;font-weight:600; }
+#freshCostDialog .fc-actions button:disabled { opacity:.5; }
+#freshCostDialog .fc-actions .fc-cancel { margin-top:4px;background:transparent;color:var(--text);font-weight:500; }
+#freshCostDialog .fc-nav { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;margin:0;padding:10px 0 max(10px,env(safe-area-inset-bottom));border-top:1px solid rgba(128,128,128,.25); }
+#freshCostDialog .fc-nav button { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:44px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--fc-muted);font-size:11px;font-weight:400; }
+#freshCostDialog .fc-nav button.active { color:var(--primary); }
+#freshCostDialog :is(input,button,summary):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
+.fresh-cost-curtain { position:fixed;inset:0;z-index:20001;background:var(--bg); }
+#freshCostDialog { z-index:20002; }
