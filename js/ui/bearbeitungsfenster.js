@@ -1,6 +1,6 @@
 Kostentracker.module({
  id:'js/ui/bearbeitungsfenster.js',
- dependencies:['decorateReminderControls','cancelEditHaushalt','cancelEditFreizeit','cancelEditKosten','cancelEditVersicherung','cancelEditEinnahme','cancelEditSparenInvestieren','cancelEditGeplanteAusgabe','cancelEditReise','cancelEditAusgabenArchiv','renderHaushalt','renderFreizeit','renderLaufendeKosten','renderVersicherungen','renderEinnahmen','renderSparenInvestieren','renderGeplanteAusgaben','renderListe','renderAusgabenArchiv'],
+ dependencies:['formatBetragText','parseBetrag','decorateReminderControls','cancelEditHaushalt','cancelEditFreizeit','cancelEditKosten','cancelEditVersicherung','cancelEditEinnahme','cancelEditSparenInvestieren','cancelEditGeplanteAusgabe','cancelEditReise','cancelEditAusgabenArchiv','renderHaushalt','renderFreizeit','renderLaufendeKosten','renderVersicherungen','renderEinnahmen','renderSparenInvestieren','renderGeplanteAusgaben','renderListe','renderAusgabenArchiv'],
  session:['state'],read:[],write:[],replace:false
 },(context,d)=>{
  'use strict';
@@ -52,13 +52,21 @@ Kostentracker.module({
   if(!save||!cancel)return false;
   const oldParents=new Set([save.parentElement,cancel.parentElement]);
   const actions=document.createElement('div');actions.className='booking-editor-actions';
-  for(const [button,label,kind]of [[cancel,'Abbrechen','secondary'],[save,'Speichern','primary']]){
+  for(const [button,label,kind]of [[save,'Speichern','primary'],[cancel,'Abbrechen','secondary']]){
    button.textContent=label;button.className='booking-editor-'+kind;button.removeAttribute('style');button.type='button';actions.appendChild(button);
   }
   // The original nodes keep values and listeners; controls are never cloned.
   for(const parent of oldParents)if(parent&&!parent.children.length)parent.remove();
   card.appendChild(actions);host.replaceChildren(card);
-  active={type,id,config};document.getElementById('bookingEditArea').textContent=config[0];
+  active={type,id,config};
+  const nameIds={haushalt:'editText-',freizeit:'editFreizeitText-',fixkosten:'editKostenText-',versicherungen:'editName-',einnahmen:'editEinnahmenText-',sparen:'editSparenText-',geplant:'editGeplantText-',reisen:'editText-',archiv:'editArchivText-'};
+  const name=(document.getElementById(nameIds[type]+id)?.value||'').trim();
+  document.getElementById('bookingEditTitle').textContent=name||config[0];
+  const recurringLabels={fixkosten:'Monatliche Fixkosten',sparen:'Sparen & Investieren · pro Gehaltsperiode'};
+  document.getElementById('bookingEditArea').textContent=recurringLabels[type]||config[0];
+  const value=d.parseBetrag(input.value),label=input.labels?.[0]?.textContent||'',currency=label.match(/\(([A-Z]{3})\)/)?.[1];
+  document.getElementById('bookingEditAmount').textContent=currency&&currency!=='EUR'?value.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' '+currency:d.formatBetragText(value);
+  dialog.querySelector('.booking-editor-scroll')?.scrollTo?.(0,0);
   // Lists continue rendering ordinary cards while the independent form stays open.
   context.session.state[config[1]]=null;d[config[3]]();
   document.body.style.overflow='hidden';
