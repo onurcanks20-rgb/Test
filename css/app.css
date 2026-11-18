@@ -3187,8 +3187,8 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 .recurring-options.hidden { display:none!important; }
 .recurring-options summary { cursor:pointer; font-size:14px; font-weight:600; line-height:1.45; }
 .recurring-options h4 { margin:12px 0 4px; font-size:14px; }
-.recurring-options .booking-field-label { display:block; margin:8px 0 6px; font-size:13px; }
-.recurring-options .booking-control { display:block; width:100%; min-width:0; box-sizing:border-box; background:#fff!important; color:#111!important; color-scheme:light!important; min-height:44px; margin:6px 0 0; }
+.recurring-options .booking-field-label { display:block; margin:8px 0 6px; font-size:13px; opacity:1; color:var(--alltag-muted,#a3a3aa); }
+.recurring-options .booking-control { display:block; width:100%; min-width:0; box-sizing:border-box; background:#fff!important; color:#111!important; color-scheme:light!important; height:48px; min-height:48px; max-height:48px; padding:11px 12px; margin:6px 0 0; }
 .recurring-change-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 10px; margin-bottom:6px; }
 .recurring-options :is(.recurring-add,.recurring-remove) { margin:0; min-height:0; width:auto; box-shadow:none; font:inherit; font-size:13px; cursor:pointer; padding:10px 0; background:transparent; border:0; color:var(--accent,#559bd5); text-align:left; }
 .recurring-options .recurring-remove { grid-column:1/-1; padding:4px 0; color:#e87777; }
@@ -3196,3 +3196,12 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 .recurring-error:empty { display:none; }
 .recurring-summary { display:flex; flex-direction:column; gap:4px; padding:0 12px 12px; font-size:12px; line-height:1.45; opacity:.75; overflow-wrap:anywhere; }
 @media(max-width:360px) { .recurring-change-row { grid-template-columns:minmax(0,1fr); } }
+
+/* Design settings: separate cards on the light page background. */
+:root[data-theme="light"] #settingsDesignView > .container {
+    background:transparent;
+    box-shadow:none;
+}
+:root[data-theme="light"] #settingsDesignView :is(.design-choice-list,.action-color-grid) {
+    background:transparent;
+}
