@@ -153,12 +153,22 @@ Kostentracker.module({
             return number.toFixed(2).replace(".", ",");
         }
 
+        // Wandelt einen Euro-Betrag in ganze Cent um (kaufmännisch gerundet).
+        // - 1.005 ist intern 1.00499999…; toPrecision(15) entfernt diesen
+        //   Kommazahl-Rest vor dem Runden, daher 1.005 -> 101 Cent.
+        // - Negative Beträge werden spiegelgleich gerundet: -1.005 -> -101 Cent
+        //   (Math.round allein würde -0.5 Richtung null runden).
+        function zuCent(number) {
+            const cent = Math.round(Number((Math.abs(number) * 100).toPrecision(15)));
+            return number < 0 ? -cent : cent;
+        }
+
         // Rundet auf ganze Cent. Kommazahlen-Reste wie 0.1 + 0.2 = 0.30000000000000004
         // oder -0.0000000001 werden so zu 0.3 bzw. 0 (und nie zu "-0,00 €").
         function rundeCent(value) {
             const number = Number(value);
             if (!Number.isFinite(number)) return 0;
-            return Math.round(number * 100) / 100 || 0;
+            return zuCent(number) / 100 || 0;
         }
 
         // Summiert Beträge in ganzen Cent, damit Vergleiche wie "< 0" exakt bleiben.
@@ -168,7 +178,7 @@ Kostentracker.module({
             let cent = 0;
             for (const eintrag of liste) {
                 const betrag = parseBetrag(wert(eintrag));
-                if (Number.isFinite(betrag)) cent += Math.round(betrag * 100);
+                if (Number.isFinite(betrag)) cent += zuCent(betrag);
             }
             return cent / 100 || 0;
         }
