@@ -1,5 +1,5 @@
 Kostentracker.module({
- id:'js/ui/eingabeschutz.js', dependencies:['dismissBookingEditor','dismissFixPriceEditor'], session:[], read:[], write:[], replace:false
+ id:'js/ui/eingabeschutz.js', dependencies:['dismissFreshCost'], session:[], read:[], write:[], replace:false
 }, (context, dependencies) => {
  'use strict';
  const panelIds=new Set(['reisenAddPanel','reiseAddPanel','versAddPanel','hausAddPanel','freizeitAddPanel','einnahmenAddPanel','kostenAddPanel','geplantAddPanel','sparenInvestierenAddPanel']);
@@ -17,7 +17,7 @@ Kostentracker.module({
  function owner(field) {
   for(let node=field;node&&node!==document;node=node.parentElement)if(panelIds.has(node.id))return node;
   if(!/^(?:edit|reiseBudgetEdit$|reiseVonEdit$|reiseBisEdit$|reiseCurrencyEdit$)/i.test(field?.id||''))return null;
-  return field.closest?.('.reise-category-card,.item')||null;
+  return field.closest?.('.reise-category-card,.item,.fc-content')||null;
  }
  function values(root) {
   return controls(root).map((field,index)=>({field,key:field.id||String(index),value:String(field.value??''),checked:!!field.checked,type:field.type}));
@@ -82,7 +82,7 @@ Kostentracker.module({
   const submitting=submissions.test(name);
   if(submitting)submission={saved:false,roots:[...drafts.keys()].filter(root=>root.contains(document.activeElement)||Array.from(root.querySelectorAll?.('[onclick]')||[]).some(button=>(button.getAttribute('onclick')||'').includes(name+'(')))};
   depth++;
-  try{const result=fn(...args);if(navigation.test(name)&&result!==false){dependencies.dismissBookingEditor?.();dependencies.dismissFixPriceEditor?.();}return result;}
+  try{const result=fn(...args);if(navigation.test(name)&&result!==false)dependencies.dismissFreshCost?.();return result;}
   finally{
    depth--;
    // A successful save closes or replaces its form; a validation/storage failure leaves it dirty.
