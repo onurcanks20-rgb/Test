@@ -1,6 +1,8 @@
 Kostentracker.module({
   "id": "js/kategorien/haushalt.js",
   "dependencies": [
+    "presentBookingEditor",
+    "closeBookingEditor",
     "applyLetzteAlltagsKategorie",
     "beginUndoDelete",
     "closeStartQuickAdd",
@@ -251,6 +253,7 @@ Kostentracker.module({
         function startEditHaushalt(id) {
             context.session.state.editHaushaltId = id;
             renderHaushalt();
+            dependencies.presentBookingEditor('haushalt',id);
         }
 
         function saveEditHaushalt(id) {
@@ -311,11 +314,13 @@ Kostentracker.module({
             }
 
             if (dependencies.speichern() === false) return;
+            dependencies.closeBookingEditor('haushalt',id);
             context.session.state.editHaushaltId = null;
             renderHaushalt();
         }
 
         function cancelEditHaushalt() {
+            dependencies.closeBookingEditor('haushalt');
             context.session.state.editHaushaltId = null;
             renderHaushalt();
         }

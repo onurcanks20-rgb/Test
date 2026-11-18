@@ -1,6 +1,8 @@
 Kostentracker.module({
   "id": "js/kategorien/geplante-ausgaben.js",
   "dependencies": [
+    "presentBookingEditor",
+    "closeBookingEditor",
     "alltagCategoryIcon",
     "appendEmptyAction",
     "beginUndoDelete",
@@ -209,10 +211,11 @@ Kostentracker.module({
         function startEditGeplanteAusgabe(id) {
             context.session.state.editGeplanteAusgabeId = id;
             renderGeplanteAusgaben();
-            setTimeout(() => document.getElementById(`editGeplantText-${id}`)?.focus(), 40);
+            dependencies.presentBookingEditor('geplant',id);
         }
 
         function cancelEditGeplanteAusgabe() {
+            dependencies.closeBookingEditor('geplant');
             context.session.state.editGeplanteAusgabeId = null;
             renderGeplanteAusgaben();
         }
@@ -273,6 +276,7 @@ Kostentracker.module({
             const recurring=dependencies.readRecurringOptions("editRecPlanned-"+id,e,wiederholung!=="einmalig",anchor);if(!recurring)return;
             Object.assign(e, { text, betrag, datum, wiederholung, wiederholungStart: anchor, ...recurring, bereich, land, kategorie, budgetWirksam, ...dependencies.readReminderControl(`edit:geplant:${id}`) });
             if (dependencies.speichern() === false) return;
+            dependencies.closeBookingEditor('geplant',id);
             context.session.state.editGeplanteAusgabeId = null;
             verarbeiteFaelligeGeplanteAusgaben();
             renderGeplanteAusgaben();

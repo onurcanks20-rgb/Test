@@ -1,6 +1,8 @@
 Kostentracker.module({
   "id": "js/kategorien/fixkosten.js",
   "dependencies": [
+    "presentBookingEditor",
+    "closeBookingEditor",
     "alltagCategoryIcon",
     "appendEmptyAction",
     "addItem",
@@ -299,9 +301,11 @@ Kostentracker.module({
         function startEditKosten(id) {
             context.session.state.editKostenId = id;
             renderLaufendeKosten();
+            dependencies.presentBookingEditor('fixkosten',id);
         }
 
         function cancelEditKosten() {
+            dependencies.closeBookingEditor('fixkosten');
             context.session.state.editKostenId = null;
             renderLaufendeKosten();
         }
@@ -339,6 +343,7 @@ Kostentracker.module({
             Object.assign(item, dependencies.readReminderControl(`edit:fixkosten:${id}`));
 
             if (dependencies.speichern() === false) return;
+            dependencies.closeBookingEditor('fixkosten',id);
             context.session.state.editKostenId = null;
             renderLaufendeKosten();
             dependencies.renderHomeUebersicht();

@@ -1,6 +1,8 @@
 Kostentracker.module({
   "id": "js/kategorien/sparen-investieren.js",
   "dependencies": [
+    "presentBookingEditor",
+    "closeBookingEditor",
     "alltagCategoryIcon",
     "appendEmptyAction",
     "alltagImZeitraum",
@@ -132,10 +134,11 @@ return { aktiv, investieren, sparenPlan, gesamt: dependencies.rundeCent(investie
         function startEditSparenInvestieren(id) {
             context.session.state.editSparenInvestierenId = id;
             renderSparenInvestieren();
-            setTimeout(() => document.getElementById(`editSparenBetrag-${id}`)?.focus(), 40);
+            dependencies.presentBookingEditor('sparen',id);
         }
 
         function cancelEditSparenInvestieren() {
+            dependencies.closeBookingEditor('sparen');
             context.session.state.editSparenInvestierenId = null;
             renderSparenInvestieren();
         }
@@ -156,6 +159,7 @@ return { aktiv, investieren, sparenPlan, gesamt: dependencies.rundeCent(investie
             e.datum = datum;
             Object.assign(e, dependencies.readReminderControl(`edit:sparen:${id}`));
             if (dependencies.speichern() === false) return;
+            dependencies.closeBookingEditor('sparen',id);
             context.session.state.editSparenInvestierenId = null;
             renderSparenInvestieren();
             dependencies.renderUebersicht();

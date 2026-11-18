@@ -1,6 +1,8 @@
 Kostentracker.module({
   "id": "js/kategorien/einnahmen.js",
   "dependencies": [
+    "presentBookingEditor",
+    "closeBookingEditor",
     "alltagCategoryIcon",
     "appendEmptyAction",
     "appendDateGroupHeader",
@@ -201,9 +203,9 @@ Kostentracker.module({
             renderEinnahmen();
         }
 
-        function startEditEinnahme(id) { context.session.state.editEinnahmeId = id; renderEinnahmen(); }
+        function startEditEinnahme(id) { context.session.state.editEinnahmeId = id; renderEinnahmen();  dependencies.presentBookingEditor('einnahmen',id); }
 
-        function cancelEditEinnahme() { context.session.state.editEinnahmeId = null; renderEinnahmen(); }
+        function cancelEditEinnahme() { dependencies.closeBookingEditor('einnahmen');  context.session.state.editEinnahmeId = null; renderEinnahmen(); }
 
         function saveEditEinnahme(id) {
             const index = context.repository.view.Einnahmen.findIndex(e => String(e.id) === String(id));
@@ -218,6 +220,7 @@ Kostentracker.module({
             const recurring=dependencies.readRecurringOptions("editRecIncome-"+id,context.repository.view.Einnahmen[index],wiederholung==="monatlich",datum);if(!recurring)return;
             context.repository.view.Einnahmen[index] = { ...context.repository.view.Einnahmen[index], ...zeit, ...recurring, text, betrag, von, datum, wiederholung, ...dependencies.readReminderControl(`edit:einnahmen:${id}`) };
             if (dependencies.speichern() === false) return;
+            dependencies.closeBookingEditor('einnahmen',id);
             context.session.state.editEinnahmeId = null;
             renderEinnahmen();
         }

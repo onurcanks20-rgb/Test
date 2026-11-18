@@ -1,6 +1,8 @@
 Kostentracker.module({
   "id": "js/kategorien/freizeit.js",
   "dependencies": [
+    "presentBookingEditor",
+    "closeBookingEditor",
     "applyLetzteAlltagsKategorie",
     "beginUndoDelete",
     "closeStartQuickAdd",
@@ -85,9 +87,9 @@ Kostentracker.module({
 
         function toggleFreizeitMonat(jahr,monat){ const key=jahr+'-'+monat; context.session.state.offeneFreizeitMonate[key]=!context.session.state.offeneFreizeitMonate[key]; renderFreizeit(); }
 
-        function startEditFreizeit(id){ context.session.state.editFreizeitId=id; renderFreizeit(); }
+        function startEditFreizeit(id){ context.session.state.editFreizeitId=id; renderFreizeit();  dependencies.presentBookingEditor('freizeit',id); }
 
-        function cancelEditFreizeit(){ context.session.state.editFreizeitId=null; renderFreizeit(); }
+        function cancelEditFreizeit(){ dependencies.closeBookingEditor('freizeit');  context.session.state.editFreizeitId=null; renderFreizeit(); }
 
         function saveEditFreizeit(id){
             const textEl=document.getElementById('editFreizeitText-'+id), betragEl=document.getElementById('editFreizeitBetrag-'+id), datumEl=document.getElementById('editFreizeitDatum-'+id);
@@ -102,6 +104,7 @@ Kostentracker.module({
             const neuerMonat=new Date(datum).getMonth()+1; context.repository.view.Freizeit[neuerMonat]??=[];
             context.repository.view.Freizeit[neuerMonat].push({...found,...zeit,id:found.id,text:dependencies.formatText(text),betrag,datum,kategorie:found.kategorie || "Sonstiges",...dependencies.readReminderControl(`edit:freizeit:${id}`)});
             if (dependencies.speichern() === false) return;
+            dependencies.closeBookingEditor('freizeit',id);
             context.session.state.editFreizeitId=null; renderFreizeit();
         }
 
