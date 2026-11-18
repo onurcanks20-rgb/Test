@@ -3205,3 +3205,41 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 :root[data-theme="light"] #settingsDesignView :is(.design-choice-list,.action-color-grid) {
     background:transparent;
 }
+
+/* A shared, independent booking editor in both colour modes. */
+.booking-edit-dialog { --editor-surface:#19191b;--editor-muted:#a3a3aa;--editor-secondary:#2c2c2e; box-sizing:border-box;position:fixed;inset:0;margin:auto;width:calc(100% - 28px);max-width:480px;max-height:88vh;max-height:88dvh;padding:0 18px;border:1px solid rgba(128,128,128,.18);border-radius:18px;background:var(--editor-surface);color:var(--text);overflow:auto;overscroll-behavior:contain;z-index:20002;box-shadow:0 24px 80px rgba(0,0,0,.28); }
+.booking-edit-dialog:not([open]) { display:none; }
+.booking-edit-dialog[open] { display:block; }
+.booking-edit-dialog::backdrop { background:rgba(0,0,0,.65);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px); }
+:root[data-theme="light"] .booking-edit-dialog { --editor-surface:#fff;--editor-muted:#686870;--editor-secondary:#f2f2f7; }
+.booking-editor-header { display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:2;margin:0;padding:18px 0 14px;background:var(--editor-surface);border-bottom:1px solid rgba(128,128,128,.15); }
+.booking-editor-header p { margin:0 0 3px;font-size:12px;line-height:1.4;color:var(--editor-muted); }
+.booking-editor-header h2 { margin:0;font-size:22px;line-height:1.25;font-weight:700;letter-spacing:-.025em; }
+#bookingEditTitle:focus { outline:none; }
+#bookingEditClose { display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;min-height:36px;margin:0;padding:0;border:0;border-radius:50%;font-size:26px;line-height:1;background:var(--editor-secondary);color:var(--text); }
+#bookingEditDialog .booking-editor-card { display:block;position:static;float:none;box-sizing:border-box;width:100%;max-width:none;min-width:0;min-height:0;margin:0!important;padding:14px 0 0;border:0;border-radius:0;background:transparent;box-shadow:none;transform:none; }
+#bookingEditDialog .booking-field-label { display:block;font-size:13px;line-height:1.4;font-weight:500;opacity:1;color:var(--editor-muted);margin:12px 0 6px; }
+#bookingEditDialog :is(.booking-edit-form,.reise-edit-form) { display:flex;flex-direction:column;gap:0;width:100%;min-width:0; }
+#bookingEditDialog :is(input,select,textarea):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]) { box-sizing:border-box;display:block;width:100%;min-width:0;min-height:48px;margin:0;padding:11px 12px;border:1px solid rgba(0,0,0,.13);border-radius:10px;background:#fff!important;color:#111!important;color-scheme:light!important;font-size:16px;line-height:24px;opacity:1;-webkit-text-fill-color:#111; }
+#bookingEditDialog input[type="date"] { height:48px;max-height:48px;appearance:none;-webkit-appearance:none;text-align:left; }
+#bookingEditDialog input[type="date"]::-webkit-date-and-time-value { text-align:left;min-height:24px; }
+#bookingEditDialog .entry-date-time { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:12px 0; }
+#bookingEditDialog .entry-date-time label { min-width:0;margin:0;opacity:1; }
+#bookingEditDialog .entry-date-time :is(label > span,.entry-time-field > label) { display:block;font-size:13px;line-height:1.4;font-weight:500;opacity:1;color:var(--editor-muted);margin:0 0 6px; }
+#bookingEditDialog .entry-time-input input { padding-right:42px; }
+#bookingEditDialog .entry-time-clear { width:36px;min-height:36px;height:36px;margin:0;padding:0; }
+#bookingEditDialog .reminder-control { margin:14px 0 4px;padding:12px;border-radius:10px;background:var(--editor-secondary); }
+#bookingEditDialog .reminder-toggle { display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;margin:0;padding:0;min-height:36px;border:0;background:transparent;color:var(--text);font-size:13px;text-align:left; }
+#bookingEditDialog .reminder-toggle > span:first-child { font-weight:500; }
+#bookingEditDialog .info-text { margin:5px 0 8px;font-size:12px;line-height:1.4;color:var(--editor-muted); }
+#bookingEditDialog .recurring-options { margin:14px 0 4px;padding:12px;border-radius:10px; }
+#bookingEditDialog .recurring-options summary { font-size:13px; }
+#bookingEditDialog .recurring-options .booking-field-label { margin-top:8px; }
+#bookingEditDialog .booking-editor-actions { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;position:sticky;bottom:0;z-index:2;margin:16px 0 0;padding:12px 0 max(14px,env(safe-area-inset-bottom));background:var(--editor-surface);border-top:1px solid rgba(128,128,128,.15); }
+#bookingEditDialog .booking-editor-actions button { display:block;width:100%;min-width:0;min-height:46px;height:auto;margin:0;padding:12px 10px;border:0;border-radius:10px;font-size:15px;line-height:1.4;font-weight:600; }
+#bookingEditDialog .booking-editor-primary { background:var(--action-add,var(--primary));color:#fff; }
+#bookingEditDialog .booking-editor-secondary { background:var(--editor-secondary);color:var(--text); }
+#bookingEditDialog :is(button,input,select,textarea):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
+@media(max-width:360px) { .booking-edit-dialog { padding:0 14px; }.booking-editor-header h2 { font-size:20px; }#bookingEditDialog .entry-date-time { grid-template-columns:minmax(0,1fr); } }
+
+.booking-editor-fallback { position:fixed;inset:0;z-index:20001;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px); }
