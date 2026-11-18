@@ -1,6 +1,6 @@
 Kostentracker.module({
  id:'js/ui/bearbeitungsfenster.js',
- dependencies:['formatDatum','recurringDateValid','formatBetragText','parseBetrag','decorateReminderControls','cancelEditHaushalt','cancelEditFreizeit','cancelEditKosten','cancelEditVersicherung','cancelEditEinnahme','cancelEditSparenInvestieren','cancelEditGeplanteAusgabe','cancelEditReise','cancelEditAusgabenArchiv','renderHaushalt','renderFreizeit','renderLaufendeKosten','renderVersicherungen','renderEinnahmen','renderSparenInvestieren','renderGeplanteAusgaben','renderListe','renderAusgabenArchiv'],
+ dependencies:['openFixPriceEditor','formatDatum','recurringDateValid','formatBetragText','parseBetrag','decorateReminderControls','cancelEditHaushalt','cancelEditFreizeit','cancelEditKosten','cancelEditVersicherung','cancelEditEinnahme','cancelEditSparenInvestieren','cancelEditGeplanteAusgabe','cancelEditReise','cancelEditAusgabenArchiv','renderHaushalt','renderFreizeit','renderLaufendeKosten','renderVersicherungen','renderEinnahmen','renderSparenInvestieren','renderGeplanteAusgaben','renderListe','renderAusgabenArchiv'],
  session:['state'],read:[],write:[],replace:false
 },(context,d)=>{
  'use strict';
@@ -110,6 +110,8 @@ Kostentracker.module({
  }
 
  function presentBookingEditor(type,id){
+  if(type==='fixkosten'&&!context.session.state.fixPriceDetailsOnce)return d.openFixPriceEditor(id);
+  context.session.state.fixPriceDetailsOnce=false;
   const config=configs[type];if(!config||!dialog||!host)return false;
   const input=document.getElementById(config[2]+id),card=input?.closest('.item');
   if(!card)return false;
