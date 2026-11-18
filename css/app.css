@@ -3255,3 +3255,24 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 #bookingEditDialog :is(button,input,select,textarea):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
 .booking-editor-fallback { position:fixed;inset:0;z-index:20001;background:var(--bg,#000); }
 @media(max-width:360px) { .booking-edit-dialog { padding:0 14px; }#bookingEditDialog .entry-date-time { grid-template-columns:minmax(0,1fr); } }
+
+#bookingEditDialog .booking-editor-extra { margin:14px 0 0;padding:0;border:0; }
+#bookingEditDialog .booking-editor-extra > summary { min-height:40px;padding:10px 0;box-sizing:border-box;cursor:pointer;font-size:13px;line-height:20px;font-weight:500;color:var(--editor-muted); }
+#bookingEditDialog .booking-editor-extra-body { padding:2px 0 8px; }
+#bookingEditDialog .booking-editor-modes { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 16px; }
+#bookingEditDialog .booking-editor-modes button { width:100%;min-height:38px;margin:0;padding:8px 4px;border:1px solid rgba(128,128,128,.25);border-radius:6px;background:transparent;color:var(--editor-muted);font-size:12px;line-height:1.3;font-weight:500; }
+#bookingEditDialog .booking-editor-modes button.active { border-color:var(--primary);color:var(--primary); }
+#bookingEditDialog .editor-lifecycle-hidden { display:none!important; }
+#bookingEditDialog .recurring-options { margin:0;padding:0;border:0; }
+#bookingEditDialog .recurring-options > summary { display:none; }
+#bookingEditDialog .recurring-change-row { display:flex;flex-direction:column;gap:0;margin:0 0 10px; }
+#bookingEditDialog .recurring-change-row > label:first-child { order:2; }
+#bookingEditDialog .recurring-change-row > label:nth-child(2) { order:1; }
+#bookingEditDialog .recurring-change-row > button { order:3;align-self:flex-start;margin-top:4px; }
+#bookingEditDialog .booking-editor-preview { margin:16px 0 0; }
+#bookingEditDialog .booking-editor-preview h3 { margin:0 0 8px;font-size:17px;line-height:1.3; }
+#bookingEditDialog .booking-editor-preview-list { padding:0 12px;border-radius:6px;background:var(--editor-secondary); }
+#bookingEditDialog .booking-editor-preview-list > div { display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:9px 0;border-bottom:1px solid rgba(128,128,128,.2);font-size:13px;line-height:1.4; }
+#bookingEditDialog .booking-editor-preview-list > div:last-child { border:0; }
+#bookingEditDialog .booking-editor-preview-list strong { font-weight:500;text-align:right; }
+#bookingEditDialog .booking-editor-preview-list > div:last-child strong { color:var(--primary); }
