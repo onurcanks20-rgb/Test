@@ -1,6 +1,6 @@
 Kostentracker.module({
- id:'js/ui/eingabeschutz.js', dependencies:[], session:[], read:[], write:[], replace:false
-}, () => {
+ id:'js/ui/eingabeschutz.js', dependencies:['dismissBookingEditor'], session:[], read:[], write:[], replace:false
+}, (context, dependencies) => {
  'use strict';
  const panelIds=new Set(['reisenAddPanel','reiseAddPanel','versAddPanel','hausAddPanel','freizeitAddPanel','einnahmenAddPanel','kostenAddPanel','geplantAddPanel','sparenInvestierenAddPanel']);
  const drafts=new Map();
@@ -82,7 +82,7 @@ Kostentracker.module({
   const submitting=submissions.test(name);
   if(submitting)submission={saved:false,roots:[...drafts.keys()].filter(root=>root.contains(document.activeElement)||Array.from(root.querySelectorAll?.('[onclick]')||[]).some(button=>(button.getAttribute('onclick')||'').includes(name+'(')))};
   depth++;
-  try{return fn(...args);}
+  try{const result=fn(...args);if(navigation.test(name)&&result!==false)dependencies.dismissBookingEditor?.();return result;}
   finally{
    depth--;
    // A successful save closes or replaces its form; a validation/storage failure leaves it dirty.

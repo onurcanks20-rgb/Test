@@ -1,6 +1,8 @@
 Kostentracker.module({
   "id": "js/ui/ausgabenarchiv.js",
   "dependencies": [
+    "presentBookingEditor",
+    "closeBookingEditor",
     "alltagCategoryIcon",
     "alltagZusatztext",
     "createItem",
@@ -55,10 +57,11 @@ Kostentracker.module({
             if (context.session.state.ausgabenArchivTyp !== typ) return;
             context.session.state.editAusgabenArchivId = String(id);
             renderAusgabenArchiv();
-            setTimeout(() => document.getElementById(`editArchivBetrag-${id}`)?.focus(), 0);
+            dependencies.presentBookingEditor('archiv',id);
         }
 
         function cancelEditAusgabenArchiv() {
+            dependencies.closeBookingEditor('archiv');
             context.session.state.editAusgabenArchivId = null;
             renderAusgabenArchiv();
         }
@@ -108,6 +111,7 @@ Kostentracker.module({
             bereich[neuerMonat].push(updated);
 
             if (dependencies.speichern() === false) return;
+            dependencies.closeBookingEditor('archiv',id);
             context.session.state.editAusgabenArchivId = null;
             renderAusgabenArchiv();
         }
