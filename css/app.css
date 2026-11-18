@@ -3232,7 +3232,7 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 #freshCostDialog h3 { margin:0 0 12px;font-size:17px;line-height:1.3;font-weight:700; }
 #freshCostDialog label { display:block;margin:10px 0 5px;font-size:12px;line-height:1.4;opacity:1;color:var(--text); }
 #freshCostDialog label:first-child { margin-top:0; }
-#freshCostDialog input { display:block;box-sizing:border-box;width:100%;min-width:0;height:36px;min-height:36px;max-height:36px;margin:0;padding:5px 10px;border:1px solid #ddd;border-radius:5px;background:#fff;color:#111;color-scheme:light;-webkit-text-fill-color:#111;font-size:16px;line-height:24px; }
+#freshCostDialog input { display:block;box-sizing:border-box;width:100%;min-width:0;height:48px;min-height:48px;max-height:48px;margin:0;padding:11px 12px;border:1px solid #ddd;border-radius:12px;background:#fff;color:#111;color-scheme:light;-webkit-text-fill-color:#111;font-size:16px;line-height:24px; }
 #freshCostDialog input[type="date"] { appearance:none;-webkit-appearance:none;text-align:left; }
 #freshCostDialog input[type="date"]::-webkit-date-and-time-value { text-align:left;min-height:24px; }
 #freshCostDialog .fc-preview { flex:none;margin:20px 0 0; }
