@@ -17,7 +17,8 @@ Kostentracker.module({
     "parseBetrag",
     "parseISODate",
     "startOfToday",
-    "versicherungsZahlungenImZeitraum"
+    "versicherungsZahlungenImZeitraum",
+    "sparenInvestierenAktivImZeitraum"
   ],
   "session": [
     "GRAFIK_COLORS",
@@ -133,14 +134,7 @@ Kostentracker.module({
 
                 // Nur Perioden zaehlen, deren Startdatum im ausgewaehlten Zeitraum liegt.
                 if(z.start>=von && z.start<=bis){
-                    (context.repository.view["Sparen & Investieren"]||[]).forEach(e=>{
-                        const valid=dependencies.parseISODate(e.datum);
-                        // Wie in der Budgetlogik gilt ein Eintrag fuer die Periode,
-                        // sobald "Gueltig ab" spaetestens innerhalb dieser Periode liegt.
-                        if(valid && valid<=z.ende){
-                            out.push(grafikEntry(e.typ==="sparen"?"Sparen":"Investieren",e.betrag,e.typ,z.start));
-                        }
-                    });
+                    dependencies.sparenInvestierenAktivImZeitraum(z.start,z.ende).forEach(e=>out.push(grafikEntry(e.typ==="sparen"?"Sparen":"Investieren",e.betrag,e.typ,z.start)));
                 }
                 ref=dependencies.addDays(z.ende,1);
             }

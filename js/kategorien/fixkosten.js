@@ -29,7 +29,13 @@ Kostentracker.module({
     "renderHomeUebersicht",
     "setupKostenEditEnterFlow",
     "speichern",
-    "tagAusDatum"
+    "tagAusDatum",
+    "recurringActive",
+    "recurringAmount",
+    "recurringSummary",
+    "renderRecurringOptions",
+    "readRecurringOptions",
+    "resetRecurringOptions"
   ],
   "session": [
     "state"
@@ -92,12 +98,11 @@ Kostentracker.module({
                     termin = new Date(startDatum);
                 }
 
-                return termin;
+                return dependencies.recurringActive(k,termin)?termin:null;
             };
 
-            summe = [...context.repository.view["Laufende Kosten"].fix]
-                .filter(k => dependencies.matchesSearch(suche, k.text, k.name, k.info, k.haendler, k.datum, k.tag, k.betrag))
-                .reduce((acc, k) => acc + (dependencies.parseBetrag(k.betrag) || 0), 0);
+            const includedIds=new Set(context.repository.view["Laufende Kosten"].fix.filter(k=>dependencies.matchesSearch(suche,k.text,k.name,k.info,k.haendler,k.datum,k.tag,k.betrag)).map(k=>String(k.id)));
+            summe=laufendeKostenImZeitraum(gehaltszeitraum.start,gehaltszeitraum.ende).filter(e=>includedIds.has(String(e.sourceId))).reduce((n,e)=>n+e.betrag,0);
 
             const sortierteFixkosten = [...context.repository.view["Laufende Kosten"].fix]
                 .filter(k => !dependencies.istEintragAusgeblendet("fixkosten", k.id))
@@ -105,7 +110,7 @@ Kostentracker.module({
                 .sort((a, b) => {
                     const terminA = terminImGehaltszeitraum(a);
                     const terminB = terminImGehaltszeitraum(b);
-                    const diff = terminA - terminB;
+                    const diff = (terminA?.getTime()??Number.MAX_SAFE_INTEGER) - (terminB?.getTime()??Number.MAX_SAFE_INTEGER);
                     if (diff !== 0) return diff;
                     return String(a.datum || '').localeCompare(String(b.datum || ''));
                 });
@@ -121,7 +126,7 @@ Kostentracker.module({
                 const gruppenTermin = terminImGehaltszeitraum(k);
                 const gruppenKey = gruppenTermin ? gruppenTermin.toISOString().slice(0,10) : datum;
                 if (gruppenKey !== letzteFixkostenGruppe) {
-                    dependencies.appendDateGroupHeader(div, gruppenTermin || datum, { first: letzteFixkostenGruppe === null, note: "Abbuchung" });
+                    dependencies.appendDateGroupHeader(div, gruppenTermin || datum, { first: letzteFixkostenGruppe === null, note: gruppenTermin ? "Abbuchung" : "Keine weiteren Abbuchungen" });
                     letzteFixkostenGruppe = gruppenKey;
                 }
                 const tag = dependencies.tagAusDatum(datum);
@@ -137,6 +142,7 @@ Kostentracker.module({
                 if (isEdit) {
                     item = dependencies.createItem(`
                     <div class="booking-edit-form">
+                        
                         <label class="booking-field-label" for="editKostenText-${k.id}">Beschreibung</label>
 <input class="booking-control" id="editKostenText-${k.id}" value="${dependencies.escapeHtml(k.text || k.name || "")}" placeholder="Beschreibung" autocapitalize="words">
                         <label class="booking-field-label" for="editKostenBetrag-${k.id}">Betrag pro Monat (€)</label>
@@ -152,7 +158,8 @@ Kostentracker.module({
                         <label class="booking-field-label" for="editKostenDatum-${k.id}">Erste Abbuchung · danach monatlich</label>
 <input class="booking-control" id="editKostenDatum-${k.id}" type="date" value="${datum}">
 
-                        <div style="display:flex; gap:10px; margin-top:6px;">
+                        ${dependencies.renderRecurringOptions(`editRecCost-${k.id}`,k)}
+<div style="display:flex; gap:10px; margin-top:6px;">
                             <button onclick="saveEditKosten('${k.id}')">💾 Speichern</button>
                             <button onclick="cancelEditKosten()" style="background:#607d8b;">❌ Abbrechen</button>
                         </div>
@@ -171,13 +178,14 @@ Kostentracker.module({
                                 <span class="compact-alltag-title">${dependencies.escapeHtml(k.text || k.name || "-")}</span>
                                 <span class="compact-alltag-sub">${k.haendler ? dependencies.escapeHtml(k.haendler) + ' · ' : ''}am ${String(tag).padStart(2, "0")}.</span>
                             </div>
-                            <strong class="compact-alltag-amount">${dependencies.formatBetrag(k.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${istOffen}" onclick="event.stopPropagation(); toggleFixkostenDetails('${k.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
+                            <strong class="compact-alltag-amount">${dependencies.formatBetrag(dependencies.recurringAmount(k,gruppenTermin||dependencies.heuteISO()))}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${istOffen}" onclick="event.stopPropagation(); toggleFixkostenDetails('${k.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
                             <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                                 <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-move"></use></svg></button>
                                 <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
                                 <button class="delete" onclick="event.stopPropagation(); deleteLaufendeKosten('${k.id}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                             </div>
                         </div>
+                        ${dependencies.recurringSummary(k)}
                         ${istOffen ? `
                             <div onclick="toggleFixkostenDetails('${k.id}')" class="category-entry-details" style="display:flex;flex-direction:column;gap:8px;cursor:pointer;">
                                 <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Wiederholung</span><span style="font-weight:600;text-align:right;">Monatlich am ${tag}.</span></div>
@@ -225,6 +233,7 @@ Kostentracker.module({
             if (!text || isNaN(betrag)) return;
             if (!datum) datum = dependencies.heuteISO();
 
+            const recurring = dependencies.readRecurringOptions("recCost", {}, true, datum);if(!recurring)return;
             const tag = dependencies.tagAusDatum(datum);
 
             // 🛡️ Struktur absichern
@@ -244,10 +253,12 @@ Kostentracker.module({
                 zuordnungTage,
                 datum,
                 tag,
+                ...recurring,
                 ...dependencies.readReminderControl("add:fixkosten")
             }) === false) return;
 
 
+            dependencies.resetRecurringOptions("recCost");
             // reset
             document.getElementById("costText").value = "";
             document.getElementById("costBetrag").value = "";
@@ -314,6 +325,8 @@ Kostentracker.module({
 
             if (!text || isNaN(betrag)) return;
 
+            const recurring=dependencies.readRecurringOptions("editRecCost-"+id,item,true,datum);if(!recurring)return;
+            Object.assign(item,recurring);
             item.text = dependencies.formatText(text);
             item.betrag = betrag;
             item.info = info;
@@ -381,12 +394,13 @@ function laufendeKostenImZeitraum(von, bis) {
                 }
 
                 while (datum <= bis) {
+                    if(!dependencies.recurringActive(k,datum))break;
                     faellig.push({
                         typ: "laufend",
                         typLabel: "Fixkosten",
                         sourceId: k.id,
                         name: k.text || k.name || "Fixkosten",
-                        betrag,
+                        betrag: dependencies.recurringAmount(k,datum),
                         datum: new Date(datum)
                     });
 
@@ -402,10 +416,7 @@ function kostenLaufend() {
             context.repository.view["Laufende Kosten"] ??= { fix: [] };
             context.repository.view["Laufende Kosten"].fix ??= [];
 
-            return context.repository.view["Laufende Kosten"].fix.reduce((sum, e) => {
-                let betrag = dependencies.parseBetrag(e.betrag);
-                return sum + (isNaN(betrag) ? 0 : betrag);
-            }, 0);
+            const now=new Date();return laufendeKostenImZeitraum(new Date(now.getFullYear(),now.getMonth(),1),new Date(now.getFullYear(),now.getMonth()+1,0)).reduce((sum,e)=>sum+e.betrag,0);
         }
 
 function berechneGesamtFixkosten() {
@@ -414,15 +425,13 @@ function berechneGesamtFixkosten() {
 
 function berechneLaufendeKosten(monatTag = new Date().getDate()) {
 
-            return context.repository.view["Laufende Kosten"].fix.reduce((sum, e) => {
-                return sum + e.betrag;
-            }, 0);
+            return kostenLaufend();
         }
 
 function faelligeKostenHeute() {
             let tag = new Date().getDate();
 
-            return context.repository.view["Laufende Kosten"].fix.filter(e => dependencies.tagAusDatum(e.datum || dependencies.datumAusTagAktuellerMonat(e.tag)) === tag);
+            return context.repository.view["Laufende Kosten"].fix.filter(e => dependencies.tagAusDatum(e.datum || dependencies.datumAusTagAktuellerMonat(e.tag)) === tag && dependencies.recurringActive(e,dependencies.heuteISO()));
         }
 
 return { renderLaufendeKosten, toggleFixkostenDetails, normalizeFixkostenZuordnungTage, addKosten, deleteLaufendeKosten, startEditKosten, cancelEditKosten, saveEditKosten, editLaufendeKosten, deleteAlleLaufendeKosten, laufendeKostenImZeitraum, kostenLaufend, berechneGesamtFixkosten, berechneLaufendeKosten, faelligeKostenHeute };

@@ -346,6 +346,7 @@ function migriereVersicherungsUndReisestruktur() {
         }
 
         context.repository.view.Versicherungen = context.repository.view.Versicherungen.map(v => ({
+            ...v,
             id: v.id || dependencies.generateId(),
             name: v.name || "",
             betrag: v.betrag ?? 0,

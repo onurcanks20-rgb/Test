@@ -30,7 +30,13 @@ Kostentracker.module({
     "readEntryTime",
     "renderEntryTime",
     "renderEntryTimeInput",
-    "compareEntriesNewest"
+    "compareEntriesNewest",
+    "recurringActive",
+    "recurringAmount",
+    "recurringSummary",
+    "renderRecurringOptions",
+    "readRecurringOptions",
+    "resetRecurringOptions"
   ],
   "session": [
     "state"
@@ -57,7 +63,8 @@ Kostentracker.module({
             if (!text || isNaN(betrag) || betrag <= 0 || !datum) return;
             const zeit=wiederholung==='monatlich'?{}:dependencies.readEntryTime("einnahmenUhrzeit",datum);if(zeit===null)return;
             context.repository.view.Einnahmen ??= [];
-            context.repository.view.Einnahmen.push({ id: dependencies.generateId(), text, betrag, von, datum, wiederholung, ...zeit, ...dependencies.readReminderControl("add:einnahmen") });
+            const recurring=dependencies.readRecurringOptions("recIncome",{},wiederholung==="monatlich",datum);if(!recurring)return;
+            context.repository.view.Einnahmen.push({ id: dependencies.generateId(), text, betrag, von, datum, wiederholung, ...recurring, ...zeit, ...dependencies.readReminderControl("add:einnahmen") });
             if (dependencies.speichern() === false) return;
 
             document.getElementById("einnahmenText").value = "";
@@ -65,6 +72,7 @@ Kostentracker.module({
             document.getElementById("einnahmenVon").value = "";
             document.getElementById("einnahmenDatum").value = dependencies.heuteISO();
             document.getElementById("einnahmenWiederholung").value = "einmalig";
+            dependencies.resetRecurringOptions("recIncome");
             document.getElementById("einnahmenAddPanel")?.classList.add("hidden");
             if (wiederholung === "monatlich") context.session.state.einnahmenMonatlichOffen = true;
             renderEinnahmen();
@@ -153,7 +161,8 @@ Kostentracker.module({
 <input class="booking-control" id="editEinnahmenVon-${e.id}" value="${dependencies.escapeHtml(e.von || '')}" placeholder="Von wem? (optional)" autocapitalize="words">
                         <div class="entry-date-time"><label><span>Datum</span><input id="editEinnahmenDatum-${e.id}" type="date" value="${e.datum || ''}"></label>${dependencies.renderEntryTimeInput(`editEinnahmenUhrzeit-${e.id}`,e,e.wiederholung==='monatlich')}</div>
                         <label class="booking-field-label" for="editEinnahmenWiederholung-${e.id}">Wiederholung</label>
-<select class="booking-control" id="editEinnahmenWiederholung-${e.id}" onchange="toggleIncomeTime('editEinnahmenWiederholung-${e.id}','editEinnahmenUhrzeit-${e.id}Wrap')"><option value="einmalig" ${e.wiederholung !== 'monatlich' ? 'selected' : ''}>Einmalig</option><option value="monatlich" ${e.wiederholung === 'monatlich' ? 'selected' : ''}>Monatlich</option></select>
+<select class="booking-control" id="editEinnahmenWiederholung-${e.id}" onchange="toggleIncomeTime('editEinnahmenWiederholung-${e.id}','editEinnahmenUhrzeit-${e.id}Wrap');toggleRecurringOptions('editRecIncome-${e.id}','editEinnahmenWiederholung-${e.id}')"><option value="einmalig" ${e.wiederholung !== 'monatlich' ? 'selected' : ''}>Einmalig</option><option value="monatlich" ${e.wiederholung === 'monatlich' ? 'selected' : ''}>Monatlich</option></select>
+                        ${dependencies.renderRecurringOptions(`editRecIncome-${e.id}`,e,e.wiederholung==='monatlich')}
                         <div style="display:flex; gap:10px;"><button onclick="saveEditEinnahme('${e.id}')">💾 Speichern</button><button onclick="cancelEditEinnahme()">❌ Abbrechen</button></div>
                     </div>`;
                 } else {
@@ -166,9 +175,10 @@ Kostentracker.module({
                                 <span class="compact-alltag-title">${dependencies.escapeHtml(e.text || 'Einnahme')}${recurring?'':dependencies.renderEntryTime(e)}</span>
                                 ${e.von || recurring ? `<span class="compact-alltag-sub">${e.von ? dependencies.escapeHtml(e.von) : ''}${e.von && recurring ? ' · ' : ''}${recurring ? 'am ' + (dependencies.parseISODate(e.datum)?.getDate() || '-') + '.' : ''}</span>` : ''}
                             </div>
-                            <strong class="compact-alltag-amount">+${dependencies.formatBetrag(e.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${istOffen}" onclick="event.stopPropagation(); toggleEinnahmeDetails('${e.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
+                            <strong class="compact-alltag-amount">+${dependencies.formatBetrag(e.wiederholung==='monatlich'?dependencies.recurringAmount(e,dependencies.heuteISO()):e.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${istOffen}" onclick="event.stopPropagation(); toggleEinnahmeDetails('${e.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
                             <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><button onclick="event.stopPropagation(); moveAusgabe('einnahmen','${e.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-move"></use></svg></button><button class="edit" onclick="event.stopPropagation(); startEditEinnahme('${e.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button><button class="delete" onclick="event.stopPropagation(); deleteEinnahme('${e.id}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button></div>
                         </div>
+                        ${recurring?dependencies.recurringSummary(e):''}
                         ${istOffen ? `<div onclick="toggleEinnahmeDetails('${e.id}')" class="category-entry-details" style="display:flex;flex-direction:column;gap:8px;cursor:pointer;">
                             <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Art</span><span style="font-weight:600;text-align:right;">${dependencies.escapeHtml(info)}</span></div>
                             ${e.von ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Von</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${dependencies.escapeHtml(e.von)}</span></div>` : ''}
@@ -205,7 +215,8 @@ Kostentracker.module({
             const wiederholung = document.getElementById(`editEinnahmenWiederholung-${id}`)?.value === "monatlich" ? "monatlich" : "einmalig";
             if (!text || isNaN(betrag) || betrag <= 0 || !datum) return;
             const zeit=wiederholung==='monatlich'?{uhrzeit:"",zeitpunkt:"",zeitzone:"",utcOffset:null}:dependencies.readEntryTime(`editEinnahmenUhrzeit-${id}`,datum,context.repository.view.Einnahmen[index]);if(zeit===null)return;
-            context.repository.view.Einnahmen[index] = { ...context.repository.view.Einnahmen[index], ...zeit, text, betrag, von, datum, wiederholung, ...dependencies.readReminderControl(`edit:einnahmen:${id}`) };
+            const recurring=dependencies.readRecurringOptions("editRecIncome-"+id,context.repository.view.Einnahmen[index],wiederholung==="monatlich",datum);if(!recurring)return;
+            context.repository.view.Einnahmen[index] = { ...context.repository.view.Einnahmen[index], ...zeit, ...recurring, text, betrag, von, datum, wiederholung, ...dependencies.readReminderControl(`edit:einnahmen:${id}`) };
             if (dependencies.speichern() === false) return;
             context.session.state.editEinnahmeId = null;
             renderEinnahmen();
@@ -256,9 +267,9 @@ function einnahmenZahlungenImZeitraum(von, bis) {
                 while (true) {
                     const letzterTag = new Date(jahr, monat + 1, 0).getDate();
                     const zahlung = new Date(jahr, monat, Math.min(startTag, letzterTag));
-                    if (zahlung > bis) break;
+                    if (zahlung > bis || !dependencies.recurringActive(e,zahlung)) break;
                     if (zahlung >= von && zahlung >= start) {
-                        result.push({ ...e, betrag, datumObj: zahlung, datumVorkommen: dependencies.isoAusDate(zahlung) });
+                        result.push({ ...e, betrag: dependencies.recurringAmount(e,zahlung), datumObj: zahlung, datumVorkommen: dependencies.isoAusDate(zahlung) });
                     }
                     monat += 1;
                     if (monat > 11) { monat = 0; jahr += 1; }

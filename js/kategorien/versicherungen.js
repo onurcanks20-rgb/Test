@@ -27,7 +27,13 @@ Kostentracker.module({
     "readReminderControl",
     "renderHomeUebersicht",
     "setupVersicherungEditEnterFlow",
-    "speichern"
+    "speichern",
+    "recurringActive",
+    "recurringAmount",
+    "recurringSummary",
+    "renderRecurringOptions",
+    "readRecurringOptions",
+    "resetRecurringOptions"
   ],
   "session": [
     "state"
@@ -64,6 +70,7 @@ Kostentracker.module({
 
             if (isNaN(monat)) monat = 1;
 
+            const recurring=dependencies.readRecurringOptions("recVers",{},true,datum);if(!recurring)return;
             if (dependencies.addItem(context.repository.view.Versicherungen, {
                 id: dependencies.generateId(),
                 name,
@@ -73,10 +80,12 @@ Kostentracker.module({
                 versicherungsnummer,
                 intervall,
                 monat,
+                ...recurring,
                 ...dependencies.readReminderControl("add:versicherungen")
             }) === false) return;
 
 
+            dependencies.resetRecurringOptions("recVers");
             // Reset
             document.getElementById("versName").value = "";
             document.getElementById("versBetrag").value = "";
@@ -139,7 +148,7 @@ Kostentracker.module({
                 const naechsteDatum = naechsteZahlungDatum(v);
                 const gruppenKey = naechsteDatum ? naechsteDatum.toISOString().slice(0,10) : (v.datum || "ohne-datum");
                 if (gruppenKey !== letzteVersicherungsGruppe) {
-                    dependencies.appendDateGroupHeader(div, naechsteDatum || v.datum, { first: letzteVersicherungsGruppe === null, note: "Nächste Zahlung" });
+                    dependencies.appendDateGroupHeader(div, naechsteDatum || v.datum, { first: letzteVersicherungsGruppe === null, note: naechsteDatum ? "Nächste Zahlung" : "Keine weiteren Zahlungen" });
                     letzteVersicherungsGruppe = gruppenKey;
                 }
                 const naechste = naechsteZahlung(v);
@@ -160,7 +169,7 @@ Kostentracker.module({
                             <span class="compact-alltag-title">${dependencies.escapeHtml(v.name || "Versicherung")}</span>
                             ${v.anbieter ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(v.anbieter)}</span>` : ''}
                         </div>
-                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(v.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${istOffen}" onclick="event.stopPropagation(); toggleVersicherungDetails('${v.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
+                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(dependencies.recurringAmount(v,naechsteDatum||dependencies.heuteISO()))}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${istOffen}" onclick="event.stopPropagation(); toggleVersicherungDetails('${v.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                             <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-move"></use></svg></button>
                             <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
@@ -168,6 +177,7 @@ Kostentracker.module({
                         </div>
                     </div>
 
+                    ${dependencies.recurringSummary(v)}
                     ${istOffen ? `
                         <div class="category-entry-details" style="
                             display:flex;
@@ -214,6 +224,7 @@ Kostentracker.module({
 
                     item.innerHTML = `
                 <div class="booking-edit-form">
+                    
 
                     <label class="booking-field-label" for="editName-${v.id}">Versicherung</label>
 <input class="booking-control" id="editName-${v.id}" value="${dependencies.escapeHtml(v.name || "")}" autocapitalize="words">
@@ -251,7 +262,8 @@ Kostentracker.module({
                         <option value="12" ${parseInt(v.monat) === 12 ? "selected" : ""}>Dezember</option>
                     </select>
 
-                    <div style="display:flex; gap:10px; margin-top:6px;">
+                    ${dependencies.renderRecurringOptions(`editRecVers-${v.id}`,v)}
+<div style="display:flex; gap:10px; margin-top:6px;">
                         <button onclick="saveEditVersicherung('${v.id}')">💾 Speichern</button>
                         <button onclick="cancelEditVersicherung()">❌ Abbrechen</button>
                     </div>
@@ -284,24 +296,9 @@ Kostentracker.module({
         }
 
         function naechsteZahlungDatum(v) {
-            if (!v.datum) return null;
-            const heute = new Date();
-            heute.setHours(0,0,0,0);
-            const start = dependencies.parseISODate(v.datum) || new Date(v.datum);
-            if (!start || isNaN(start)) return null;
-            const tag = start.getDate();
-            let datum = new Date(start);
-            function addInterval(months = 0, years = 0) {
-                if (months) datum.setMonth(datum.getMonth() + months);
-                if (years) datum.setFullYear(datum.getFullYear() + years);
-                datum.setDate(tag);
-            }
-            if (v.intervall === "monatlich") while (datum <= heute) addInterval(1);
-            else if (v.intervall === "vierteljährlich") while (datum <= heute) addInterval(3);
-            else if (v.intervall === "halbjährlich") while (datum <= heute) addInterval(6);
-            else if (v.intervall === "jährlich") while (datum <= heute) addInterval(0, 1);
-            else return null;
-            return datum;
+            let date=dependencies.parseISODate(v.datum);if(!date)return null;const today=new Date();today.setHours(0,0,0,0);const tag=date.getDate(),interval=intervallInMonaten(v.intervall);let guard=0;
+            while(date<=today&&guard++<12000)date=dependencies.datumMitSicheremTag(date.getFullYear(),date.getMonth()+interval,tag);
+            return dependencies.recurringActive(v,date)?date:null;
         }
 
         function naechsteZahlung(v) {
@@ -383,12 +380,7 @@ Kostentracker.module({
 
             if (!Array.isArray(context.repository.view.Versicherungen)) return [];
 
-            return context.repository.view.Versicherungen.filter(v => {
-                let betrag = dependencies.parseBetrag(v.betrag);
-                if (isNaN(betrag)) return false;
-
-                return istVersicherungFaelligInMonat(v, monatAktuell);
-            });
+            const year=new Date().getFullYear();return versicherungsZahlungenImZeitraum(new Date(year,monatAktuell-1,1),new Date(year,monatAktuell,0)).map(payment=>({...context.repository.view.Versicherungen.find(v=>String(v.id)===String(payment.sourceId)),betrag:payment.betrag}));
         }
 
         function deleteAlleVersicherungen() {
@@ -445,6 +437,8 @@ Kostentracker.module({
 
             if (!name || isNaN(betrag) || !datum || isNaN(monat)) return;
 
+            const recurring=dependencies.readRecurringOptions("editRecVers-"+id,v,true,datum);if(!recurring)return;
+            Object.assign(v,recurring);
             v.datum = datum;
             v.name = dependencies.formatText(name);
             v.betrag = betrag;
@@ -494,12 +488,13 @@ function versicherungsZahlungenImZeitraum(von, bis) {
                 }
 
                 while (datum <= bis) {
+                    if(!dependencies.recurringActive(v,datum))break;
                     faellig.push({
                         typ: "versicherung",
                         typLabel: "Versicherung",
                         sourceId: v.id,
                         name: v.name || "Versicherung",
-                        betrag,
+                        betrag: dependencies.recurringAmount(v,datum),
                         datum: new Date(datum)
                     });
 

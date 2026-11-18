@@ -24,7 +24,13 @@ Kostentracker.module({
     "renderHomeUebersicht",
     "renderUebersicht",
     "speichern",
-    "speichernOhneHomeRender"
+    "speichernOhneHomeRender",
+    "recurringActive",
+    "recurringAmount",
+    "recurringSummary",
+    "renderRecurringOptions",
+    "readRecurringOptions",
+    "resetRecurringOptions"
   ],
   "session": [
     "state"
@@ -123,8 +129,8 @@ Kostentracker.module({
                 let guard = 0;
                 while (datum && guard++ < 240) {
                     const d = dependencies.parseISODate(datum);
-                    if (!d || d > bis) break;
-                    if (d >= von) out.push({ ...e, datum, betrag: dependencies.parseBetrag(e.betrag) || 0 });
+                    if (!d || d > bis || wiederholung!=="einmalig"&&!dependencies.recurringActive(e,datum)) break;
+                    if (d >= von) out.push({ ...e, datum, betrag: wiederholung==='einmalig'?dependencies.parseBetrag(e.betrag)||0:dependencies.recurringAmount(e,datum) });
                     if (wiederholung === "einmalig") break;
                     const next = geplantNaechstesDatum(datum, wiederholung, e.wiederholungStart || e.datum);
                     if (!next || next === datum) break;
@@ -156,7 +162,8 @@ Kostentracker.module({
             }
 
             context.repository.view["Geplante Ausgaben"] ??= [];
-            context.repository.view["Geplante Ausgaben"].push({ id: dependencies.generateId(), text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...dependencies.readReminderControl("add:geplant") });
+            const recurring=dependencies.readRecurringOptions("recPlanned",{},wiederholung!=="einmalig",datum);if(!recurring)return;
+            context.repository.view["Geplante Ausgaben"].push({ id: dependencies.generateId(), text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...recurring, ...dependencies.readReminderControl("add:geplant") });
             if (dependencies.speichern() === false) return;
             document.getElementById("geplantText").value = "";
             document.getElementById("geplantBetrag").value = "";
@@ -164,6 +171,7 @@ Kostentracker.module({
             if (document.getElementById("geplantWiederholung")) document.getElementById("geplantWiederholung").value = "einmalig";
             if (document.getElementById("geplantBereich")) document.getElementById("geplantBereich").value = "haushalt";
             if (document.getElementById("geplantBudgetWirksam")) document.getElementById("geplantBudgetWirksam").value = "ja";
+            dependencies.resetRecurringOptions("recPlanned");
             updateGeplantBereichUI(false);
             document.getElementById("geplantAddPanel")?.classList.add("hidden");
             if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) dependencies.closeStartQuickAdd();
@@ -261,7 +269,9 @@ Kostentracker.module({
             const budgetWirksam = document.getElementById(`editGeplantBudget-${id}`)?.value !== "nein";
             if (!text || isNaN(betrag) || betrag <= 0 || !dependencies.parseISODate(datum)) return;
             if (bereich === "reisen" && (!land || !context.repository.view.Reisen?.[land])) { alert("Bitte wähle eine vorhandene Reise aus."); return; }
-            Object.assign(e, { text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...dependencies.readReminderControl(`edit:geplant:${id}`) });
+            const anchor=e.datum===datum&&e.wiederholung===wiederholung?(e.wiederholungStart||datum):datum;
+            const recurring=dependencies.readRecurringOptions("editRecPlanned-"+id,e,wiederholung!=="einmalig",anchor);if(!recurring)return;
+            Object.assign(e, { text, betrag, datum, wiederholung, wiederholungStart: anchor, ...recurring, bereich, land, kategorie, budgetWirksam, ...dependencies.readReminderControl(`edit:geplant:${id}`) });
             if (dependencies.speichern() === false) return;
             context.session.state.editGeplanteAusgabeId = null;
             verarbeiteFaelligeGeplanteAusgaben();
@@ -285,16 +295,17 @@ Kostentracker.module({
                 let guard = 0;
                 while (datum && datum < heute && guard++ < 240) {
                     const d = dependencies.parseISODate(datum);
-                    if (!d) break;
+                    if (!d || wiederholung!=="einmalig"&&!dependencies.recurringActive(e,datum)) break;
+                    const occurrence=wiederholung==='einmalig'?e:{...e,betrag:dependencies.recurringAmount(e,datum)};
                     const bereich = ["haushalt", "freizeit", "reisen"].includes(e.bereich) ? e.bereich : "haushalt";
                     const occurrenceKey = `${e.id}:${datum}`;
                     let konnteBuchen = true;
 
                     konnteBuchen = bereich === "reisen"
-                        ? dependencies.bookReisePlannedOccurrence(e, datum, occurrenceKey, wiederholung)
+                        ? dependencies.bookReisePlannedOccurrence(occurrence, datum, occurrenceKey, wiederholung)
                         : bereich === "freizeit"
-                            ? dependencies.bookFreizeitPlannedOccurrence(e, datum, occurrenceKey, wiederholung)
-                            : dependencies.bookHaushaltPlannedOccurrence(e, datum, occurrenceKey, wiederholung);
+                            ? dependencies.bookFreizeitPlannedOccurrence(occurrence, datum, occurrenceKey, wiederholung)
+                            : dependencies.bookHaushaltPlannedOccurrence(occurrence, datum, occurrenceKey, wiederholung);
 
                     if (!konnteBuchen) break;
                     geaendert = true;
@@ -336,7 +347,7 @@ Kostentracker.module({
                 let gruppenHeader = "";
                 const gruppenKey = e.datum || "ohne-datum";
                 if (gruppenKey !== letzteGeplantGruppe) {
-                    gruppenHeader = `<div class="date-group-title${letzteGeplantGruppe === null ? " first" : ""}">${dependencies.formatDateGroupLabel(e.datum)}<small>Geplant</small></div>`;
+                    gruppenHeader = `<div class="date-group-title${letzteGeplantGruppe === null ? " first" : ""}">${dependencies.formatDateGroupLabel(e.datum)}<small>${e.wiederholung!=="einmalig"&&!dependencies.recurringActive(e,e.datum)?"Keine weiteren Termine":"Geplant"}</small></div>`;
                     letzteGeplantGruppe = gruppenKey;
                 }
                 const isEdit = String(context.session.state.editGeplanteAusgabeId) === String(e.id);
@@ -356,7 +367,7 @@ Kostentracker.module({
                                 <label class="booking-field-label" for="editGeplantDatum-${e.id}">Geplantes Datum</label>
 <input class="booking-control" id="editGeplantDatum-${e.id}" type="date" value="${e.datum || ''}">
                                 <label class="booking-field-label" for="editGeplantWiederholung-${e.id}">Wiederholung</label>
-<select class="booking-control" id="editGeplantWiederholung-${e.id}">
+<select class="booking-control" id="editGeplantWiederholung-${e.id}" onchange="toggleRecurringOptions('editRecPlanned-${e.id}','editGeplantWiederholung-${e.id}')">
                                     <option value="einmalig" ${(e.wiederholung || "einmalig") === "einmalig" ? "selected" : ""}>Einmalig</option>
                                     <option value="monatlich" ${e.wiederholung === "monatlich" ? "selected" : ""}>Monatlich</option>
                                     <option value="jaehrlich" ${e.wiederholung === "jaehrlich" ? "selected" : ""}>Jährlich</option>
@@ -382,6 +393,7 @@ Kostentracker.module({
                                     <option value="ja" ${e.budgetWirksam !== false ? "selected" : ""}>Ja, vom Frei verfügbar abziehen</option>
                                     <option value="nein" ${e.budgetWirksam === false ? "selected" : ""}>Nein, nur vormerken</option>
                                 </select>
+                                ${dependencies.renderRecurringOptions(`editRecPlanned-${e.id}`,e,e.wiederholung==='monatlich'||e.wiederholung==='jaehrlich')}
                                 <div style="display:flex;gap:10px;">
                                     <button onclick="saveEditGeplanteAusgabe('${e.id}')">💾 Speichern</button>
                                     <button onclick="cancelEditGeplanteAusgabe()" style="background:#3a3a3c;">❌ Abbrechen</button>
@@ -399,13 +411,14 @@ Kostentracker.module({
                             <span class="compact-alltag-title">${dependencies.escapeHtml(e.text || "Geplante Ausgabe")}</span>
                             <span class="compact-alltag-sub">${ziel}</span><span class="category-status">${e.budgetWirksam !== false ? 'Reserviert' : 'Nur vorgemerkt'}</span>
                         </div>
-                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
+                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.wiederholung==='monatlich'||e.wiederholung==='jaehrlich'?dependencies.recurringAmount(e,e.datum):e.betrag)}</strong>
                         <button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${offen}" onclick="event.stopPropagation();toggleGeplantDetails('${e.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-chevron"></use></svg></button>
                         <div class="actions" style="display:flex;gap:5px;">
                             <button class="edit" onclick="event.stopPropagation();startEditGeplanteAusgabe('${String(e.id)}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
                             <button class="delete" onclick="event.stopPropagation();deleteGeplanteAusgabe('${String(e.id)}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                         </div>
                       </div>
+                      ${e.wiederholung==='monatlich'||e.wiederholung==='jaehrlich'?dependencies.recurringSummary(e):''}
                       ${offen ? `<div class="category-entry-details"><dl><dt>Datum</dt><dd>${dependencies.formatDatum(e.datum)}</dd><dt>Wiederholung</dt><dd>${e.wiederholung === 'monatlich' ? 'Monatlich' : e.wiederholung === 'jaehrlich' ? 'Jährlich' : 'Einmalig'}</dd><dt>Budget</dt><dd>${e.budgetWirksam !== false ? 'Vom Frei verfügbar abziehen' : 'Nur vormerken'}</dd></dl></div>` : ''}
                     </div>`;
             }).join("");

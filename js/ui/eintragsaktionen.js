@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/ui/eintragsaktionen.js",
   "dependencies": [
+    "resetRecurringOptions",
     "beginUndoDelete",
     "findeAusgabeZumVerschieben",
     "finishUndoDelete",
@@ -177,6 +178,7 @@ Kostentracker.module({
                 dependencies.resetAddReminderForPanel(template.panel);
                 for(const [key,value] of Object.entries(template.fields)){const input=document.getElementById(key);if(input)input.value=String(value);}
                 document.getElementById(template.date).value=dependencies.heuteISO();
+                dependencies.resetRecurringOptions({fixkosten:'recCost',versicherungen:'recVers',einnahmen:'recIncome',geplant:'recPlanned',sparen:'recSavings'}[type]);
                 if(type==='einnahmen')dependencies.toggleIncomeTime('einnahmenWiederholung','einnahmenUhrzeitWrap');
                 if(type==='geplant'){
                     dependencies.updateGeplantBereichUI(false);

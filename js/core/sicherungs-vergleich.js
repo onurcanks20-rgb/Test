@@ -33,10 +33,10 @@
  function entryDescription(record){const e=record.value;return [e.text||e.name||e.kategorie||'Buchung',e.betrag!=null?currency(e.betrag):'',e.datum||'',pathLabel(record.path)].filter(Boolean).join(' · ');}
  function entryChanges(before,after){
   const a=before.value,b=after.value,parts=[];
-  const fieldNames={text:'Beschreibung',name:'Name',datum:'Datum',uhrzeit:'Uhrzeit',kategorie:'Kategorie',wiederholung:'Wiederholung',intervall:'Intervall',haendler:'Händler',bereich:'Bereich',originalAmount:'Originalbetrag',originalCurrency:'Währung',betragEuro:'Eurobetrag',betrag:'Betrag'};
+  const fieldNames={text:'Beschreibung',name:'Name',datum:'Datum',uhrzeit:'Uhrzeit',kategorie:'Kategorie',wiederholung:'Wiederholung',intervall:'Intervall',haendler:'Händler',bereich:'Bereich',originalAmount:'Originalbetrag',originalCurrency:'Währung',betragEuro:'Eurobetrag',betrag:'Betrag',wiederholungEnde:'Enddatum',betragsAenderungen:'Betragsänderungen'};
   for(const key of new Set([...Object.keys(a),...Object.keys(b)])){
    if(key==='id'||same(a[key],b[key]))continue;
-   const show=v=>key==='betrag'||key==='betragEuro'?v===undefined?'Nicht vorhanden':currency(v):display(v);
+   const show=v=>key==='betragsAenderungen'?(Array.isArray(v)&&v.length?v.map(c=>c.ab+': '+currency(c.betrag)).join(', '):'Keine'):key==='betrag'||key==='betragEuro'?v===undefined?'Nicht vorhanden':currency(v):display(v);
    parts.push((fieldNames[key]||'Weitere Angabe')+': '+show(a[key])+' → '+show(b[key]));
   }
   if(!same(before.path,after.path))parts.push('Zuordnung: '+pathLabel(before.path)+' → '+pathLabel(after.path));

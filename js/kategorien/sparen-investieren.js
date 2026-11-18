@@ -27,7 +27,14 @@ Kostentracker.module({
     "speichern",
     "versicherungsZahlungenImZeitraum",
     "rundeCent",
-    "summeBetraege"
+    "summeBetraege",
+    "recurringActive",
+    "recurringAmount",
+    "recurringSummary",
+    "renderRecurringOptions",
+    "readRecurringOptions",
+    "resetRecurringOptions",
+    "recurringSavingsReference"
   ],
   "session": [
     "state"
@@ -47,8 +54,8 @@ Kostentracker.module({
         function sparenInvestierenAktivImZeitraum(von, bis) {
             return (context.repository.view["Sparen & Investieren"] || []).filter(e => {
                 const d = dependencies.parseISODate(e.datum);
-                return d && d <= bis;
-            }).map(e => ({ ...e, betrag: dependencies.parseBetrag(e.betrag) || 0 }));
+                return d && d <= bis && dependencies.recurringActive(e,dependencies.recurringSavingsReference(e,von));
+            }).map(e => ({ ...e, betrag: dependencies.recurringAmount(e,dependencies.recurringSavingsReference(e,von)) }));
         }
 
         function sparenInvestierenSummen(zeitraum) {
@@ -84,8 +91,10 @@ return { aktiv, investieren, sparenPlan, gesamt: dependencies.rundeCent(investie
             const datum = document.getElementById("sparenInvestierenDatum")?.value || dependencies.heuteISO();
             if (isNaN(betrag) || betrag <= 0 || !dependencies.parseISODate(datum)) return;
             context.repository.view["Sparen & Investieren"] ??= [];
-            context.repository.view["Sparen & Investieren"].push({ id: dependencies.generateId(), typ, text, betrag, datum, ...dependencies.readReminderControl("add:sparen") });
+            const recurring=dependencies.readRecurringOptions("recSavings",{},true,datum);if(!recurring)return;
+            context.repository.view["Sparen & Investieren"].push({ id: dependencies.generateId(), typ, text, betrag, datum, ...recurring, ...dependencies.readReminderControl("add:sparen") });
             if (dependencies.speichern() === false) return;
+            dependencies.resetRecurringOptions("recSavings");
             document.getElementById("sparenInvestierenBetrag").value = "";
             document.getElementById("sparenInvestierenText").value = "";
             document.getElementById("sparenInvestierenAddPanel")?.classList.add("hidden");
@@ -139,6 +148,8 @@ return { aktiv, investieren, sparenPlan, gesamt: dependencies.rundeCent(investie
             const text = (document.getElementById(`editSparenText-${id}`)?.value || "").trim();
             const datum = document.getElementById(`editSparenDatum-${id}`)?.value || "";
             if (isNaN(betrag) || betrag <= 0 || !dependencies.parseISODate(datum)) return;
+            const recurring=dependencies.readRecurringOptions("editRecSavings-"+id,e,true,datum);if(!recurring)return;
+            Object.assign(e,recurring);
             e.typ = typ;
             e.text = text;
             e.betrag = betrag;
@@ -192,6 +203,7 @@ return { aktiv, investieren, sparenPlan, gesamt: dependencies.rundeCent(investie
 <input class="booking-control" id="editSparenText-${e.id}" autocapitalize="words" value="${dependencies.escapeHtml(e.text || '')}" placeholder="Beschreibung (optional)" enterkeyhint="next">
                             <label class="booking-field-label" for="editSparenDatum-${e.id}">Gültig ab</label>
 <input class="booking-control" id="editSparenDatum-${e.id}" type="date" value="${e.datum || ''}">
+                            ${dependencies.renderRecurringOptions(`editRecSavings-${e.id}`,e,true,true)}
                             <div style="display:flex;gap:10px;">
                                 <button onclick="saveEditSparenInvestieren('${e.id}')">💾 Speichern</button>
                                 <button onclick="cancelEditSparenInvestieren()" style="background:#3a3a3c;">❌ Abbrechen</button>
@@ -207,13 +219,14 @@ return { aktiv, investieren, sparenPlan, gesamt: dependencies.rundeCent(investie
                             <span class="compact-alltag-title">${e.typ === "sparen" ? "Sparen" : "Investieren"}</span>
                             <span class="compact-alltag-sub">Pro Gehaltsperiode</span>
                         </div>
-                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
+                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(dependencies.recurringAmount(e,dependencies.recurringSavingsReference(e,z.start)))}</strong>
                         <button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${offen}" onclick="event.stopPropagation();toggleSparenDetails('${e.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-chevron"></use></svg></button>
                         <div class="actions" style="display:flex;gap:5px;">
                             <button class="edit" onclick="event.stopPropagation();startEditSparenInvestieren('${String(e.id)}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
                             <button class="delete" onclick="event.stopPropagation();deleteSparenInvestieren('${String(e.id)}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                         </div>
                       </div>
+                      ${dependencies.recurringSummary(e,dependencies.recurringSavingsReference(e,z.start))}
                       ${offen ? `<div class="category-entry-details"><dl><dt>Gültig ab</dt><dd>${dependencies.formatDatum(e.datum)}</dd><dt>Art</dt><dd>${e.typ === 'sparen' ? 'Rücklage · dient als Puffer' : 'Investition · bleibt geschützt'}</dd>${e.text ? `<dt>Beschreibung</dt><dd>${dependencies.escapeHtml(e.text)}</dd>` : ''}</dl></div>` : ''}
                     </div>`;
             }).join("");

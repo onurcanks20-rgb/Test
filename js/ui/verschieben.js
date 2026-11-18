@@ -205,6 +205,7 @@ Kostentracker.module({
             const datum = e.datum || dependencies.heuteISO();
             const betrag = dependencies.parseBetrag(e.betrag) || 0;
             const text = e.text || e.name || "Eintrag";
+            const recurring={...(e.wiederholungEnde?{wiederholungEnde:e.wiederholungEnde}:{}),...(e.betragsAenderungen?{betragsAenderungen:e.betragsAenderungen.map(c=>({...c}))}:{})};
             const neueId = e.id || dependencies.generateId();
 
             if (ziel === "haushalt") {
@@ -222,15 +223,15 @@ Kostentracker.module({
                 context.repository.view["Laufende Kosten"].fix ??= [];
                 const infos=[];
                 if(e.info) infos.push(e.info); if(e.anbieter) infos.push(e.anbieter); if(e.versicherungsnummer) infos.push(e.versicherungsnummer); if(e.von) infos.push("von "+e.von);
-                context.repository.view["Laufende Kosten"].fix.push({id:neueId,text,betrag,datum,tag:dependencies.tagAusDatum(datum),info:infos.join(" · ")});
+                context.repository.view["Laufende Kosten"].fix.push({...recurring,id:neueId,text,betrag,datum,tag:dependencies.tagAusDatum(datum),info:infos.join(" · ")});
             } else if (ziel === "versicherungen") {
                 context.repository.view.Versicherungen ??= [];
                 const d=dependencies.parseISODate(datum)||new Date();
-                context.repository.view.Versicherungen.push({id:neueId,name:text,betrag,datum,anbieter:e.anbieter||"",versicherungsnummer:e.versicherungsnummer||e.info||"",intervall:e.intervall||"monatlich",monat:e.monat||(d.getMonth()+1)});
+                context.repository.view.Versicherungen.push({...recurring,id:neueId,name:text,betrag,datum,anbieter:e.anbieter||"",versicherungsnummer:e.versicherungsnummer||e.info||"",intervall:e.intervall||"monatlich",monat:e.monat||(d.getMonth()+1)});
             } else if (ziel === "einnahmen") {
                 context.repository.view.Einnahmen ??= [];
                 const wiederholung=e.wiederholung || ((quelle==="fixkosten" || (quelle==="versicherungen" && e.intervall==="monatlich")) ? "monatlich" : "einmalig");
-                context.repository.view.Einnahmen.push({...(wiederholung==='monatlich'?{}:dependencies.entryTimeSnapshot(e)),id:neueId,text,betrag,von:e.von||"",datum,wiederholung});
+                context.repository.view.Einnahmen.push({...(wiederholung==='monatlich'?recurring:dependencies.entryTimeSnapshot(e)),id:neueId,text,betrag,von:e.von||"",datum,wiederholung});
             } else if (ziel === "reisen") {
                 const {land,kategorie="Sonstiges"}=extra;
                 if(!land || !context.repository.view.Reisen?.[land]) return;
