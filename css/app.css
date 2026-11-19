@@ -3226,9 +3226,9 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 #freshCostDialog .fc-menu { position:absolute;right:0;top:42px;z-index:2;min-width:180px;padding:6px;border:1px solid rgba(128,128,128,.3);border-radius:8px;background:var(--fc-card); }
 #freshCostDialog .fc-menu button { display:block;width:100%;min-height:40px;margin:0;padding:8px;text-align:left;border:0;border-radius:4px;background:transparent;color:var(--text);font-size:13px; }
 #freshCostDialog .fc-content { display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;flex:1;min-height:0;transform:none;transition:none;width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:auto;overscroll-behavior:contain; }
-#freshCostDialog .fc-summary { display:flex;align-items:center;flex:none;gap:10px;min-height:40px;margin:0 0 16px;padding:8px 10px;border-radius:5px;background:var(--fc-card);font-size:13px; }
+#freshCostDialog .fc-summary { display:flex;align-items:center;flex:none;gap:10px;min-height:40px;margin:0 0 16px;padding:8px 10px;border-radius:5px;background:var(--fc-card);font-size:16px; }
 #freshCostDialog .fc-summary svg { flex:none;color:var(--primary); }
-#freshCostDialog .fc-summary strong { margin-left:auto;font-size:13px;font-weight:600;white-space:nowrap; }
+#freshCostDialog .fc-summary strong { margin-left:auto;font-size:16px;font-weight:600;white-space:nowrap; }
 #freshCostDialog h3 { margin:0 0 12px;font-size:17px;line-height:1.3;font-weight:700; }
 #freshCostDialog label { display:block;margin:10px 0 5px;font-size:12px;line-height:1.4;opacity:1;color:var(--text); }
 #freshCostDialog label:first-child { margin-top:0; }
@@ -3238,9 +3238,9 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 #freshCostDialog .fc-preview { flex:none;margin:20px 0 0; }
 #freshCostDialog .fc-preview h3 { margin-bottom:8px; }
 #freshCostDialog .fc-table { padding:0 10px;background:var(--fc-card);border-radius:5px; }
-#freshCostDialog .fc-table > div { display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(128,128,128,.22);font-size:12px;line-height:1.4; }
+#freshCostDialog .fc-table > div { display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(128,128,128,.22);font-size:15px;line-height:1.4; }
 #freshCostDialog .fc-table > div:last-child { border:0; }
-#freshCostDialog .fc-table strong { font-weight:500;text-align:right; }
+#freshCostDialog .fc-table strong { font-weight:600;text-align:right; }
 #freshAfterValue { color:var(--primary); }
 #freshCostDialog .fc-actions { flex:none;margin-top:auto;padding:20px 0 10px; }
 #freshCostError { margin:0 0 8px;font-size:12px;line-height:1.4;color:#e87777; }
