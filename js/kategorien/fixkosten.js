@@ -298,10 +298,7 @@ Kostentracker.module({
         }
 
         function startEditKosten(id) {
-            if(!context.session.state.freshCostDetails){dependencies.openFreshCost(id);return;}
-            context.session.state.freshCostDetails=false;
-            context.session.state.editKostenId = id;
-            renderLaufendeKosten();
+            dependencies.openFreshCost(id);
         }
 
         function cancelEditKosten() {
