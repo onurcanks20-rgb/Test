@@ -3207,64 +3207,78 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 }
 
 /* New reference page. Scoped independently from the old form layouts. */
-#freshCostDialog { --fc-bg:#000;--fc-card:#171719;--fc-muted:#a0a0a7;box-sizing:border-box;position:fixed;inset:0;margin:0 auto;width:100%;max-width:480px;height:100dvh;max-height:100dvh;padding:calc(env(safe-area-inset-top,0px) + 22px) 18px 0;border:0;border-radius:0;background:var(--fc-bg);color:var(--text);overflow:hidden; }
-#freshCostDialog:not([open]) { display:none; }
-#freshCostDialog[open] { display:flex;flex-direction:column; }
-#freshCostDialog::backdrop { background:#000; }
-:root[data-theme="light"] #freshCostDialog { --fc-bg:#f2f2f7;--fc-card:#fff;--fc-muted:#686870; }
-:root[data-theme="light"] #freshCostDialog::backdrop { background:#f2f2f7; }
-#freshCostDialog .fc-head { display:flex;align-items:center;gap:8px;flex:none;padding:0;margin:0 0 16px; }
-#freshCostDialog .fc-head > div { flex:1;min-width:0; }
-#freshCostDialog .fc-head h2 { margin:0;font-size:19px;line-height:1.25;font-weight:700;letter-spacing:-.02em; }
-#freshCostDialog .fc-head p { margin:3px 0 0;font-size:12px;line-height:1.3;color:var(--fc-muted); }
+:is(#freshCostDialog,#categoryEditDialog) { --fc-bg:#000;--fc-card:#171719;--fc-muted:#a0a0a7;box-sizing:border-box;position:fixed;inset:0;margin:0 auto;width:100%;max-width:480px;height:100dvh;max-height:100dvh;padding:calc(env(safe-area-inset-top,0px) + 22px) 18px 0;border:0;border-radius:0;background:var(--fc-bg);color:var(--text);overflow:hidden; }
+:is(#freshCostDialog,#categoryEditDialog):not([open]) { display:none; }
+:is(#freshCostDialog,#categoryEditDialog)[open] { display:flex;flex-direction:column; }
+:is(#freshCostDialog,#categoryEditDialog)::backdrop { background:#000; }
+:root[data-theme="light"] :is(#freshCostDialog,#categoryEditDialog) { --fc-bg:#f2f2f7;--fc-card:#fff;--fc-muted:#686870; }
+:root[data-theme="light"] :is(#freshCostDialog,#categoryEditDialog)::backdrop { background:#f2f2f7; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-head { display:flex;align-items:center;gap:8px;flex:none;padding:0;margin:0 0 16px; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-head > div { flex:1;min-width:0; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-head h2 { margin:0;font-size:19px;line-height:1.25;font-weight:700;letter-spacing:-.02em; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-head p { margin:3px 0 0;font-size:12px;line-height:1.3;color:var(--fc-muted); }
 #freshCostName:focus { outline:none; }
-#freshCostDialog .fc-back { display:grid;place-items:center;flex:0 0 28px;width:28px;min-height:40px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--primary); }
-#freshCostDialog .alltag-icon { width:22px;height:22px; }
-#freshCostDialog .fc-tabs { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;gap:6px;margin:0 0 18px; }
-#freshCostDialog .fc-tabs button { box-sizing:border-box;min-width:0;min-height:40px;margin:0;padding:8px 4px;border:1px solid rgba(128,128,128,.3);border-radius:7px;background:transparent;color:var(--fc-muted);font-size:12px;line-height:20px;font-weight:500;cursor:pointer; }
-#freshCostDialog .fc-tabs button[aria-pressed="true"] { border-color:var(--primary);color:var(--primary); }
-#freshCostDialog .fc-tabs button:focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
-#freshCostDialog #freshCostHeading.sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0; }
-#freshCostDialog .fc-content { display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;flex:1;min-height:0;transform:none;transition:none;width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:auto;overscroll-behavior:contain; }
-#freshCostDialog .fc-summary { display:flex;align-items:center;flex:none;gap:10px;min-height:40px;margin:0 0 16px;padding:8px 10px;border-radius:5px;background:var(--fc-card);font-size:16px; }
-#freshCostDialog .fc-summary svg { flex:none;color:var(--primary); }
-#freshCostDialog .fc-summary strong { margin-left:auto;font-size:16px;font-weight:600;white-space:nowrap; }
-#freshCostDialog h3 { margin:0 0 12px;font-size:17px;line-height:1.3;font-weight:700; }
-#freshCostDialog label { display:block;margin:10px 0 5px;font-size:12px;line-height:1.4;opacity:1;color:var(--text); }
-#freshCostDialog label:first-child { margin-top:0; }
-#freshCostDialog input { display:block;box-sizing:border-box;width:100%;min-width:0;height:44px;min-height:44px;max-height:44px;margin:0;padding:9px 12px;border:1px solid #ddd;border-radius:7px;background:#fff;color:#111;color-scheme:light;-webkit-text-fill-color:#111;font-size:16px;line-height:24px; }
-#freshCostDialog input[type="date"] { appearance:none;-webkit-appearance:none;text-align:left; }
-#freshCostDialog input[type="date"]::-webkit-date-and-time-value { text-align:left;min-height:24px; }
-#freshCostDialog .fc-preview { flex:none;margin:20px 0 0; }
-#freshCostDialog .fc-preview h3 { margin-bottom:8px; }
-#freshCostDialog .fc-table { padding:0 10px;background:var(--fc-card);border-radius:5px; }
-#freshCostDialog .fc-table > div { display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(128,128,128,.22);font-size:15px;line-height:1.4; }
-#freshCostDialog .fc-table > div:last-child { border:0; }
-#freshCostDialog .fc-table strong { font-weight:600;text-align:right; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-back { display:grid;place-items:center;flex:0 0 28px;width:28px;min-height:40px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--primary); }
+:is(#freshCostDialog,#categoryEditDialog) .alltag-icon { width:22px;height:22px; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-tabs { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;gap:6px;margin:0 0 18px; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-tabs button { box-sizing:border-box;min-width:0;min-height:40px;margin:0;padding:8px 4px;border:1px solid rgba(128,128,128,.3);border-radius:7px;background:transparent;color:var(--fc-muted);font-size:12px;line-height:20px;font-weight:500;cursor:pointer; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-tabs button[aria-pressed="true"] { border-color:var(--primary);color:var(--primary); }
+:is(#freshCostDialog,#categoryEditDialog) .fc-tabs button:focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
+:is(#freshCostDialog,#categoryEditDialog) #freshCostHeading.sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-content { display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;flex:1;min-height:0;transform:none;transition:none;width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:auto;overscroll-behavior:contain; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-summary { display:flex;align-items:center;flex:none;gap:10px;min-height:40px;margin:0 0 16px;padding:8px 10px;border-radius:5px;background:var(--fc-card);font-size:16px; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-summary svg { flex:none;color:var(--primary); }
+:is(#freshCostDialog,#categoryEditDialog) .fc-summary strong { margin-left:auto;font-size:16px;font-weight:600;white-space:nowrap; }
+:is(#freshCostDialog,#categoryEditDialog) h3 { margin:0 0 12px;font-size:17px;line-height:1.3;font-weight:700; }
+:is(#freshCostDialog,#categoryEditDialog) label { display:block;margin:10px 0 5px;font-size:12px;line-height:1.4;opacity:1;color:var(--text); }
+:is(#freshCostDialog,#categoryEditDialog) label:first-child { margin-top:0; }
+:is(#freshCostDialog,#categoryEditDialog) input { display:block;box-sizing:border-box;width:100%;min-width:0;height:44px;min-height:44px;max-height:44px;margin:0;padding:9px 12px;border:1px solid #ddd;border-radius:7px;background:#fff;color:#111;color-scheme:light;-webkit-text-fill-color:#111;font-size:16px;line-height:24px; }
+:is(#freshCostDialog,#categoryEditDialog) input[type="date"] { appearance:none;-webkit-appearance:none;text-align:left; }
+:is(#freshCostDialog,#categoryEditDialog) input[type="date"]::-webkit-date-and-time-value { text-align:left;min-height:24px; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-preview { flex:none;margin:20px 0 0; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-preview h3 { margin-bottom:8px; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-table { padding:0 10px;background:var(--fc-card);border-radius:5px; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-table > div { display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(128,128,128,.22);font-size:15px;line-height:1.4; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-table > div:last-child { border:0; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-table strong { font-weight:600;text-align:right; }
 #freshAfterValue { color:var(--primary); }
-#freshCostDialog .fc-actions { flex:none;margin-top:auto;padding:20px 0 10px; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-actions { flex:none;margin-top:auto;padding:20px 0 10px; }
 #freshCostError { margin:0 0 8px;font-size:12px;line-height:1.4;color:#e87777; }
 #freshCostError:empty { display:none; }
-#freshCostDialog .fc-actions button { display:block;width:100%;min-height:40px;margin:0;padding:10px;border:0;border-radius:5px;background:var(--action-add);color:#fff;font-size:13px;line-height:20px;font-weight:600; }
-#freshCostDialog .fc-actions button:disabled { opacity:.5; }
-#freshCostDialog .fc-actions .fc-cancel { margin-top:4px;background:transparent;color:var(--text);font-weight:500; }
-#freshCostDialog .fc-nav { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;margin:0;padding:10px 0 max(10px,env(safe-area-inset-bottom));border-top:1px solid rgba(128,128,128,.25); }
-#freshCostDialog .fc-nav button { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:44px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--fc-muted);font-size:11px;font-weight:400; }
-#freshCostDialog .fc-nav button.active { color:var(--primary); }
-#freshCostDialog :is(input,button,summary):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-actions button { display:block;width:100%;min-height:40px;margin:0;padding:10px;border:0;border-radius:5px;background:var(--action-add);color:#fff;font-size:13px;line-height:20px;font-weight:600; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-actions button:disabled { opacity:.5; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-actions .fc-cancel { margin-top:4px;background:transparent;color:var(--text);font-weight:500; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-nav { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;margin:0;padding:10px 0 max(10px,env(safe-area-inset-bottom));border-top:1px solid rgba(128,128,128,.25); }
+:is(#freshCostDialog,#categoryEditDialog) .fc-nav button { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:44px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--fc-muted);font-size:11px;font-weight:400; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-nav button.active { color:var(--primary); }
+:is(#freshCostDialog,#categoryEditDialog) :is(input,button,summary):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
 .fresh-cost-curtain { position:fixed;inset:0;z-index:20001;background:var(--bg); }
-#freshCostDialog { z-index:20002; }
+:is(#freshCostDialog,#categoryEditDialog) { z-index:20002; }
 
 /* Full Fixkosten details share the approved field shape and page layout. */
-#freshCostDialog .fc-detail-group { margin:14px 0 0;padding:0;border-top:1px solid rgba(128,128,128,.2); }
-#freshCostDialog .fc-detail-group summary { cursor:pointer;padding:10px 0;font-size:14px;line-height:20px;font-weight:500;color:var(--fc-muted); }
-#freshCostDialog .fc-detail-group[open] { padding-bottom:8px; }
-#freshCostDialog .fc-schedule-row { display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:9px 0;border-bottom:1px solid rgba(128,128,128,.2);font-size:13px;line-height:1.4; }
-#freshCostDialog .fc-schedule-row strong { margin-left:auto;font-weight:600; }
-#freshCostDialog .fc-schedule-row button { width:auto;min-height:32px;margin:0;padding:5px 0;border:0;border-radius:0;background:transparent;color:#e87777;font-size:12px;font-weight:400; }
-#freshCostDialog input[type="hidden"] { display:none; }
-#freshCostDialog .reminder-control { margin:12px 0 0;padding:0;border:0;border-radius:0;background:transparent; }
-#freshCostDialog .reminder-toggle { display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;width:100%;margin:0;padding:6px 0;border:0;border-radius:0;background:transparent;color:var(--text);font-size:14px;text-align:left; }
-#freshCostDialog .reminder-days { padding:6px 0; }
-#freshCostDialog .reminder-days label { font-size:12px; }
-#freshCostDialog .fc-detail-group label:first-of-type { margin-top:0; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-detail-group { margin:14px 0 0;padding:0;border-top:1px solid rgba(128,128,128,.2); }
+:is(#freshCostDialog,#categoryEditDialog) .fc-detail-group summary { cursor:pointer;padding:10px 0;font-size:14px;line-height:20px;font-weight:500;color:var(--fc-muted); }
+:is(#freshCostDialog,#categoryEditDialog) .fc-detail-group[open] { padding-bottom:8px; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-schedule-row { display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:9px 0;border-bottom:1px solid rgba(128,128,128,.2);font-size:13px;line-height:1.4; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-schedule-row strong { margin-left:auto;font-weight:600; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-schedule-row button { width:auto;min-height:32px;margin:0;padding:5px 0;border:0;border-radius:0;background:transparent;color:#e87777;font-size:12px;font-weight:400; }
+:is(#freshCostDialog,#categoryEditDialog) input[type="hidden"] { display:none; }
+:is(#freshCostDialog,#categoryEditDialog) .reminder-control { margin:12px 0 0;padding:0;border:0;border-radius:0;background:transparent; }
+:is(#freshCostDialog,#categoryEditDialog) .reminder-toggle { display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;width:100%;margin:0;padding:6px 0;border:0;border-radius:0;background:transparent;color:var(--text);font-size:14px;text-align:left; }
+:is(#freshCostDialog,#categoryEditDialog) .reminder-days { padding:6px 0; }
+:is(#freshCostDialog,#categoryEditDialog) .reminder-days label { font-size:12px; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-detail-group label:first-of-type { margin-top:0; }
+
+#categoryEditDialog .booking-edit-form { display:block;width:100%;margin:0;padding:0; }
+#categoryEditDialog input,#categoryEditDialog select { box-sizing:border-box;width:100%;min-width:0;height:44px;min-height:44px;max-height:44px;margin:0;padding:9px 12px;border:1px solid #ddd;border-radius:7px;background:#fff;color:#111;color-scheme:light;-webkit-text-fill-color:#111;font-size:16px;line-height:24px; }
+#categoryEditDialog .booking-edit-form > label { margin-top:12px; }
+#categoryEditDialog .booking-edit-form > label:first-child { margin-top:0; }
+#categoryEditDialog .entry-date-time { margin-top:12px; }
+#categoryEditDialog .entry-date-time label { margin-top:0; }
+#categoryEditDialog .info-text { margin:8px 0;color:var(--fc-muted);font-size:12px; }
+#categoryEditDialog .recurring-options { margin:16px 0;border-radius:7px; }
+#categoryEditDialog .recurring-options summary { font-size:13px; }
+#categoryEditDialog .fc-content .hidden { display:none!important; }
+#categoryEditError { margin:0 0 8px;color:#e87777;font-size:12px; }
+#categoryEditError:empty { display:none; }
+#categoryAfterValue { color:var(--primary); }

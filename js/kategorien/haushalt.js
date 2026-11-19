@@ -1,6 +1,8 @@
 Kostentracker.module({
   "id": "js/kategorien/haushalt.js",
   "dependencies": [
+    "openCategoryEditor",
+    "finishCategoryEditor",
     "applyLetzteAlltagsKategorie",
     "beginUndoDelete",
     "closeStartQuickAdd",
@@ -249,8 +251,7 @@ Kostentracker.module({
         }
 
         function startEditHaushalt(id) {
-            context.session.state.editHaushaltId = id;
-            renderHaushalt();
+            return dependencies.openCategoryEditor("haushalt",id);
         }
 
         function saveEditHaushalt(id) {
@@ -311,6 +312,7 @@ Kostentracker.module({
             }
 
             if (dependencies.speichern() === false) return;
+            dependencies.finishCategoryEditor("haushalt",id);
             context.session.state.editHaushaltId = null;
             renderHaushalt();
         }

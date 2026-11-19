@@ -1,6 +1,8 @@
 Kostentracker.module({
   "id": "js/kategorien/freizeit.js",
   "dependencies": [
+    "openCategoryEditor",
+    "finishCategoryEditor",
     "applyLetzteAlltagsKategorie",
     "beginUndoDelete",
     "closeStartQuickAdd",
@@ -85,7 +87,9 @@ Kostentracker.module({
 
         function toggleFreizeitMonat(jahr,monat){ const key=jahr+'-'+monat; context.session.state.offeneFreizeitMonate[key]=!context.session.state.offeneFreizeitMonate[key]; renderFreizeit(); }
 
-        function startEditFreizeit(id){ context.session.state.editFreizeitId=id; renderFreizeit(); }
+        function startEditFreizeit(id){
+            return dependencies.openCategoryEditor("freizeit",id);
+        }
 
         function cancelEditFreizeit(){ context.session.state.editFreizeitId=null; renderFreizeit(); }
 
@@ -102,6 +106,7 @@ Kostentracker.module({
             const neuerMonat=new Date(datum).getMonth()+1; context.repository.view.Freizeit[neuerMonat]??=[];
             context.repository.view.Freizeit[neuerMonat].push({...found,...zeit,id:found.id,text:dependencies.formatText(text),betrag,datum,kategorie:found.kategorie || "Sonstiges",...dependencies.readReminderControl(`edit:freizeit:${id}`)});
             if (dependencies.speichern() === false) return;
+            dependencies.finishCategoryEditor("freizeit",id);
             context.session.state.editFreizeitId=null; renderFreizeit();
         }
 

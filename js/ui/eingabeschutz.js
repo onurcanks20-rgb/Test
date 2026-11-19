@@ -1,5 +1,5 @@
 Kostentracker.module({
- id:'js/ui/eingabeschutz.js', dependencies:['dismissFreshCost'], session:[], read:[], write:[], replace:false
+ id:'js/ui/eingabeschutz.js', dependencies:['dismissFreshCost','dismissCategoryEditor'], session:[], read:[], write:[], replace:false
 }, (context, dependencies) => {
  'use strict';
  const panelIds=new Set(['reisenAddPanel','reiseAddPanel','versAddPanel','hausAddPanel','freizeitAddPanel','einnahmenAddPanel','kostenAddPanel','geplantAddPanel','sparenInvestierenAddPanel']);
@@ -56,7 +56,7 @@ Kostentracker.module({
    if(name==='show'&&document.getElementById(args[0])&&!document.getElementById(args[0]).classList.contains('hidden'))return [];
    return all;
   }
-  if(name==='setFreshCostMode')return all.filter(root=>root.classList.contains('fc-content'));
+  if(name==='setFreshCostMode'||name==='setCategoryEditMode')return all.filter(root=>root.classList.contains('fc-content'));
   if(name==='closeStartQuickAdd')return all.filter(root=>document.getElementById('startQuickAddHost')?.contains(root));
   if(name==='closeCategoryAddPanels'||name==='toggleCategoryAdd')return all.filter(root=>panelIds.has(root.id));
   if(name==='openStartQuickAdd'||name==='erneutBuchenEintrag')return all;
@@ -83,7 +83,7 @@ Kostentracker.module({
   const submitting=submissions.test(name);
   if(submitting)submission={saved:false,roots:[...drafts.keys()].filter(root=>root.contains(document.activeElement)||Array.from(root.querySelectorAll?.('[onclick]')||[]).some(button=>(button.getAttribute('onclick')||'').includes(name+'(')))};
   depth++;
-  try{const result=fn(...args);if(navigation.test(name)&&result!==false)dependencies.dismissFreshCost?.();return result;}
+  try{const result=fn(...args);if(navigation.test(name)&&result!==false){dependencies.dismissFreshCost?.();dependencies.dismissCategoryEditor?.();}return result;}
   finally{
    depth--;
    // A successful save closes or replaces its form; a validation/storage failure leaves it dirty.

@@ -1,6 +1,8 @@
 Kostentracker.module({
   "id": "js/kategorien/versicherungen.js",
   "dependencies": [
+    "openCategoryEditor",
+    "finishCategoryEditor",
     "alltagCategoryIcon",
     "appendEmptyAction",
     "addItem",
@@ -400,11 +402,7 @@ Kostentracker.module({
         }
 
         function startEditVersicherung(id) {
-
-            context.session.state.editHaushaltId = null; // optional reset
-            context.session.state.editVersicherungId = id;
-
-            renderVersicherungen();
+            return dependencies.openCategoryEditor("versicherungen",id);
         }
 
         function cancelEditVersicherung() {
@@ -449,6 +447,7 @@ Kostentracker.module({
             Object.assign(v, dependencies.readReminderControl(`edit:versicherungen:${id}`));
 
             if (dependencies.speichern() === false) return;
+            dependencies.finishCategoryEditor("versicherungen",id);
 
             context.session.state.editVersicherungId = null;
             renderVersicherungen();

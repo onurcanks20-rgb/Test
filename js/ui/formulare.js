@@ -79,7 +79,7 @@ Kostentracker.module({
                 dependencies.addEintrag();
                 setTimeout(() => document.getElementById("betrag")?.focus(), 50);
             });
-            if (first) document.getElementById(first)?.focus();
+            if (first && !document.getElementById(first)?.closest("#categoryEditDialog")) document.getElementById(first)?.focus();
         }
 
         function setupQuickAddEnterFlow() {
@@ -104,12 +104,12 @@ Kostentracker.module({
 
         function setupReiseEditEnterFlow(id) {
             const first = setupEnterSequence(["editBetrag-" + id, "editText-" + id, "editDatum-" + id], () => dependencies.saveEditReise(id));
-            if (first) document.getElementById(first)?.focus();
+            if (first && !document.getElementById(first)?.closest("#categoryEditDialog")) document.getElementById(first)?.focus();
         }
 
         function setupLandEnter() {
             const first = setupEnterSequence(["landInput", "landBudget", "landVon", "landBis"], () => dependencies.addLand());
-            if (first) document.getElementById(first)?.focus();
+            if (first && !document.getElementById(first)?.closest("#categoryEditDialog")) document.getElementById(first)?.focus();
         }
 
         function setupLandEditEnterFlow(name) {
@@ -162,11 +162,11 @@ Kostentracker.module({
                 if (e.key === "Enter") {
                     e.preventDefault();
                     dependencies.addVersicherung();
-                    name.focus();
+                    if (!name.closest("#categoryEditDialog")) name.focus();
                 }
             };
 
-            name.focus();
+            if (!name.closest("#categoryEditDialog")) name.focus();
         }
 
         function setupVersicherungEditEnterFlow(id) {
@@ -189,27 +189,27 @@ Kostentracker.module({
                 }
             };
 
-            name.focus();
+            if (!name.closest("#categoryEditDialog")) name.focus();
         }
 
         function setupHaushaltEnterFlow() {
             const first = setupEnterSequence(["hausBetrag", "hausText", "hausDatum"], () => dependencies.addHaushalt());
-            if (first) document.getElementById(first)?.focus();
+            if (first && !document.getElementById(first)?.closest("#categoryEditDialog")) document.getElementById(first)?.focus();
         }
 
         function setupFreizeitEnterFlow() {
             const first = setupEnterSequence(["freizeitBetrag", "freizeitText", "freizeitDatum"], () => dependencies.addFreizeit());
-            if (first) document.getElementById(first)?.focus();
+            if (first && !document.getElementById(first)?.closest("#categoryEditDialog")) document.getElementById(first)?.focus();
         }
 
         function setupFreizeitEditEnterFlow(id) {
             const first = setupEnterSequence(["editFreizeitBetrag-" + id, "editFreizeitText-" + id, "editFreizeitDatum-" + id], () => dependencies.saveEditFreizeit(id));
-            if (first) document.getElementById(first)?.focus();
+            if (first && !document.getElementById(first)?.closest("#categoryEditDialog")) document.getElementById(first)?.focus();
         }
 
         function setupHaushaltEditEnterFlow(id) {
             const first = setupEnterSequence(["editBetrag-" + id, "editText-" + id, "editDatum-" + id], () => dependencies.saveEditHaushalt(id));
-            if (first) document.getElementById(first)?.focus();
+            if (first && !document.getElementById(first)?.closest("#categoryEditDialog")) document.getElementById(first)?.focus();
         }
 
         function setupKostenEnterFlow() {

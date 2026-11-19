@@ -1,6 +1,8 @@
 Kostentracker.module({
   "id": "js/kategorien/einnahmen.js",
   "dependencies": [
+    "openCategoryEditor",
+    "finishCategoryEditor",
     "alltagCategoryIcon",
     "appendEmptyAction",
     "appendDateGroupHeader",
@@ -201,7 +203,9 @@ Kostentracker.module({
             renderEinnahmen();
         }
 
-        function startEditEinnahme(id) { context.session.state.editEinnahmeId = id; renderEinnahmen(); }
+        function startEditEinnahme(id) {
+            return dependencies.openCategoryEditor("einnahmen",id);
+        }
 
         function cancelEditEinnahme() { context.session.state.editEinnahmeId = null; renderEinnahmen(); }
 
@@ -218,6 +222,7 @@ Kostentracker.module({
             const recurring=dependencies.readRecurringOptions("editRecIncome-"+id,context.repository.view.Einnahmen[index],wiederholung==="monatlich",datum);if(!recurring)return;
             context.repository.view.Einnahmen[index] = { ...context.repository.view.Einnahmen[index], ...zeit, ...recurring, text, betrag, von, datum, wiederholung, ...dependencies.readReminderControl(`edit:einnahmen:${id}`) };
             if (dependencies.speichern() === false) return;
+            dependencies.finishCategoryEditor("einnahmen",id);
             context.session.state.editEinnahmeId = null;
             renderEinnahmen();
         }

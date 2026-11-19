@@ -1,6 +1,8 @@
 Kostentracker.module({
   "id": "js/kategorien/reisen.js",
   "dependencies": [
+    "openCategoryEditor",
+    "finishCategoryEditor",
     "alltagCategoryIcon",
     "isTravelMode", "activeHomeTrips", "openTravelOverview",
     "appendEmptyAction",
@@ -851,10 +853,7 @@ Kostentracker.module({
         }
 
         function startEditReise(id) {
-
-            context.session.state.editReiseId = id;
-
-            renderListe();
+            return dependencies.openCategoryEditor("reisen",id);
         }
 
         function saveEditReise(id) {
@@ -896,6 +895,7 @@ Kostentracker.module({
             }
 
             if (dependencies.speichern() === false) return;
+            dependencies.finishCategoryEditor("reisen",id);
             context.session.state.editReiseId = null; // 👈 vereinheitlicht
             renderListe();
             renderReiseBudget();
