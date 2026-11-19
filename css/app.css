@@ -3252,9 +3252,7 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 :is(#freshCostDialog,#categoryEditDialog) .fc-actions button { display:block;width:100%;min-height:40px;margin:0;padding:10px;border:0;border-radius:5px;background:var(--action-add);color:#fff;font-size:13px;line-height:20px;font-weight:600; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-actions button:disabled { opacity:.5; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-actions .fc-cancel { margin-top:4px;background:transparent;color:var(--text);font-weight:500; }
-:is(#freshCostDialog,#categoryEditDialog) :is(input,button,summary):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
-/* Keep field focus rings inside the form's clipped scroll area. */
-:is(#freshCostDialog,#categoryEditDialog) .fc-content :is(input,select,textarea):focus-visible { outline:2px solid var(--primary);outline-offset:-3px; }
+:is(#freshCostDialog,#categoryEditDialog) :is(input,select,textarea,button,summary):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
 :is(#freshCostDialog,#categoryEditDialog) { z-index:20002; }
 
 /* Full Fixkosten details share the approved field shape and page layout. */
@@ -3300,8 +3298,11 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
  #categoryEditDialog .entry-date-time { grid-template-columns:minmax(0,1fr); }
 }
 
-/* Keep iPhone overlay scrollbars outside the form controls. */
-:is(#freshCostDialog,#categoryEditDialog) .fc-content { box-sizing:border-box;padding-right:8px;overflow-x:hidden;overflow-y:hidden; }
+/* Widen the scroll area for the outer focus ring and the iPhone scrollbar. */
+:is(#freshCostDialog,#categoryEditDialog) > .fc-content {
+    box-sizing:border-box;width:calc(100% - 26px);max-width:454px;
+    padding-inline:5px 13px;overflow-x:hidden;overflow-y:hidden;
+}
 
 /* Reserve page panning for the scrollable part of the editor. */
 :is(#freshCostDialog,#categoryEditDialog) :is(.fc-head,.fc-content:not(.editor-can-scroll)) { touch-action:pinch-zoom; }
