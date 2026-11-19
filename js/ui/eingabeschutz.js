@@ -1,5 +1,5 @@
 Kostentracker.module({
- id:'js/ui/eingabeschutz.js', dependencies:['dismissFreshCost','dismissCategoryEditor'], session:[], read:[], write:[], replace:false
+ id:'js/ui/eingabeschutz.js', dependencies:['dismissFreshCost','dismissCategoryEditor','dismissCategoryAdd'], session:[], read:[], write:[], replace:false
 }, (context, dependencies) => {
  'use strict';
  const panelIds=new Set(['reisenAddPanel','reiseAddPanel','versAddPanel','hausAddPanel','freizeitAddPanel','einnahmenAddPanel','kostenAddPanel','geplantAddPanel','sparenInvestierenAddPanel']);
@@ -57,6 +57,7 @@ Kostentracker.module({
    return all;
   }
   if(name==='setFreshCostMode'||name==='setCategoryEditMode')return all.filter(root=>root.classList.contains('fc-content'));
+  if(name==='cancelCategoryAdd')return all.filter(root=>root.parentElement?.id==='categoryAddHost');
   if(name==='closeStartQuickAdd')return all.filter(root=>document.getElementById('startQuickAddHost')?.contains(root));
   if(name==='closeCategoryAddPanels'||name==='toggleCategoryAdd')return all.filter(root=>panelIds.has(root.id));
   if(name==='openStartQuickAdd'||name==='erneutBuchenEintrag')return all;
@@ -83,11 +84,17 @@ Kostentracker.module({
   const submitting=submissions.test(name);
   if(submitting)submission={saved:false,roots:[...drafts.keys()].filter(root=>root.contains(document.activeElement)||Array.from(root.querySelectorAll?.('[onclick]')||[]).some(button=>(button.getAttribute('onclick')||'').includes(name+'(')))};
   depth++;
-  try{const result=fn(...args);if(navigation.test(name)&&result!==false){dependencies.dismissFreshCost?.(false);dependencies.dismissCategoryEditor?.(false);}return result;}
+  try{
+   if(navigation.test(name))dependencies.dismissCategoryAdd(false);
+   const result=fn(...args);
+   if(navigation.test(name)&&result!==false){dependencies.dismissFreshCost?.(false);dependencies.dismissCategoryEditor?.(false);}
+   return result;
+  }
   finally{
    depth--;
    // A successful save closes or replaces its form; a validation/storage failure leaves it dirty.
    if(submitting){
+    if(submission.saved&&submission.roots.some(root=>root.parentElement?.id==='categoryAddHost'))dependencies.dismissCategoryAdd();
     for(const [root,state]of drafts){
      if(!visible(root)||(submission.saved&&submission.roots.includes(root)))drafts.delete(root);
     }

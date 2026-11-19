@@ -2,6 +2,11 @@ Kostentracker.module({
   "id": "js/ui/schnelleingabe.js",
   "dependencies": [
     "addKategorie",
+    "openEditorLayer",
+    "closeEditorLayer",
+    "lockEditorBackground",
+    "unlockEditorBackground",
+    "cancelCategoryAdd",
     "getReiseInputCurrency",
     "prepareReiseExpenseRate",
     "updateReiseAmountPreview",
@@ -14,6 +19,7 @@ Kostentracker.module({
     "renderHomeUebersicht",
     "renderListe",
     "resetAddReminderForPanel",
+    "resetRecurringOptions",
     "setupQuickAddEnterFlow",
     "setupUniversalAddEnterFlow",
     "speichern",
@@ -200,10 +206,12 @@ Kostentracker.module({
             document.getElementById("addSheet")?.classList.add("hidden");
         }
 
-        function prepareStartQuickAdd(panelId) {
+        function prepareStartQuickAdd(panelId, focusCategoryAmount = true) {
             dependencies.prepareEntryTime(panelId);
             const today = dependencies.heuteISO();
             const dateIds = {
+                geplantAddPanel: "geplantDatum",
+                sparenInvestierenAddPanel: "sparenInvestierenDatum",
                 hausAddPanel: "hausDatum",
                 freizeitAddPanel: "freizeitDatum",
                 einnahmenAddPanel: "einnahmenDatum",
@@ -217,8 +225,8 @@ Kostentracker.module({
                 const monat = document.getElementById("versMonat");
                 if (monat) monat.value = String(dependencies.getAktuellerMonat());
             }
-            if (panelId === "hausAddPanel") applyLetzteAlltagsKategorie("haushalt");
-            if (panelId === "freizeitAddPanel") applyLetzteAlltagsKategorie("freizeit");
+            if (panelId === "hausAddPanel") applyLetzteAlltagsKategorie("haushalt", focusCategoryAmount);
+            if (panelId === "freizeitAddPanel") applyLetzteAlltagsKategorie("freizeit", focusCategoryAmount);
             if (panelId === "reiseAddPanel") { applyLetzteReiseKategorie(false); dependencies.prepareReiseExpenseRate(true); }
         }
 
@@ -276,6 +284,7 @@ Kostentracker.module({
         }
 
         function openStartQuickAdd(panelId, focusId) {
+            dismissCategoryAdd();
             closeAddSheet();
             closeStartQuickAdd();
             const panel = document.getElementById(panelId);
@@ -385,7 +394,47 @@ Kostentracker.module({
             setTimeout(() => document.getElementById(id)?.focus(), 80);
         }
 
+        let categoryAdd = null;
+
+        function dismissCategoryAdd(restoreScroll = true) {
+            if (!categoryAdd) return;
+            const {panel, location, editor} = categoryAdd;
+            categoryAdd = null;
+            panel.classList.add("hidden");
+            location.replaceWith(panel);
+            dependencies.closeEditorLayer(editor);
+            dependencies.unlockEditorBackground("category-add", restoreScroll);
+        }
+
+        function cancelCategoryAdd() {
+            dismissCategoryAdd();
+        }
+
+        function openCategoryAdd(panel) {
+            const editor = document.getElementById("categoryAddDialog");
+            const heading = document.getElementById("categoryAddTitle");
+            const host = document.getElementById("categoryAddHost");
+            const location = document.createComment("category form");
+            heading.textContent = panel.querySelector("h3").textContent;
+            const recurringPrefix = {
+                kostenAddPanel: "recCost",
+                versAddPanel: "recVers",
+                einnahmenAddPanel: "recIncome",
+                geplantAddPanel: "recPlanned",
+                sparenInvestierenAddPanel: "recSavings"
+            }[panel.id];
+            if (recurringPrefix) dependencies.resetRecurringOptions(recurringPrefix);
+            panel.before(location);
+            host.appendChild(panel);
+            panel.classList.remove("hidden");
+            categoryAdd = {panel, location, editor};
+            editor.querySelector(".fc-content").scrollTop = 0;
+            dependencies.lockEditorBackground("category-add");
+            dependencies.openEditorLayer(editor, heading, dependencies.cancelCategoryAdd);
+        }
+
         function closeCategoryAddPanels() {
+            dismissCategoryAdd();
             ["reisenAddPanel","reiseAddPanel","versAddPanel","hausAddPanel","freizeitAddPanel","einnahmenAddPanel","kostenAddPanel","geplantAddPanel","sparenInvestierenAddPanel"].forEach(id => {
                 document.getElementById(id)?.classList.add("hidden");
             });
@@ -394,17 +443,20 @@ Kostentracker.module({
         function toggleCategoryAdd(panelId, focusId) {
             const panel = document.getElementById(panelId);
             if (!panel) return;
-            const wirdGeoeffnet = panel.classList.contains("hidden");
+            const opening = panel.classList.contains("hidden");
             closeCategoryAddPanels();
-            if (wirdGeoeffnet) {
+            if (!opening) return;
+
+            dependencies.resetAddReminderForPanel(panelId);
+            prepareStartQuickAdd(panelId, false);
+            const firstId = dependencies.setupUniversalAddEnterFlow(panelId) || focusId;
+            if (panelId === "reisenAddPanel") {
                 panel.classList.remove("hidden");
-                dependencies.resetAddReminderForPanel(panelId);
-                prepareStartQuickAdd(panelId);
-                setTimeout(() => {
-                    const firstId = dependencies.setupUniversalAddEnterFlow(panelId) || focusId;
-                    document.getElementById(firstId)?.focus();
-                }, 80);
+                focusLater(firstId);
+                return;
             }
+
+            openCategoryAdd(panel);
         }
 
         function toggleFreiDetails() {
@@ -429,14 +481,14 @@ Kostentracker.module({
             }
         }
 
-        function applyLetzteAlltagsKategorie(bereich) {
+        function applyLetzteAlltagsKategorie(bereich, focusBetrag = true) {
             const isHaus = bereich === "haushalt";
             const prefix = isHaus ? "haus" : "freizeit";
             const fallback = isHaus ? "Einkauf" : "Essen / Trinken";
             const kat = getLetzteKategorie(bereich, fallback);
             const btn = document.querySelector(`#${prefix}KategorieGrid [data-category="${CSS.escape(kat)}"]`)
                 || document.querySelector(`#${prefix}KategorieGrid [data-category="${fallback}"]`);
-            setQuickCategory(prefix, btn?.dataset.category || fallback, btn);
+            setQuickCategory(prefix, btn?.dataset.category || fallback, btn, focusBetrag);
         }
 
         function focusBetragSchnell(id) {
@@ -450,7 +502,7 @@ Kostentracker.module({
             }, 40);
         }
 
-        function setQuickCategory(bereich, kategorie, button) {
+        function setQuickCategory(bereich, kategorie, button, focusBetrag = true) {
             const inputId = bereich === "haus" ? "hausKategorie" : "freizeitKategorie";
             const gridId = bereich === "haus" ? "hausKategorieGrid" : "freizeitKategorieGrid";
             const betragId = bereich === "haus" ? "hausBetrag" : "freizeitBetrag";
@@ -460,7 +512,7 @@ Kostentracker.module({
             button?.classList.add("selected");
 
             // Alltag schneller erfassen: Kategorie antippen -> Betragstastatur sofort bereit.
-            if (button) focusBetragSchnell(betragId);
+            if (button && focusBetrag) focusBetragSchnell(betragId);
         }
 
         function setReiseKategorie(kategorie, button, focusBetrag = true) {
@@ -591,5 +643,5 @@ Kostentracker.module({
             dependencies.renderListe();
         }
 
-return { refreshReiseQuickAmounts, getQuickAddFavoriten, renderQuickAddMenu, toggleQuickAddSettingsPanel, getQuickAmounts, renderQuickAmountSettings, saveQuickAmounts, renderQuickAddSettings, toggleQuickAddFavorit, moveQuickAddOption, openAddSheet, closeAddSheet, prepareStartQuickAdd, setQuickAmount, prepareQuickEntryLayout, openStartQuickAdd, closeStartQuickAdd, closeReiseAuswahlSheet, openReiseAuswahlFromHome, focusLater, closeCategoryAddPanels, toggleCategoryAdd, toggleFreiDetails, getLetzteKategorie, merkeLetzteKategorie, applyLetzteAlltagsKategorie, focusBetragSchnell, setQuickCategory, setReiseKategorie, applyLetzteReiseKategorie, renderQuickAdd, quickAdd, toggleManual, saveQuickAdd };
+return { dismissCategoryAdd, cancelCategoryAdd, refreshReiseQuickAmounts, getQuickAddFavoriten, renderQuickAddMenu, toggleQuickAddSettingsPanel, getQuickAmounts, renderQuickAmountSettings, saveQuickAmounts, renderQuickAddSettings, toggleQuickAddFavorit, moveQuickAddOption, openAddSheet, closeAddSheet, prepareStartQuickAdd, setQuickAmount, prepareQuickEntryLayout, openStartQuickAdd, closeStartQuickAdd, closeReiseAuswahlSheet, openReiseAuswahlFromHome, focusLater, closeCategoryAddPanels, toggleCategoryAdd, toggleFreiDetails, getLetzteKategorie, merkeLetzteKategorie, applyLetzteAlltagsKategorie, focusBetragSchnell, setQuickCategory, setReiseKategorie, applyLetzteReiseKategorie, renderQuickAdd, quickAdd, toggleManual, saveQuickAdd };
 });

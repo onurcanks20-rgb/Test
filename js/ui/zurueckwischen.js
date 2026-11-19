@@ -256,7 +256,7 @@ Kostentracker.module({
                 if (touch.clientX > 24 || touch.clientX < 0) return;
                 if (document.activeElement?.matches('input,textarea,select,[contenteditable="true"]')) return;
                 if (event.target.closest('input,textarea,select,[contenteditable="true"]')) return;
-                if (['paymentReviewDialog','pageInfoDialog','serverRestoreDialog','freshCostDialog','categoryEditDialog'].some(id => document.getElementById(id)?.open)) return;
+                if (['paymentReviewDialog','pageInfoDialog','serverRestoreDialog','freshCostDialog','categoryEditDialog','categoryAddDialog'].some(id => document.getElementById(id)?.open)) return;
                 if ([...document.querySelectorAll('.sheet-backdrop')].some(el => !el.classList.contains('hidden'))) return;
                 if (document.querySelector('.swipe-selection-mode')) return;
                 const view = activeView();

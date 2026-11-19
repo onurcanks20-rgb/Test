@@ -5,6 +5,7 @@ Kostentracker.module({
     "travelModeRoute", "isTravelMode", "openTravelOverview", "refreshTravelMode",
     "closeAddSheet",
     "closeCategoryAddPanels",
+    "toggleCategoryAdd",
     "getAktuellerMonat",
     "getGehaltstag",
     "getGehaltszeitraum",
@@ -149,10 +150,7 @@ Kostentracker.module({
             const datum = document.getElementById("sparenInvestierenDatum");
             if (datum && !datum.value) datum.value = dependencies.heuteISO();
             dependencies.renderSparenInvestieren();
-            if (direktHinzufuegen) {
-                document.getElementById("sparenInvestierenAddPanel")?.classList.remove("hidden");
-                setTimeout(() => document.getElementById("sparenInvestierenBetrag")?.focus(), 80);
-            }
+            if (direktHinzufuegen) dependencies.toggleCategoryAdd("sparenInvestierenAddPanel", "sparenInvestierenBetrag");
         }
 
         function openGeplanteAusgaben(direktHinzufuegen = false) {
@@ -164,10 +162,7 @@ Kostentracker.module({
             dependencies.updateGeplantKategorieSelect();
             dependencies.updateGeplantBereichUI(false);
             dependencies.renderGeplanteAusgaben();
-            if (direktHinzufuegen) {
-                document.getElementById("geplantAddPanel")?.classList.remove("hidden");
-                setTimeout(() => document.getElementById("geplantText")?.focus(), 80);
-            }
+            if (direktHinzufuegen) dependencies.toggleCategoryAdd("geplantAddPanel", "geplantText");
         }
 
         function openGrafik() {

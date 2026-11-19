@@ -68,7 +68,7 @@ function openEmptyAdd(area){
  if(!panel)return;
  if(panel.classList.contains('hidden'))dependencies.toggleCategoryAdd(panelId,focusId);
  else document.getElementById(focusId)?.focus();
- panel.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+ if(panelId==='reisenAddPanel')panel.scrollIntoView?.({behavior:'smooth',block:'nearest'});
 }
 function appendEmptyAction(host,area){
  const action=emptyActions[area];if(!host||!action)return;

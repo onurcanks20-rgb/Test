@@ -4,6 +4,8 @@ Kostentracker.module({
     "addEinnahme",
     "addEintrag",
     "addFreizeit",
+    "addGeplanteAusgabe",
+    "addSparenInvestieren",
     "addHaushalt",
     "addKosten",
     "addLand",
@@ -62,6 +64,9 @@ Kostentracker.module({
 
         function setupUniversalAddEnterFlow(panelId) {
             const flows = {
+                reiseAddPanel: { ids: ["betrag","text","datum"], submit: () => dependencies.addEintrag() },
+                geplantAddPanel: { ids: ["geplantText","geplantBetrag","geplantDatum"], submit: () => dependencies.addGeplanteAusgabe() },
+                sparenInvestierenAddPanel: { ids: ["sparenInvestierenBetrag","sparenInvestierenText","sparenInvestierenDatum"], submit: () => dependencies.addSparenInvestieren() },
                 reisenAddPanel: { ids: ["landInput"], submit: () => dependencies.addLand() },
                 versAddPanel: { ids: ["versName","versBetrag","versDatum","versAnbieter","versNummer","versIntervall","versMonat"], submit: () => dependencies.addVersicherung() },
                 hausAddPanel: { ids: ["hausBetrag","hausText","hausDatum"], submit: () => dependencies.addHaushalt() },

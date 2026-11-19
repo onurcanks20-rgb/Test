@@ -197,7 +197,7 @@ Kostentracker.module({
  dialog?.addEventListener('cancel',event=>{event.preventDefault();d.cancelEditCategoryEditor();});
  // Only enable the scroll surface when its content actually exceeds its
  // viewport. Ignore subpixel rounding, which can create a 1px iOS scrollbar.
- for(const editorId of ['freshCostDialog','categoryEditDialog']){
+ for(const editorId of ['freshCostDialog','categoryEditDialog','categoryAddDialog']){
   const editor=$(editorId),surface=editor?.querySelector('.fc-content');if(!surface)continue;
   keepEditorScrollInside(editor,surface);
   let frame=0;
