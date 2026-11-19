@@ -2375,17 +2375,17 @@ button:disabled { opacity:.5; cursor:default; }
 .alltag-page .empty-state-title { font-size:16px; }
 .alltag-page .empty-state-text { font-size:13px;line-height:1.5;color:var(--alltag-muted); }
 /* Gemeinsame Navigation bleibt funktional identisch, neue Symbole nur auf diesen zwei Seiten. */
-body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav {
+body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open], #categoryAddDialog[open]) #categoryBottomNav {
     left:0;bottom:0;transform:none;width:100%;max-width:none;
     gap:0;padding:4px 16px max(4px, env(safe-area-inset-bottom));
     border:0;border-top:1px solid rgba(128,128,128,.18);border-radius:0;
     background:var(--bg);box-shadow:none;
 }
-body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav button { min-height:44px;padding:2px 8px;font-size:11px;font-weight:500;line-height:1.2;background:transparent; }
-body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav .nav-icon { display:grid;place-items:center;min-height:24px;margin-bottom:1px; }
-body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav .alltag-nav-emoji { display:none; }
-body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav .alltag-nav-vector { display:block;width:24px;height:24px; }
-body:has(#freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav {
+body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open], #categoryAddDialog[open]) #categoryBottomNav button { min-height:44px;padding:2px 8px;font-size:11px;font-weight:500;line-height:1.2;background:transparent; }
+body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open], #categoryAddDialog[open]) #categoryBottomNav .nav-icon { display:grid;place-items:center;min-height:24px;margin-bottom:1px; }
+body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open], #categoryAddDialog[open]) #categoryBottomNav .alltag-nav-emoji { display:none; }
+body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open], #categoryAddDialog[open]) #categoryBottomNav .alltag-nav-vector { display:block;width:24px;height:24px; }
+body:has(#freshCostDialog[open], #categoryEditDialog[open], #categoryAddDialog[open]) #categoryBottomNav {
     display:grid;z-index:20003;touch-action:pinch-zoom;
 }
 @media(max-width:360px) {
@@ -3210,24 +3210,24 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 }
 
 /* New reference page. Scoped independently from the old form layouts. */
-:is(#freshCostDialog,#categoryEditDialog) { --fc-bg:#000;--fc-card:#171719;--fc-muted:#a0a0a7;box-sizing:border-box;position:fixed;inset:0 0 var(--editor-nav-height, 0px);margin:0 auto;width:100%;max-width:none;height:auto;max-height:none;padding:calc(env(safe-area-inset-top,0px) + 22px) 0 0;border:0;border-radius:0;background:var(--fc-bg);color:var(--text);overflow:hidden; }
-:is(#freshCostDialog,#categoryEditDialog):not([open]) { display:none; }
-:is(#freshCostDialog,#categoryEditDialog)[open] { display:flex;flex-direction:column;overscroll-behavior:none; }
-:root[data-theme="light"] :is(#freshCostDialog,#categoryEditDialog) { --fc-bg:#f2f2f7;--fc-card:#fff;--fc-muted:#686870; }
-:is(#freshCostDialog,#categoryEditDialog) .fc-head { display:flex;align-items:center;gap:8px;flex:none;padding:0;margin:0 0 16px; }
-:is(#freshCostDialog,#categoryEditDialog) .fc-head > div { flex:1;min-width:0; }
-:is(#freshCostDialog,#categoryEditDialog) .fc-head h2 { margin:0;font-size:19px;line-height:1.25;font-weight:700;letter-spacing:-.02em; }
-:is(#freshCostDialog,#categoryEditDialog) .fc-head p { margin:3px 0 0;font-size:12px;line-height:1.3;color:var(--fc-muted); }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) { --fc-bg:#000;--fc-card:#171719;--fc-muted:#a0a0a7;box-sizing:border-box;position:fixed;inset:0 0 var(--editor-nav-height, 0px);margin:0 auto;width:100%;max-width:none;height:auto;max-height:none;padding:calc(env(safe-area-inset-top,0px) + 22px) 0 0;border:0;border-radius:0;background:var(--fc-bg);color:var(--text);overflow:hidden; }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog):not([open]) { display:none; }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog)[open] { display:flex;flex-direction:column;overscroll-behavior:none; }
+:root[data-theme="light"] :is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) { --fc-bg:#f2f2f7;--fc-card:#fff;--fc-muted:#686870; }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) .fc-head { display:flex;align-items:center;gap:8px;flex:none;padding:0;margin:0 0 16px; }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) .fc-head > div { flex:1;min-width:0; }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) .fc-head h2 { margin:0;font-size:19px;line-height:1.25;font-weight:700;letter-spacing:-.02em; }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) .fc-head p { margin:3px 0 0;font-size:12px;line-height:1.3;color:var(--fc-muted); }
 #freshCostName:focus,#categoryEditName:focus { outline:none; }
-:is(#freshCostDialog,#categoryEditDialog) .fc-back { display:grid;place-items:center;flex:0 0 28px;width:28px;min-height:40px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--primary); }
-:is(#freshCostDialog,#categoryEditDialog) .alltag-icon { width:22px;height:22px; }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) .fc-back { display:grid;place-items:center;flex:0 0 28px;width:28px;min-height:40px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--primary); }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) .alltag-icon { width:22px;height:22px; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-tabs { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;gap:6px;margin:0 0 18px; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-tabs button { box-sizing:border-box;min-width:0;min-height:40px;margin:0;padding:8px 4px;border:1px solid rgba(128,128,128,.3);border-radius:7px;background:transparent;color:var(--fc-muted);font-size:12px;line-height:20px;font-weight:500;cursor:pointer; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-tabs button[aria-pressed="true"] { border-color:var(--primary);color:var(--primary); }
 :is(#freshCostDialog,#categoryEditDialog) .fc-tabs button:focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
 :is(#freshCostDialog,#categoryEditDialog) #freshCostHeading.sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0; }
-:is(#freshCostDialog,#categoryEditDialog) .fc-content { display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;flex:1;min-height:0;transform:none;transition:none;width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:auto;overscroll-behavior:contain; }
-:is(#freshCostDialog,#categoryEditDialog) > :is(.fc-head,.fc-content) {
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) .fc-content { display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;flex:1;min-height:0;transform:none;transition:none;width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:auto;overscroll-behavior:contain; }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) > :is(.fc-head,.fc-content) {
     width:calc(100% - 36px);max-width:444px;margin-inline:auto;
 }
 :is(#freshCostDialog,#categoryEditDialog) .fc-summary { display:flex;align-items:center;flex:none;gap:10px;min-height:40px;margin:0 0 16px;padding:8px 10px;border-radius:5px;background:var(--fc-card);font-size:16px; }
@@ -3252,8 +3252,8 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 :is(#freshCostDialog,#categoryEditDialog) .fc-actions button { display:block;width:100%;min-height:40px;margin:0;padding:10px;border:0;border-radius:5px;background:var(--action-add);color:#fff;font-size:13px;line-height:20px;font-weight:600; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-actions button:disabled { opacity:.5; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-actions .fc-cancel { margin-top:4px;background:transparent;color:var(--text);font-weight:500; }
-:is(#freshCostDialog,#categoryEditDialog) :is(input,select,textarea,button,summary):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
-:is(#freshCostDialog,#categoryEditDialog) { z-index:20002; }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) :is(input,select,textarea,button,summary):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) { z-index:20002; }
 
 /* Full Fixkosten details share the approved field shape and page layout. */
 :is(#freshCostDialog,#categoryEditDialog) .fc-detail-group { margin:14px 0 0;padding:0;border-top:1px solid rgba(128,128,128,.2); }
@@ -3299,11 +3299,25 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 }
 
 /* Widen the scroll area for the outer focus ring and the iPhone scrollbar. */
-:is(#freshCostDialog,#categoryEditDialog) > .fc-content {
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) > .fc-content {
     box-sizing:border-box;width:calc(100% - 26px);max-width:454px;
     padding-inline:5px 13px;overflow-x:hidden;overflow-y:hidden;
 }
 
 /* Reserve page panning for the scrollable part of the editor. */
-:is(#freshCostDialog,#categoryEditDialog) :is(.fc-head,.fc-content:not(.editor-can-scroll)) { touch-action:pinch-zoom; }
-:is(#freshCostDialog,#categoryEditDialog) .fc-content.editor-can-scroll { overflow-y:auto; }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) :is(.fc-head,.fc-content:not(.editor-can-scroll)) { touch-action:pinch-zoom; }
+:is(#freshCostDialog,#categoryEditDialog,#categoryAddDialog) .fc-content.editor-can-scroll { overflow-y:auto; }
+
+/* Category entry forms share the full-screen editor and keep their existing fields. */
+#categoryAddDialog #categoryAddHost { flex:none; }
+#categoryAddDialog .category-add-panel { margin:0;padding:0;border:0;background:none; }
+#categoryAddDialog .category-add-panel > h3,
+#categoryAddDialog .reise-add-cancel { display:none; }
+#categoryAddDialog .category-add-panel .booking-field-label:first-of-type { margin-top:0; }
+#categoryAddDialog .category-add-panel > .btn-primary {
+    min-height:44px;margin:16px 0 0;border-radius:7px;background:var(--action-add);
+}
+#categoryAddDialog .fc-actions { flex:none;padding:4px 0 14px; }
+#categoryAddDialog .fc-cancel {
+    min-height:44px;margin:0;background:transparent;color:var(--text);font-weight:500;
+}
