@@ -1,5 +1,5 @@
-Kostentracker.module({id:'js/ui/fixkosten-neu.js',dependencies:['lockEditorBackground','unlockEditorBackground','escapeHtml','formatText','formatInputBetrag','normalizeFixkostenZuordnungTage','reminderControlHtml','readReminderControl','cancelEditFreshKosten','parseBetrag','formatBetragText','formatDatum','parseISODate','heuteISO','isoAusDate','addDays','datumMitSicheremTag','recurringAmount','recurringChanges','recurringDateValid','speichern','renderLaufendeKosten','renderHomeUebersicht','startEditKosten'],session:['state'],read:['Laufende Kosten'],write:['Laufende Kosten'],replace:false},(context,d)=>{
- 'use strict';let id=null,mode='details',fallback=[],draftChanges=[];
+Kostentracker.module({id:'js/ui/fixkosten-neu.js',dependencies:['lockEditorBackground','unlockEditorBackground','openEditorLayer','closeEditorLayer','escapeHtml','formatText','formatInputBetrag','normalizeFixkostenZuordnungTage','reminderControlHtml','readReminderControl','cancelEditFreshKosten','parseBetrag','formatBetragText','formatDatum','parseISODate','heuteISO','isoAusDate','addDays','datumMitSicheremTag','recurringAmount','recurringChanges','recurringDateValid','speichern','renderLaufendeKosten','renderHomeUebersicht','startEditKosten'],session:['state'],read:['Laufende Kosten'],write:['Laufende Kosten'],replace:false},(context,d)=>{
+ 'use strict';let id=null,mode='details',draftChanges=[];
  const $=id=>document.getElementById(id),dialog=$('freshCostDialog');
  const entry=()=>context.repository.view['Laufende Kosten']?.fix?.find(e=>String(e.id)===String(id));
  function freshCostProposal(e,kind,raw,date){
@@ -59,7 +59,7 @@ Kostentracker.module({id:'js/ui/fixkosten-neu.js',dependencies:['lockEditorBackg
   $('freshDetailsFields').classList.toggle('hidden',mode!=='details');$('freshPriceFields').classList.toggle('hidden',mode!=='price');$('freshEndFields').classList.toggle('hidden',mode!=='end');$('freshCostPreview').classList.toggle('hidden',mode==='details');
   $('freshCostHeading').textContent=mode==='details'?'Details bearbeiten':mode==='end'?'Abo beenden':'Betrag ändern';$('freshCostSave').textContent=mode==='details'?'Details speichern':mode==='end'?'Enddatum speichern':'Änderung vormerken';$('freshCostError').textContent='';for(const tabMode of ['details','price','end']){$('freshTab'+tabMode[0].toUpperCase()+tabMode.slice(1)).setAttribute('aria-pressed',String(mode===tabMode));}refreshFreshCost();
  }
- function dismissFreshCost(restoreScroll=true){if(id===null)return;id=null;if(dialog.open&&dialog.close)dialog.close();else dialog.removeAttribute('open');d.unlockEditorBackground('fixkosten',restoreScroll);$('freshCostCurtain').classList.add('hidden');for(const [n,was]of fallback)n.inert=was;fallback=[];}
+ function dismissFreshCost(restoreScroll=true){if(id===null)return;id=null;d.closeEditorLayer(dialog);d.unlockEditorBackground('fixkosten',restoreScroll);}
  function cancelEditFreshKosten(){dismissFreshCost();}
  function startEditFreshDetails(){setFreshCostMode('details');}
  function saveEditFreshKosten(){
@@ -74,8 +74,7 @@ Kostentracker.module({id:'js/ui/fixkosten-neu.js',dependencies:['lockEditorBackg
   $('freshCostName').textContent=e.text||e.name||'Fixkosten';$('freshCostCurrent').textContent=d.formatBetragText(d.recurringAmount(e,d.heuteISO()));
   $('editFreshAmount').value='';$('editFreshDate').value=e.datum>d.heuteISO()?e.datum:d.heuteISO();$('editFreshEnd').value=e.wiederholungEnde||'';setFreshCostMode('details');
   context.session.state.editKostenId=null;d.renderLaufendeKosten();d.lockEditorBackground('fixkosten');
-  if(dialog.showModal)dialog.showModal();else{dialog.setAttribute('open','');$('freshCostCurtain').classList.remove('hidden');for(const n of document.body.children)if(n!==dialog&&n.id!=='freshCostCurtain'&&n.tagName!=='SCRIPT'){fallback.push([n,!!n.inert]);n.inert=true;}}
-  $('freshCostName').focus({preventScroll:true});return true;
+  d.openEditorLayer(dialog,$('freshCostName'),d.cancelEditFreshKosten);return true;
  }
  for(const name of ['editFreshAmount','editFreshDate','editFreshEnd','editFreshName','editFreshBase','editFreshStart','editFreshInfo','editFreshProvider','editFreshWindow','editFreshDetailsEnd','editFreshScheduleMark']){ $(name)?.addEventListener('input',refreshFreshCost);$(name)?.addEventListener('change',refreshFreshCost); }
  dialog?.addEventListener('cancel',event=>{event.preventDefault();d.cancelEditFreshKosten();});

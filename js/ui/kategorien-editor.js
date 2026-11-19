@@ -17,54 +17,84 @@ Kostentracker.module({
   freizeit:{key:'Freizeit',label:'Freizeit',state:'editFreizeitId',render:'renderFreizeit',save:'saveEditFreizeit',field:'editFreizeitBetrag-',reminder:'freizeit'},
   reisen:{key:'Reisen',label:'Reisen',state:'editReiseId',render:'renderListe',save:'saveEditReise',field:'editBetrag-',reminder:'reisen'}
  };
- let active=null,mode='details',fallback=[];
- // iOS needs a fixed page, not only overflow:hidden, to stop the document
- // behind a full-screen dialog from scrolling. Preserve the category position
- // and original inline styles; navigation deliberately starts at the top.
+ let active=null,mode='details';
+ const navigation=$('categoryBottomNav');
+ // Keep the document in normal flow so the fixed navigation retains its
+ // viewport position. The editor and navigation intercept scroll gestures.
  const backgroundOwners=new Set();let background=null;
  function lockEditorBackground(owner){
-  if(backgroundOwners.has(owner))return;
-  if(!backgroundOwners.size){
-   const body=document.body,root=document.documentElement;
-   const bodyKeys=['position','top','left','right','width','overflow','boxSizing'];
-   const rootKeys=['overflow','overscrollBehavior','scrollBehavior'];
-   background={x:window.scrollX||0,y:window.scrollY||0,restore:true,body:Object.fromEntries(bodyKeys.map(key=>[key,body.style[key]||''])),root:Object.fromEntries(rootKeys.map(key=>[key,root.style[key]||'']))};
-   root.style.overflow='hidden';root.style.overscrollBehavior='none';root.style.scrollBehavior='auto';
-   Object.assign(body.style,{position:'fixed',top:-background.y+'px',left:-background.x+'px',right:'0',width:'100%',overflow:'hidden',boxSizing:'border-box'});
-  }
+  if(!backgroundOwners.size)background={x:window.scrollX||0,y:window.scrollY||0,restore:true};
   backgroundOwners.add(owner);
  }
  function unlockEditorBackground(owner,restoreScroll=true){
   if(!backgroundOwners.delete(owner)||!background)return;
   if(!restoreScroll)background.restore=false;
   if(backgroundOwners.size)return;
-  const saved=background;background=null;Object.assign(document.body.style,saved.body);
-  const root=document.documentElement;Object.assign(root.style,saved.root,{scrollBehavior:'auto'});
-  window.scrollTo(saved.restore?saved.x:0,saved.restore?saved.y:0);root.style.scrollBehavior=saved.root.scrollBehavior;
+  const saved=background;background=null;
+  const left=saved.restore?saved.x:0,top=saved.restore?saved.y:0;
+  if(window.scrollX!==left||window.scrollY!==top)window.scrollTo({left,top,behavior:'instant'});
  }
- // Keep touch and wheel scrolling inside the editor, including on browsers
- // that pass gestures through a modal when its contents fit or reach an edge.
- function keepEditorScrollInside(editor,surface){
-  function canScroll(target,deltaY){
-   if(!surface.contains(target)||!surface.classList.contains('editor-can-scroll'))return false;
+ // Keep the existing navigation in the normal page so iOS uses one viewport
+ // anchor. The editor occupies only the space above that navigation.
+ const editorLayers=new Map();
+ function openEditorLayer(editor,heading,cancel){
+  const hiddenBackground=new Map(),previousFocus=document.activeElement;
+  for(const node of document.body.children){
+   if(node===editor||node===navigation||node.tagName==='SCRIPT')continue;
+   hiddenBackground.set(node,!!node.inert);
+   node.inert=true;
+  }
+  editorLayers.set(editor,{hiddenBackground,previousFocus,cancel});
+  editor.setAttribute('open','');
+  fitEditorAboveNavigation();
+  heading.focus({preventScroll:true});
+ }
+ function closeEditorLayer(editor){
+  const layer=editorLayers.get(editor);if(!layer)return;
+  editor.removeAttribute('open');editorLayers.delete(editor);
+  editor.style.removeProperty('--editor-nav-height');
+  for(const [node,wasInert]of layer.hiddenBackground)node.inert=wasInert;
+  if(layer.previousFocus?.isConnected)layer.previousFocus.focus({preventScroll:true});
+ }
+ function fitEditorAboveNavigation(){
+  if(!editorLayers.size)return;
+  const height=navigation?.getBoundingClientRect().height||0;
+  for(const editor of editorLayers.keys())editor.style.setProperty('--editor-nav-height',height+'px');
+ }
+ if(navigation&&typeof ResizeObserver==='function')new ResizeObserver(fitEditorAboveNavigation).observe(navigation);
+ window.addEventListener('resize',fitEditorAboveNavigation);
+ window.visualViewport?.addEventListener('resize',fitEditorAboveNavigation);
+ document.addEventListener('keydown',event=>{
+  if(event.key!=='Escape'||event.defaultPrevented)return;
+  for(const [editor,layer]of editorLayers){
+   if(!editor.contains(event.target)&&!navigation?.contains(event.target))continue;
+   event.preventDefault();layer.cancel();break;
+  }
+ });
+ // Cancel gestures on the navigation and at the edges of the form, where
+ // Safari could otherwise scroll the page or move its browser chrome.
+ function keepEditorScrollInside(target,surface){
+  function canScroll(node,deltaY){
+   if(!surface?.contains(node)||!surface.classList.contains('editor-can-scroll'))return false;
    const remaining=surface.scrollHeight-surface.clientHeight-surface.scrollTop;
    return deltaY>0?remaining>1:deltaY<0&&surface.scrollTop>0;
   }
-  editor.addEventListener('wheel',event=>{
-   if(event.cancelable&&!event.ctrlKey&&!canScroll(event.target,event.deltaY))event.preventDefault();
+  target.addEventListener('wheel',event=>{
+   if(backgroundOwners.size&&event.cancelable&&!event.ctrlKey&&!canScroll(event.target,event.deltaY))event.preventDefault();
   },{passive:false});
   let lastTouchY;
-  editor.addEventListener('touchstart',event=>{
+  target.addEventListener('touchstart',event=>{
    lastTouchY=event.touches.length===1?event.touches[0].clientY:undefined;
   },{passive:true});
-  editor.addEventListener('touchmove',event=>{
+  target.addEventListener('touchmove',event=>{
    if(event.touches.length!==1){lastTouchY=undefined;return;}
    const y=event.touches[0].clientY;
    const deltaY=lastTouchY===undefined?0:lastTouchY-y;
    lastTouchY=y;
-   if(event.cancelable&&!canScroll(event.target,deltaY))event.preventDefault();
+   if(backgroundOwners.size&&event.cancelable&&!canScroll(event.target,deltaY))event.preventDefault();
   },{passive:false});
  }
+ if(navigation)keepEditorScrollInside(navigation);
  function findEntry(kind,id){
   const cfg=configs[kind];if(!cfg)return null;const data=context.repository.view[cfg.key];
   const lists=Array.isArray(data)?[data]:Object.values(kind==='reisen'?data?.[context.session.aktuellesLand]||{}:data||{});
@@ -101,13 +131,11 @@ Kostentracker.module({
   $('categoryEditCurrent').textContent=d.formatBetragText(recurring(kind,e)?d.recurringAmount(e,kind==='sparen-investieren'?d.getGehaltszeitraum().start:d.heuteISO()):e.betrag);
   if(!mountDetails()){active=null;return false;}
   setCategoryEditMode('details',false);lockEditorBackground('category');
-  if(dialog.showModal)dialog.showModal();else{dialog.setAttribute('open','');$('categoryEditorCurtain').classList.remove('hidden');for(const node of document.body.children)if(node!==dialog&&node.id!=='categoryEditorCurtain'&&node.tagName!=='SCRIPT'){fallback.push([node,!!node.inert]);node.inert=true;}}
-  $('categoryEditName').focus({preventScroll:true});return true;
+  openEditorLayer(dialog,$('categoryEditName'),d.cancelEditCategoryEditor);return true;
  }
  function dismissCategoryEditor(restoreScroll=true){
   if(!active)return;const cfg=active.cfg;active=null;context.session.state[cfg.state]=null;
-  if(dialog.open&&dialog.close)dialog.close();else dialog.removeAttribute('open');
-  unlockEditorBackground('category',restoreScroll);$('categoryEditorCurtain').classList.add('hidden');for(const [node,was]of fallback)node.inert=was;fallback=[];$('categoryEditDetails').replaceChildren();
+  closeEditorLayer(dialog);unlockEditorBackground('category',restoreScroll);$('categoryEditDetails').replaceChildren();
  }
  function cancelEditCategoryEditor(){dismissCategoryEditor();}
  function finishCategoryEditor(kind,id){if(active&&active.kind===kind&&String(active.id)===String(id))dismissCategoryEditor();}
@@ -188,5 +216,5 @@ Kostentracker.module({
   window.addEventListener('resize',schedule);window.visualViewport?.addEventListener('resize',schedule);document.fonts?.ready.then(schedule);
   schedule();
  }
- return {lockEditorBackground,unlockEditorBackground,openCategoryEditor,dismissCategoryEditor,cancelEditCategoryEditor,finishCategoryEditor,setCategoryEditMode,refreshCategoryEditor,saveEditCategoryEditor,categoryEditorProposal};
+ return {lockEditorBackground,unlockEditorBackground,openEditorLayer,closeEditorLayer,openCategoryEditor,dismissCategoryEditor,cancelEditCategoryEditor,finishCategoryEditor,setCategoryEditMode,refreshCategoryEditor,saveEditCategoryEditor,categoryEditorProposal};
 });
