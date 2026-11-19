@@ -57,7 +57,7 @@ Kostentracker.module({id:'js/ui/fixkosten-neu.js',dependencies:['escapeHtml','fo
   mode=['details','price','end'].includes(next)?next:'details';hydrateFreshDetails(e);
   $('editFreshAmount').value='';$('editFreshDate').value=e.datum>d.heuteISO()?e.datum:d.heuteISO();$('editFreshEnd').value=e.wiederholungEnde||'';
   $('freshDetailsFields').classList.toggle('hidden',mode!=='details');$('freshPriceFields').classList.toggle('hidden',mode!=='price');$('freshEndFields').classList.toggle('hidden',mode!=='end');$('freshCostPreview').classList.toggle('hidden',mode==='details');
-  $('freshCostHeading').textContent=mode==='details'?'Details bearbeiten':mode==='end'?'Abo beenden':'Betrag ändern';$('freshCostSave').textContent=mode==='details'?'Details speichern':mode==='end'?'Enddatum speichern':'Änderung vormerken';$('freshCostError').textContent='';$('freshCostMenu').open=false;refreshFreshCost();
+  $('freshCostHeading').textContent=mode==='details'?'Details bearbeiten':mode==='end'?'Abo beenden':'Betrag ändern';$('freshCostSave').textContent=mode==='details'?'Details speichern':mode==='end'?'Enddatum speichern':'Änderung vormerken';$('freshCostError').textContent='';for(const tabMode of ['details','price','end']){$('freshTab'+tabMode[0].toUpperCase()+tabMode.slice(1)).setAttribute('aria-pressed',String(mode===tabMode));}refreshFreshCost();
  }
  function dismissFreshCost(){if(id===null)return;id=null;if(dialog.open&&dialog.close)dialog.close();else dialog.removeAttribute('open');document.body.style.overflow=overflow;$('freshCostCurtain').classList.add('hidden');for(const [n,was]of fallback)n.inert=was;fallback=[];}
  function cancelEditFreshKosten(){dismissFreshCost();}
