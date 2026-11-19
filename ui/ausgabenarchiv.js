@@ -1,0 +1,227 @@
+Kostentracker.module({
+  "id": "js/ui/ausgabenarchiv.js",
+  "dependencies": [
+    "alltagCategoryIcon",
+    "alltagZusatztext",
+    "createItem",
+    "datumZeitwert",
+    "deleteFreizeit",
+    "deleteHaushalt",
+    "escapeHtml",
+    "formatBetrag",
+    "formatDatum",
+    "formatInputBetrag",
+    "formatText",
+    "getMonatName",
+    "getSearchTerm",
+    "gruppiereFreizeit",
+    "gruppiereHaushalt",
+    "istEintragAusgeblendet",
+    "matchesSearch",
+    "parseBetrag",
+    "parseISODate",
+    "speichern",
+    "readEntryTime",
+    "entryClock",
+    "renderEntryTime",
+    "renderEntryTimeInput",
+    "compareEntriesNewest"
+  ],
+  "session": [
+    "state"
+  ],
+  "read": [
+    "Freizeit",
+    "Haushalt"
+  ],
+  "write": [
+    "Freizeit",
+    "Haushalt"
+  ],
+  "replace": false
+}, (context, dependencies) => {
+"use strict";
+// Kostentracker Test: js/ui/ausgabenarchiv.js
+// Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
+
+        function toggleArchivDetails(typ, id) {
+            const map = typ === 'freizeit' ? context.session.state.offeneFreizeitEintraege : context.session.state.offeneHaushaltEintraege;
+            const key = String(id);
+            map[key] = !map[key];
+            renderAusgabenArchiv();
+        }
+
+        function startEditAusgabenArchiv(typ, id) {
+            if (context.session.state.ausgabenArchivTyp !== typ) return;
+            context.session.state.editAusgabenArchivId = String(id);
+            renderAusgabenArchiv();
+            setTimeout(() => document.getElementById(`editArchivBetrag-${id}`)?.focus(), 0);
+        }
+
+        function cancelEditAusgabenArchiv() {
+            context.session.state.editAusgabenArchivId = null;
+            renderAusgabenArchiv();
+        }
+
+        function saveEditAusgabenArchiv(typ, id) {
+            const textEl = document.getElementById(`editArchivText-${id}`);
+            const betragEl = document.getElementById(`editArchivBetrag-${id}`);
+            const datumEl = document.getElementById(`editArchivDatum-${id}`);
+            if (!textEl || !betragEl || !datumEl) return;
+
+            const betrag = dependencies.parseBetrag(betragEl.value);
+            const datum = datumEl.value;
+            if (isNaN(betrag) || !datum) return;
+
+            const bereich = typ === 'freizeit' ? context.repository.view.Freizeit : context.repository.view.Haushalt;
+            if (!bereich) return;
+
+            let found = null;
+            let oldKey = null;
+            let oldIndex = -1;
+            for (const key of Object.keys(bereich)) {
+                const liste = bereich[key];
+                if (!Array.isArray(liste)) continue;
+                const index = liste.findIndex(e => String(e.id) === String(id));
+                if (index !== -1) {
+                    found = liste[index];
+                    oldKey = key;
+                    oldIndex = index;
+                    break;
+                }
+            }
+            if (!found) return;
+
+            const zeit=dependencies.readEntryTime(`editArchivUhrzeit-${id}`,datum,found);if(zeit===null)return;
+            const parsed = dependencies.parseISODate(datum);
+            const neuerMonat = (parsed ? parsed.getMonth() : new Date().getMonth()) + 1;
+            const updated = {
+                ...found,
+                ...zeit,
+                text: dependencies.formatText(textEl.value.trim()),
+                betrag,
+                datum
+            };
+
+            bereich[oldKey].splice(oldIndex, 1);
+            bereich[neuerMonat] ??= [];
+            bereich[neuerMonat].push(updated);
+
+            if (dependencies.speichern() === false) return;
+            context.session.state.editAusgabenArchivId = null;
+            renderAusgabenArchiv();
+        }
+
+        function deleteArchivEintrag(typ, id) {
+            if (typ === 'freizeit') dependencies.deleteFreizeit(id);
+            else dependencies.deleteHaushalt(id);
+            if (!document.getElementById('ausgabenArchivView')?.classList.contains('hidden')) {
+                renderAusgabenArchiv();
+            }
+        }
+
+        function renderAusgabenArchiv() {
+            const typ = context.session.state.ausgabenArchivTyp === "freizeit" ? "freizeit" : "haushalt";
+            const istFreizeit = typ === "freizeit";
+            const titel = document.getElementById("ausgabenArchivTitel");
+            const container = document.getElementById("ausgabenArchivListe");
+            if (!container) return;
+            if (titel) titel.textContent = istFreizeit ? "Freizeit · Alle Einträge" : "Haushalt · Alle Einträge";
+            container.innerHTML = "";
+
+            const suche = dependencies.getSearchTerm("ausgabenArchivSuche");
+            const data = istFreizeit ? dependencies.gruppiereFreizeit() : dependencies.gruppiereHaushalt();
+            Object.keys(data).forEach(j => Object.keys(data[j]).forEach(m => {
+                data[j][m] = data[j][m]
+                    // In „Alle Einträge“ bleiben auch ausgeblendete Buchungen sichtbar,
+                    // damit sie hier direkt erkannt und wieder eingeblendet werden können.
+                    .filter(e => dependencies.matchesSearch(suche, e.text, e.name, e.kategorie, e.datum, e.betrag))
+                    .sort(dependencies.compareEntriesNewest);
+                if (!data[j][m].length) delete data[j][m];
+            }));
+            Object.keys(data).forEach(j => { if (!Object.keys(data[j]).length) delete data[j]; });
+            const jahre = Object.keys(data).sort((a,b) => b-a);
+
+            if (!jahre.length) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-title">Noch keine Einträge</div><div class="empty-state-text">Hier ist aktuell noch nichts gespeichert.</div></div>`;
+                return;
+            }
+
+            const jahresState = istFreizeit ? context.session.state.offeneFreizeitJahre : context.session.state.offeneHaushaltJahre;
+            const monatsState = istFreizeit ? context.session.state.offeneFreizeitMonate : context.session.state.offeneHaushaltMonate;
+            const offenMap = istFreizeit ? context.session.state.offeneFreizeitEintraege : context.session.state.offeneHaushaltEintraege;
+
+            jahre.forEach(jahr => {
+                const jahrOffen = !!jahresState[jahr];
+                const jahrSumme = Object.values(data[jahr]).flat().reduce((a,b) => a + (dependencies.parseBetrag(b.betrag)||0), 0);
+                const jahrItem = dependencies.createItem(`<div style="display:flex; justify-content:space-between; width:100%; align-items:center; cursor:pointer;">
+                    <div class="archive-group-label"><svg class="alltag-icon archive-group-chevron ${jahrOffen ? 'is-open' : ''}" aria-hidden="true"><use href="#alltag-chevron"></use></svg><span>${jahr}</span></div><strong>${dependencies.formatBetrag(jahrSumme)}</strong>
+                </div>`);
+                jahrItem.classList.add("archive-year-toggle");
+                jahrItem.setAttribute("role","button");jahrItem.setAttribute("tabindex","0");jahrItem.setAttribute("aria-expanded",String(jahrOffen));
+                jahrItem.onkeydown = event => { if(event.key === "Enter" || event.key === " "){event.preventDefault();jahrItem.onclick();} };
+                jahrItem.onclick = () => { jahresState[jahr] = !jahrOffen; renderAusgabenArchiv(); };
+                container.appendChild(jahrItem);
+                if (!jahrOffen) return;
+
+                Object.keys(data[jahr]).sort((a,b)=>b-a).forEach(monat => {
+                    const key = jahr + "-" + monat;
+                    const monatOffen = !!monatsState[key];
+                    const liste = [...data[jahr][monat]].sort(dependencies.compareEntriesNewest);
+                    const summe = liste.reduce((a,b)=>a+(dependencies.parseBetrag(b.betrag)||0),0);
+                    const monatItem = dependencies.createItem(`<div style="display:flex; justify-content:space-between; width:100%; align-items:center; cursor:pointer;">
+                        <div class="archive-group-label"><svg class="alltag-icon archive-group-chevron ${monatOffen ? 'is-open' : ''}" aria-hidden="true"><use href="#alltag-chevron"></use></svg><span>${dependencies.getMonatName(parseInt(monat))}</span></div><strong>${dependencies.formatBetrag(summe)}</strong>
+                    </div>`,0);
+                    monatItem.classList.add("archive-month-toggle");
+                    monatItem.setAttribute("role","button");monatItem.setAttribute("tabindex","0");monatItem.setAttribute("aria-expanded",String(monatOffen));
+                    monatItem.onkeydown = event => { if(event.key === "Enter" || event.key === " "){event.preventDefault();monatItem.onclick();} };
+                    monatItem.onclick = () => { monatsState[key] = !monatOffen; renderAusgabenArchiv(); };
+                    container.appendChild(monatItem);
+                    if (!monatOffen) return;
+
+                    liste.forEach(e => {
+                        const isEdit = String(context.session.state.editAusgabenArchivId) === String(e.id);
+                        let item;
+
+                        if (isEdit) {
+                            item = dependencies.createItem(`<div style="display:flex; flex-direction:column; width:100%; gap:6px;">
+                                <label class="booking-field-label" for="editArchivBetrag-${e.id}">Betrag (€)</label>
+<input class="booking-control" id="editArchivBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                                <label class="booking-field-label" for="editArchivText-${e.id}">Beschreibung (optional)</label>
+<input class="booking-control" id="editArchivText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                                <div class="entry-date-time"><label><span>Datum</span><input id="editArchivDatum-${e.id}" type="date" value="${e.datum || ''}"></label>${dependencies.renderEntryTimeInput(`editArchivUhrzeit-${e.id}`,e)}</div>
+                                <div style="display:flex; gap:10px;">
+                                    <button onclick="event.stopPropagation(); saveEditAusgabenArchiv('${typ}','${e.id}')">💾 Speichern</button>
+                                    <button onclick="event.stopPropagation(); cancelEditAusgabenArchiv()">❌ Abbrechen</button>
+                                </div>
+                            </div>`,0);
+                        } else {
+                            const zusatz = dependencies.alltagZusatztext(e);
+                            const istAusgeblendet = dependencies.istEintragAusgeblendet(typ, e.id);
+                            item = dependencies.createItem(`<div class="compact-alltag-content"><span class="alltag-category-icon">${dependencies.alltagCategoryIcon(e.kategorie)}</span>
+                                <div class="compact-alltag-main">
+                                    <span class="compact-alltag-title">${dependencies.escapeHtml(e.kategorie || 'Sonstiges')}</span>
+                                    ${istAusgeblendet ? `<span class="compact-alltag-sub" style="opacity:.9;">👁️‍🗨️ Ausgeblendet</span>` : ''}
+                                    ${zusatz || dependencies.entryClock(e) ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(zusatz)}${dependencies.renderEntryTime(e,!!zusatz)}</span>` : ''}
+                                    ${e.datum ? `<span class="compact-alltag-sub">${dependencies.formatDatum(e.datum)}</span>` : ''}
+                                </div>
+                                <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
+                                <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                    ${istAusgeblendet ? `<button onclick="event.stopPropagation(); eintragEinblenden('${typ}','${e.id}')" title="Wieder einblenden">👁️</button>` : ''}
+                                    <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-move"></use></svg></button>
+                                    <button class="edit" onclick="event.stopPropagation(); startEditAusgabenArchiv('${typ}','${e.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-edit"></use></svg></button>
+                                    <button class="delete" onclick="event.stopPropagation(); deleteArchivEintrag('${typ}','${e.id}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-delete"></use></svg></button>
+                                </div>
+                            </div>`,0);
+                            item.classList.add("compact-alltag-card");
+                        }
+
+                        item.classList.add("alltag-entry");
+                        container.appendChild(item);
+                    });
+                });
+            });
+        }
+
+return { toggleArchivDetails, startEditAusgabenArchiv, cancelEditAusgabenArchiv, saveEditAusgabenArchiv, deleteArchivEintrag, renderAusgabenArchiv };
+});
