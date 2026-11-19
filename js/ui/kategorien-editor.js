@@ -42,6 +42,29 @@ Kostentracker.module({
   const root=document.documentElement;Object.assign(root.style,saved.root,{scrollBehavior:'auto'});
   window.scrollTo(saved.restore?saved.x:0,saved.restore?saved.y:0);root.style.scrollBehavior=saved.root.scrollBehavior;
  }
+ // Keep touch and wheel scrolling inside the editor, including on browsers
+ // that pass gestures through a modal when its contents fit or reach an edge.
+ function keepEditorScrollInside(editor,surface){
+  function canScroll(target,deltaY){
+   if(!surface.contains(target)||!surface.classList.contains('editor-can-scroll'))return false;
+   const remaining=surface.scrollHeight-surface.clientHeight-surface.scrollTop;
+   return deltaY>0?remaining>1:deltaY<0&&surface.scrollTop>0;
+  }
+  editor.addEventListener('wheel',event=>{
+   if(event.cancelable&&!event.ctrlKey&&!canScroll(event.target,event.deltaY))event.preventDefault();
+  },{passive:false});
+  let lastTouchY;
+  editor.addEventListener('touchstart',event=>{
+   lastTouchY=event.touches.length===1?event.touches[0].clientY:undefined;
+  },{passive:true});
+  editor.addEventListener('touchmove',event=>{
+   if(event.touches.length!==1){lastTouchY=undefined;return;}
+   const y=event.touches[0].clientY;
+   const deltaY=lastTouchY===undefined?0:lastTouchY-y;
+   lastTouchY=y;
+   if(event.cancelable&&!canScroll(event.target,deltaY))event.preventDefault();
+  },{passive:false});
+ }
  function findEntry(kind,id){
   const cfg=configs[kind];if(!cfg)return null;const data=context.repository.view[cfg.key];
   const lists=Array.isArray(data)?[data]:Object.values(kind==='reisen'?data?.[context.session.aktuellesLand]||{}:data||{});
@@ -148,6 +171,7 @@ Kostentracker.module({
  // viewport. Ignore subpixel rounding, which can create a 1px iOS scrollbar.
  for(const editorId of ['freshCostDialog','categoryEditDialog']){
   const editor=$(editorId),surface=editor?.querySelector('.fc-content');if(!surface)continue;
+  keepEditorScrollInside(editor,surface);
   let frame=0;
   const measure=()=>{
    frame=0;const canScroll=editor.hasAttribute('open')&&surface.clientHeight>0&&surface.scrollHeight-surface.clientHeight>1;
