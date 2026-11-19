@@ -3254,3 +3254,17 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 #freshCostDialog :is(input,button,summary):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
 .fresh-cost-curtain { position:fixed;inset:0;z-index:20001;background:var(--bg); }
 #freshCostDialog { z-index:20002; }
+
+/* Full Fixkosten details share the approved field shape and page layout. */
+#freshCostDialog .fc-detail-group { margin:14px 0 0;padding:0;border-top:1px solid rgba(128,128,128,.2); }
+#freshCostDialog .fc-detail-group summary { cursor:pointer;padding:10px 0;font-size:14px;line-height:20px;font-weight:500;color:var(--fc-muted); }
+#freshCostDialog .fc-detail-group[open] { padding-bottom:8px; }
+#freshCostDialog .fc-schedule-row { display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:9px 0;border-bottom:1px solid rgba(128,128,128,.2);font-size:13px;line-height:1.4; }
+#freshCostDialog .fc-schedule-row strong { margin-left:auto;font-weight:600; }
+#freshCostDialog .fc-schedule-row button { width:auto;min-height:32px;margin:0;padding:5px 0;border:0;border-radius:0;background:transparent;color:#e87777;font-size:12px;font-weight:400; }
+#freshCostDialog input[type="hidden"] { display:none; }
+#freshCostDialog .reminder-control { margin:12px 0 0;padding:0;border:0;border-radius:0;background:transparent; }
+#freshCostDialog .reminder-toggle { display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;width:100%;margin:0;padding:6px 0;border:0;border-radius:0;background:transparent;color:var(--text);font-size:14px;text-align:left; }
+#freshCostDialog .reminder-days { padding:6px 0; }
+#freshCostDialog .reminder-days label { font-size:12px; }
+#freshCostDialog .fc-detail-group label:first-of-type { margin-top:0; }
