@@ -3299,4 +3299,6 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 }
 
 /* Keep iPhone overlay scrollbars outside the form controls. */
-:is(#freshCostDialog,#categoryEditDialog) .fc-content { box-sizing:border-box;padding-right:8px;scrollbar-gutter:stable; }
+:is(#freshCostDialog,#categoryEditDialog) .fc-content { box-sizing:border-box;padding-right:8px;overflow-x:hidden;overflow-y:hidden; }
+
+:is(#freshCostDialog,#categoryEditDialog) .fc-content.editor-can-scroll { overflow-y:auto; }

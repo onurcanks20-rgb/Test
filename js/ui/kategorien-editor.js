@@ -120,5 +120,25 @@ Kostentracker.module({
  }
  for(const name of ['editCategoryAmount','editCategoryDate','editCategoryEndDate'])for(const event of ['input','change'])$(name)?.addEventListener(event,refreshCategoryEditor);
  dialog?.addEventListener('cancel',event=>{event.preventDefault();d.cancelEditCategoryEditor();});
+ // Only enable the scroll surface when its content actually exceeds its
+ // viewport. Ignore subpixel rounding, which can create a 1px iOS scrollbar.
+ for(const editorId of ['freshCostDialog','categoryEditDialog']){
+  const editor=$(editorId),surface=editor?.querySelector('.fc-content');if(!surface)continue;
+  let frame=0;
+  const measure=()=>{
+   frame=0;const canScroll=editor.hasAttribute('open')&&surface.clientHeight>0&&surface.scrollHeight-surface.clientHeight>1;
+   if(surface.classList.contains('editor-can-scroll')!==canScroll)surface.classList.toggle('editor-can-scroll',canScroll);
+   if(!canScroll&&surface.scrollTop)surface.scrollTop=0;
+  };
+  const schedule=()=>{if(!frame)frame=requestAnimationFrame(measure);};
+  const resize=typeof ResizeObserver==='function'?new ResizeObserver(schedule):null;
+  const observeSize=()=>{resize?.disconnect();resize?.observe(surface);for(const child of surface.children)resize?.observe(child);};
+  observeSize();
+  const mutations=new MutationObserver(()=>{observeSize();schedule();});
+  mutations.observe(editor,{attributes:true,childList:true,characterData:true,subtree:true,attributeFilter:['open','class','style','hidden']});
+  editor.addEventListener('input',schedule);editor.addEventListener('change',schedule);editor.addEventListener('toggle',schedule,true);
+  window.addEventListener('resize',schedule);window.visualViewport?.addEventListener('resize',schedule);document.fonts?.ready.then(schedule);
+  schedule();
+ }
  return {openCategoryEditor,dismissCategoryEditor,cancelEditCategoryEditor,finishCategoryEditor,setCategoryEditMode,refreshCategoryEditor,saveEditCategoryEditor,categoryEditorProposal};
 });
