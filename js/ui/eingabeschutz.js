@@ -56,6 +56,7 @@ Kostentracker.module({
    if(name==='show'&&document.getElementById(args[0])&&!document.getElementById(args[0]).classList.contains('hidden'))return [];
    return all;
   }
+  if(name==='setFreshCostMode')return all.filter(root=>root.classList.contains('fc-content'));
   if(name==='closeStartQuickAdd')return all.filter(root=>document.getElementById('startQuickAddHost')?.contains(root));
   if(name==='closeCategoryAddPanels'||name==='toggleCategoryAdd')return all.filter(root=>panelIds.has(root.id));
   if(name==='openStartQuickAdd'||name==='erneutBuchenEintrag')return all;
