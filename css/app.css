@@ -3220,11 +3220,11 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 #freshCostName:focus { outline:none; }
 #freshCostDialog .fc-back { display:grid;place-items:center;flex:0 0 28px;width:28px;min-height:40px;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:var(--primary); }
 #freshCostDialog .alltag-icon { width:22px;height:22px; }
-#freshCostDialog .fc-head details { position:relative;flex:none; }
-#freshCostDialog .fc-head summary { display:grid;place-items:center;list-style:none;width:32px;min-height:40px;cursor:pointer;color:var(--fc-muted);font-size:16px; }
-#freshCostDialog .fc-head summary::-webkit-details-marker { display:none; }
-#freshCostDialog .fc-menu { position:absolute;right:0;top:42px;z-index:2;min-width:180px;padding:6px;border:1px solid rgba(128,128,128,.3);border-radius:8px;background:var(--fc-card); }
-#freshCostDialog .fc-menu button { display:block;width:100%;min-height:40px;margin:0;padding:8px;text-align:left;border:0;border-radius:4px;background:transparent;color:var(--text);font-size:13px; }
+#freshCostDialog .fc-tabs { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;gap:6px;margin:0 0 18px; }
+#freshCostDialog .fc-tabs button { box-sizing:border-box;min-width:0;min-height:40px;margin:0;padding:8px 4px;border:1px solid rgba(128,128,128,.3);border-radius:7px;background:transparent;color:var(--fc-muted);font-size:12px;line-height:20px;font-weight:500;cursor:pointer; }
+#freshCostDialog .fc-tabs button[aria-pressed="true"] { border-color:var(--primary);color:var(--primary); }
+#freshCostDialog .fc-tabs button:focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
+#freshCostDialog #freshCostHeading.sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0; }
 #freshCostDialog .fc-content { display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;flex:1;min-height:0;transform:none;transition:none;width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:auto;overscroll-behavior:contain; }
 #freshCostDialog .fc-summary { display:flex;align-items:center;flex:none;gap:10px;min-height:40px;margin:0 0 16px;padding:8px 10px;border-radius:5px;background:var(--fc-card);font-size:16px; }
 #freshCostDialog .fc-summary svg { flex:none;color:var(--primary); }
