@@ -3253,6 +3253,8 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 :is(#freshCostDialog,#categoryEditDialog) .fc-actions button:disabled { opacity:.5; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-actions .fc-cancel { margin-top:4px;background:transparent;color:var(--text);font-weight:500; }
 :is(#freshCostDialog,#categoryEditDialog) :is(input,button,summary):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
+/* Keep field focus rings inside the form's clipped scroll area. */
+:is(#freshCostDialog,#categoryEditDialog) .fc-content :is(input,select,textarea):focus-visible { outline:2px solid var(--primary);outline-offset:-3px; }
 :is(#freshCostDialog,#categoryEditDialog) { z-index:20002; }
 
 /* Full Fixkosten details share the approved field shape and page layout. */
