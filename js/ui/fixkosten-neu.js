@@ -1,5 +1,5 @@
-Kostentracker.module({id:'js/ui/fixkosten-neu.js',dependencies:['escapeHtml','formatText','formatInputBetrag','normalizeFixkostenZuordnungTage','reminderControlHtml','readReminderControl','cancelEditFreshKosten','parseBetrag','formatBetragText','formatDatum','parseISODate','heuteISO','isoAusDate','addDays','datumMitSicheremTag','recurringAmount','recurringChanges','recurringDateValid','speichern','renderLaufendeKosten','renderHomeUebersicht','startEditKosten'],session:['state'],read:['Laufende Kosten'],write:['Laufende Kosten'],replace:false},(context,d)=>{
- 'use strict';let id=null,mode='details',overflow='',fallback=[],draftChanges=[];
+Kostentracker.module({id:'js/ui/fixkosten-neu.js',dependencies:['lockEditorBackground','unlockEditorBackground','escapeHtml','formatText','formatInputBetrag','normalizeFixkostenZuordnungTage','reminderControlHtml','readReminderControl','cancelEditFreshKosten','parseBetrag','formatBetragText','formatDatum','parseISODate','heuteISO','isoAusDate','addDays','datumMitSicheremTag','recurringAmount','recurringChanges','recurringDateValid','speichern','renderLaufendeKosten','renderHomeUebersicht','startEditKosten'],session:['state'],read:['Laufende Kosten'],write:['Laufende Kosten'],replace:false},(context,d)=>{
+ 'use strict';let id=null,mode='details',fallback=[],draftChanges=[];
  const $=id=>document.getElementById(id),dialog=$('freshCostDialog');
  const entry=()=>context.repository.view['Laufende Kosten']?.fix?.find(e=>String(e.id)===String(id));
  function freshCostProposal(e,kind,raw,date){
@@ -59,7 +59,7 @@ Kostentracker.module({id:'js/ui/fixkosten-neu.js',dependencies:['escapeHtml','fo
   $('freshDetailsFields').classList.toggle('hidden',mode!=='details');$('freshPriceFields').classList.toggle('hidden',mode!=='price');$('freshEndFields').classList.toggle('hidden',mode!=='end');$('freshCostPreview').classList.toggle('hidden',mode==='details');
   $('freshCostHeading').textContent=mode==='details'?'Details bearbeiten':mode==='end'?'Abo beenden':'Betrag ändern';$('freshCostSave').textContent=mode==='details'?'Details speichern':mode==='end'?'Enddatum speichern':'Änderung vormerken';$('freshCostError').textContent='';for(const tabMode of ['details','price','end']){$('freshTab'+tabMode[0].toUpperCase()+tabMode.slice(1)).setAttribute('aria-pressed',String(mode===tabMode));}refreshFreshCost();
  }
- function dismissFreshCost(){if(id===null)return;id=null;if(dialog.open&&dialog.close)dialog.close();else dialog.removeAttribute('open');document.body.style.overflow=overflow;$('freshCostCurtain').classList.add('hidden');for(const [n,was]of fallback)n.inert=was;fallback=[];}
+ function dismissFreshCost(restoreScroll=true){if(id===null)return;id=null;if(dialog.open&&dialog.close)dialog.close();else dialog.removeAttribute('open');d.unlockEditorBackground('fixkosten',restoreScroll);$('freshCostCurtain').classList.add('hidden');for(const [n,was]of fallback)n.inert=was;fallback=[];}
  function cancelEditFreshKosten(){dismissFreshCost();}
  function startEditFreshDetails(){setFreshCostMode('details');}
  function saveEditFreshKosten(){
@@ -70,10 +70,10 @@ Kostentracker.module({id:'js/ui/fixkosten-neu.js',dependencies:['escapeHtml','fo
   dismissFreshCost();d.renderLaufendeKosten();d.renderHomeUebersicht();
  }
  function openFreshCost(current){
-  id=current;const e=entry();if(!e){id=null;return false;}overflow=document.body.style.overflow;
+  id=current;const e=entry();if(!e){id=null;return false;}
   $('freshCostName').textContent=e.text||e.name||'Fixkosten';$('freshCostCurrent').textContent=d.formatBetragText(d.recurringAmount(e,d.heuteISO()));
   $('editFreshAmount').value='';$('editFreshDate').value=e.datum>d.heuteISO()?e.datum:d.heuteISO();$('editFreshEnd').value=e.wiederholungEnde||'';setFreshCostMode('details');
-  context.session.state.editKostenId=null;d.renderLaufendeKosten();document.body.style.overflow='hidden';
+  context.session.state.editKostenId=null;d.renderLaufendeKosten();d.lockEditorBackground('fixkosten');
   if(dialog.showModal)dialog.showModal();else{dialog.setAttribute('open','');$('freshCostCurtain').classList.remove('hidden');for(const n of document.body.children)if(n!==dialog&&n.id!=='freshCostCurtain'&&n.tagName!=='SCRIPT'){fallback.push([n,!!n.inert]);n.inert=true;}}
   $('freshCostName').focus({preventScroll:true});return true;
  }

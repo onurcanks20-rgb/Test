@@ -83,7 +83,7 @@ Kostentracker.module({
   const submitting=submissions.test(name);
   if(submitting)submission={saved:false,roots:[...drafts.keys()].filter(root=>root.contains(document.activeElement)||Array.from(root.querySelectorAll?.('[onclick]')||[]).some(button=>(button.getAttribute('onclick')||'').includes(name+'(')))};
   depth++;
-  try{const result=fn(...args);if(navigation.test(name)&&result!==false){dependencies.dismissFreshCost?.();dependencies.dismissCategoryEditor?.();}return result;}
+  try{const result=fn(...args);if(navigation.test(name)&&result!==false){dependencies.dismissFreshCost?.(false);dependencies.dismissCategoryEditor?.(false);}return result;}
   finally{
    depth--;
    // A successful save closes or replaces its form; a validation/storage failure leaves it dirty.
