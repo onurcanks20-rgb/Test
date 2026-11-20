@@ -11,7 +11,6 @@ Kostentracker.module({
     "getGehaltszeitraum",
     "getStartgehalt",
     "heuteISO",
-    "initGrafik",
     "renderAusgabenArchiv",
     "renderDesignMenuStatus",
     "renderDesignSettings",
@@ -19,7 +18,6 @@ Kostentracker.module({
     "renderFreizeit",
     "renderGeplanteAusgaben",
     "renderGestureSettings",
-    "renderGrafik",
     "renderHaushalt",
     "renderHomeUebersicht",
     "renderLaender",
@@ -84,7 +82,7 @@ Kostentracker.module({
                 "kostenView",
                 "versicherungenView",
                 "uebersichtView",
-                "grafikView",
+                "statistikView",
                 "settingsView",
                 "settingsBudgetView",
                 "settingsQuickAddView",
@@ -113,7 +111,17 @@ Kostentracker.module({
             ];
             const categoryNav = document.getElementById("categoryBottomNav");
             const isCategory = categoryViews.includes(id);
-            categoryNav?.classList.toggle("hidden", !isCategory);
+            const activeTab = {
+                home: "home", uebersichtView: "overview", statistikView: "statistics",
+                reisen: "reisen", travelOverviewView: "reisen", land: "reisen"
+            }[id] || (isCategory ? "overview" : "");
+            categoryNav?.classList.toggle("hidden", !activeTab);
+            categoryNav?.querySelectorAll("[data-main-tab]").forEach(button => {
+                const active = button.dataset.mainTab === activeTab;
+                button.classList.toggle("active", active);
+                if (active) button.setAttribute("aria-current", "page");
+                else button.removeAttribute("aria-current");
+            });
             document.body?.classList.toggle("category-nav-visible", isCategory);
 
             // Kleine Resets, aber nur wenn die Elemente existieren
@@ -165,10 +173,8 @@ Kostentracker.module({
             if (direktHinzufuegen) dependencies.toggleCategoryAdd("geplantAddPanel", "geplantText");
         }
 
-        function openGrafik() {
-            show("grafikView");
-            dependencies.initGrafik();
-            dependencies.renderGrafik();
+        function openStatistik() {
+            show("statistikView");
         }
 
         function openSettings() {
@@ -308,5 +314,5 @@ Kostentracker.module({
             dependencies.renderHomeUebersicht();
         }
 
-return { monatZuZahl, safeId, show, goHome, openUebersicht, openSparenInvestieren, openGeplanteAusgaben, openGrafik, openSettings, openSettingsBudget, openSettingsQuickAdd, openSettingsWarnings, openSettingsDesign, openReisen, openVersicherungen, openHaushalt, openFreizeit, openAusgabenArchiv, closeAusgabenArchiv, openEinnahmen, openKosten, hideAllViews, toggleKostenDetails, toggleFaelligDetails };
+return { monatZuZahl, safeId, show, goHome, openUebersicht, openSparenInvestieren, openGeplanteAusgaben, openStatistik, openSettings, openSettingsBudget, openSettingsQuickAdd, openSettingsWarnings, openSettingsDesign, openReisen, openVersicherungen, openHaushalt, openFreizeit, openAusgabenArchiv, closeAusgabenArchiv, openEinnahmen, openKosten, hideAllViews, toggleKostenDetails, toggleFaelligDetails };
 });

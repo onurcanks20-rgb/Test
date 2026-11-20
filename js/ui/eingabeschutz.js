@@ -5,7 +5,7 @@ Kostentracker.module({
  const panelIds=new Set(['reisenAddPanel','reiseAddPanel','versAddPanel','hausAddPanel','freizeitAddPanel','einnahmenAddPanel','kostenAddPanel','geplantAddPanel','sparenInvestierenAddPanel']);
  const drafts=new Map();
  let depth=0,submission=null;
- const navigation=/^(?:goHome|show|backToReisen|closeAusgabenArchiv|open(?:Uebersicht|Haushalt|Freizeit|Einnahmen|Kosten|Versicherungen|GeplanteAusgaben|SparenInvestieren|Reisen|Land|AusgabenArchiv|GlobalArchiv|Grafik|HiddenArchive|ServerSettings|Settings\w*)|setTravelMode)$/;
+ const navigation=/^(?:goHome|show|backToReisen|closeAusgabenArchiv|open(?:Uebersicht|Haushalt|Freizeit|Einnahmen|Kosten|Versicherungen|GeplanteAusgaben|SparenInvestieren|Reisen|Land|AusgabenArchiv|GlobalArchiv|Statistik|HiddenArchive|ServerSettings|Settings\w*)|setTravelMode)$/;
  const editStart=/^(?:startEdit\w+|editKategorie|editLand|editEintrag|editHaushalt|editGeplanteAusgabe|erneutBuchenEintrag)$/;
  const submissions=/^(?:add(?:Haushalt|Freizeit|Eintrag|Land|Versicherung|Kosten|Einnahme|GeplanteAusgabe|SparenInvestieren)|saveEdit\w+|saveReiseBudget|saveQuickAdd)$/;
  const controls=root=>Array.from(root?.querySelectorAll?.('input,textarea,select')||[]).filter(field=>!field.disabled&&!field.readOnly&&!['button','submit','reset','file'].includes(field.type));
@@ -60,7 +60,7 @@ Kostentracker.module({
   if(name==='cancelCategoryAdd')return all.filter(root=>root.parentElement?.id==='categoryAddHost');
   if(name==='closeStartQuickAdd')return all.filter(root=>document.getElementById('startQuickAddHost')?.contains(root));
   if(name==='closeCategoryAddPanels'||name==='toggleCategoryAdd')return all.filter(root=>panelIds.has(root.id));
-  if(name==='openStartQuickAdd'||name==='erneutBuchenEintrag')return all;
+  if(name==='openAddSheet'||name==='openStartQuickAdd'||name==='erneutBuchenEintrag')return all;
   if(/^cancelEdit/.test(name))return all.filter(root=>Array.from(root.querySelectorAll?.('[onclick]')||[]).some(button=>(button.getAttribute('onclick')||'').includes(name+'(')));
   if(name==='setReiseBudgetEditing')return all.filter(root=>root.classList.contains('reise-budget-editor'));
   if(editStart.test(name)||/^toggle.*(?:Details|Monat|Jahr)$/.test(name)||name==='toggleKategorie')return all.filter(root=>!panelIds.has(root.id));
@@ -86,6 +86,11 @@ Kostentracker.module({
   depth++;
   try{
    if(navigation.test(name))dependencies.dismissCategoryAdd(false);
+   if(name==='openAddSheet'){
+    dependencies.dismissCategoryAdd();
+    dependencies.dismissFreshCost();
+    dependencies.dismissCategoryEditor();
+   }
    const result=fn(...args);
    if(navigation.test(name)&&result!==false){dependencies.dismissFreshCost?.(false);dependencies.dismissCategoryEditor?.(false);}
    return result;
