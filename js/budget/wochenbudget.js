@@ -66,18 +66,11 @@ Kostentracker.module({
             const sheet = document.getElementById("weekPreviewSheet");
             const list = document.getElementById("weekPreviewList");
             const totalEl = document.getElementById("weekPreviewTotal");
-            if (!sheet || !list || !totalEl) return;
+            const totalRow = document.getElementById("weekPreviewTotalRow");
+            if (!sheet || !list || !totalEl || !totalRow) return;
 
             const zeitraum = dependencies.getGehaltszeitraum();
-            const start = dependencies.getStartgehalt(zeitraum);
-            const laufendSum = dependencies.summeBetraege(dependencies.laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende));
-            const versSum = dependencies.summeBetraege(dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende));
-            const einnahmenSum = dependencies.summeBetraege(dependencies.einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende));
-            const geplantSum = dependencies.summeBetraege(dependencies.geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende));
-            const gebuchtReserviert = dependencies.summeBetraege(alltagImZeitraum(zeitraum.start, zeitraum.ende), geplanterWochenAnteil);
             const sparStatus = dependencies.berechneSparBudgetStatus(zeitraum);
-            const sparenInvestierenGesamt = dependencies.rundeCent(sparStatus.investieren + sparStatus.sparenPlan);
-            const alltagGesamt = dependencies.summeBetraege(alltagImZeitraum(zeitraum.start, zeitraum.ende));
             const freiJetzt = sparStatus.frei;
 
             const heute = dependencies.startOfToday();
@@ -86,13 +79,43 @@ Kostentracker.module({
             const wochenStart = kalenderMontag < zeitraum.start ? new Date(zeitraum.start) : kalenderMontag;
             const wochenEnde = kalenderSonntag > zeitraum.ende ? new Date(zeitraum.ende) : kalenderSonntag;
 
+            const bisHeute = heute < wochenEnde ? heute : wochenEnde;
+            const alltagDieseWoche = wochenAlltagSumme(wochenStart, bisHeute);
+
+            totalRow.classList.toggle("hidden", freiJetzt < 0);
+            if (freiJetzt < 0) {
+                list.innerHTML = `
+                    <div class="week-preview-deficit">
+                        <div class="week-preview-label">Fehlbetrag bis zum nächsten Gehalt</div>
+                        <div class="week-preview-deficit-value">${dependencies.formatBetrag(Math.abs(freiJetzt))}</div>
+                    </div>
+                    <div class="week-preview-row week-preview-activity">
+                        <div class="week-preview-left">
+                            <div class="week-preview-label">Diese Woche</div>
+                            <div class="week-preview-dates">${dependencies.formatKurzDatum(wochenStart)} – ${dependencies.formatKurzDatum(wochenEnde)}</div>
+                        </div>
+                        <div class="week-preview-activity-value">
+                            <div class="week-preview-value">${dependencies.formatBetrag(alltagDieseWoche)}</div>
+                            <div class="week-preview-dates">Bis heute aufs Wochenbudget angerechnet</div>
+                        </div>
+                    </div>
+                    <p class="week-preview-deficit-note">Bis zum Gehalt ist aktuell kein Budget mehr frei.</p>`;
+                sheet.classList.remove("hidden");
+                return;
+            }
+
+            const start = dependencies.getStartgehalt(zeitraum);
+            const laufendSum = dependencies.summeBetraege(dependencies.laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende));
+            const versSum = dependencies.summeBetraege(dependencies.versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende));
+            const einnahmenSum = dependencies.summeBetraege(dependencies.einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende));
+            const geplantSum = dependencies.summeBetraege(dependencies.geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende));
+            const gebuchtReserviert = dependencies.summeBetraege(alltagImZeitraum(zeitraum.start, zeitraum.ende), geplanterWochenAnteil);
+            const sparenInvestierenGesamt = dependencies.rundeCent(sparStatus.investieren + sparStatus.sparenPlan);
             const alltagVorWoche = wochenAlltagSumme(zeitraum.start, dependencies.addDays(wochenStart, -1));
             const verfuegbarZuWochenbeginn = dependencies.rundeCent(start + einnahmenSum - laufendSum - versSum - alltagVorWoche - geplantSum - gebuchtReserviert - sparenInvestierenGesamt);
             const tageInAktuellerWoche = Math.max(1, Math.round((wochenEnde - wochenStart) / 86400000) + 1);
             const verbleibendeTageAbWochenstart = Math.max(1, Math.round((zeitraum.ende - wochenStart) / 86400000) + 1);
             const wochenBudgetStart = verfuegbarZuWochenbeginn * (tageInAktuellerWoche / verbleibendeTageAbWochenstart);
-            const bisHeute = heute < wochenEnde ? heute : wochenEnde;
-            const alltagDieseWoche = wochenAlltagSumme(wochenStart, bisHeute);
             const dieseWocheUebrig = Math.round((wochenBudgetStart - alltagDieseWoche) * 100) / 100;
 
             const rows = [{
