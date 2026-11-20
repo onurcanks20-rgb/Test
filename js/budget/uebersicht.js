@@ -4,6 +4,7 @@ Kostentracker.module({
     "resumePaymentImportedNotice",
     "refreshTravelMode",
     "renderHomeQuickFavorites",
+    "renderStatistik",
     "alltagCategoryIcon",
     "compareEntriesNewest",
     "formatDateGroupLabel",
@@ -111,6 +112,7 @@ Kostentracker.module({
             dependencies.resumePaymentImportedNotice?.();
             renderHomeTrips();
             dependencies.renderHomeQuickFavorites();
+            if (!document.getElementById("statistikView")?.classList.contains("hidden")) dependencies.renderStatistik?.();
 
             const zeitraum = dependencies.getGehaltszeitraum();
             dependencies.renderBudgetUndWochen(zeitraum);
