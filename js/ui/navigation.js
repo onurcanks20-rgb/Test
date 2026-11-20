@@ -342,16 +342,31 @@ Kostentracker.module({
             return {button, targetId, direction};
         }
 
+        function prepareTabPreviewTarget(target) {
+            if (target.id === "reisen") dependencies.renderLaender();
+            else if (target.id === "uebersichtView") dependencies.renderUebersicht();
+            else if (target.id === "travelOverviewView") dependencies.renderTravelCountries();
+        }
+
+        function prepareTabSwipeTargets(page) {
+            if (!tabSwipePages[page.id] || document.querySelector(tabSwipeBlocked)) return [];
+            return [-1, 1].flatMap(direction => {
+                const destination = tabSwipeDestination(page, direction);
+                if (!destination || destination.targetId === "land") return [];
+                const target = document.getElementById(destination.targetId);
+                if (!target) return [];
+                prepareTabPreviewTarget(target);
+                return [target];
+            });
+        }
+
         function startTabPreview(page, destination) {
             const {targetId, direction} = destination;
             // A single active trip opens its detail view through the normal router.
             if (targetId === "land" || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return false;
             const target = document.getElementById(targetId);
             if (!target) return false;
-            if (targetId === "reisen") dependencies.renderLaender();
-            if (targetId === "uebersichtView") dependencies.renderUebersicht();
-            if (targetId === "travelOverviewView") dependencies.renderTravelCountries();
-            return dependencies.beginTabSlide?.(page, target, direction) === true;
+            return dependencies.beginTabSlide?.(page, target, direction, () => prepareTabPreviewTarget(target)) === true;
         }
 
         document.addEventListener("touchstart", event => {
@@ -420,5 +435,5 @@ Kostentracker.module({
             swipe = null;
         }, {passive: true});
 
-return { monatZuZahl, safeId, show, goHome, openUebersicht, openSparenInvestieren, openGeplanteAusgaben, openStatistik, openSettings, openSettingsBudget, openSettingsQuickAdd, openSettingsWarnings, openSettingsDesign, openReisen, openVersicherungen, openHaushalt, openFreizeit, openAusgabenArchiv, closeAusgabenArchiv, openEinnahmen, openKosten, hideAllViews, toggleKostenDetails, toggleFaelligDetails };
+return { prepareTabSwipeTargets, monatZuZahl, safeId, show, goHome, openUebersicht, openSparenInvestieren, openGeplanteAusgaben, openStatistik, openSettings, openSettingsBudget, openSettingsQuickAdd, openSettingsWarnings, openSettingsDesign, openReisen, openVersicherungen, openHaushalt, openFreizeit, openAusgabenArchiv, closeAusgabenArchiv, openEinnahmen, openKosten, hideAllViews, toggleKostenDetails, toggleFaelligDetails };
 });

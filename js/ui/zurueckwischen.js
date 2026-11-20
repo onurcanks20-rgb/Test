@@ -1,6 +1,6 @@
 Kostentracker.module({
   "id": "js/ui/zurueckwischen.js",
-  "dependencies": ["isTravelMode", "travelModeRoute"],
+  "dependencies": ["isTravelMode", "travelModeRoute", "prepareTabSwipeTargets"],
   "session": [
     "kostentrackerRememberView",
     "state"
@@ -49,6 +49,7 @@ Kostentracker.module({
             let handoffFrame = 0;
             let suppressClickUntil = 0;
             let warmed = null;
+            let warmedTabs = null;
             let prepareFrame = 0;
             let prepareIdle = 0;
             const activeView = () => viewIds.map(id => document.getElementById(id)).find(el => el && !el.classList.contains('hidden'));
@@ -108,6 +109,7 @@ Kostentracker.module({
                 if (gesture || tabSlide || document.hidden || document.activeElement?.matches('input,textarea,select,[contenteditable="true"]')) return;
                 discardPrepared();
                 const view = activeView();
+                prepareTabLayers(view);
                 const button = view?.querySelector('.back-btn');
                 const targetId = button && destination(button);
                 const target = targetId && document.getElementById(targetId);
@@ -149,6 +151,7 @@ Kostentracker.module({
             }
 
             function invalidatePrepared() {
+                warmedTabs = null;
                 if (gesture || tabSlide) return;
                 discardPrepared();
                 schedulePreparation();
@@ -160,6 +163,7 @@ Kostentracker.module({
                 if (gesture && !gesture.navigating) cleanup();
                 if (tabSlide && !tabSlide.navigating) clearTabSlide();
                 if (view && view.id !== nextId) {
+                    warmedTabs = null;
                     const prepared = gesture?.navigating && gesture.view === view;
                     cache.set(view.id, {node:prepared ? gesture.sourceSnapshot : snapshot(view),scroll:prepared ? gesture.sourceScroll : window.scrollY});
                 }
@@ -173,7 +177,7 @@ Kostentracker.module({
                 return target && dependencies.isTravelMode?.() ? dependencies.travelModeRoute(target) : target;
             }
 
-            function layer(node, scroll, front) {
+            function layer(node, scroll, front, attach = true) {
                 const el = document.createElement('div');
                 el.className = 'edge-back-layer' + (front ? ' edge-back-front' : '');
                 const content = document.createElement('div');
@@ -186,8 +190,18 @@ Kostentracker.module({
                     shade.className = 'edge-back-shade';
                     el.appendChild(shade);
                 }
-                shadow.appendChild(el);
+                if (attach) shadow.appendChild(el);
                 return el;
+            }
+
+            function prepareTabLayers(view) {
+                if (!view || reducedMotion?.matches || warmedTabs?.view === view) return;
+                const targets = dependencies.prepareTabSwipeTargets?.(view) || [];
+                if (!targets.length) return;
+                syncPreviewTheme();
+                const current = layer(snapshot(view), 0, true, false);
+                const adjacent = new Map(targets.map(target => [target, layer(snapshot(target), 0, true, false)]));
+                warmedTabs = {view, current, adjacent};
             }
 
             function clearTabSlide() {
@@ -203,19 +217,33 @@ Kostentracker.module({
                 cleanup();
             }
 
-            function beginTabSlide(view, target, direction) {
+            function beginTabSlide(view, target, direction, prepareTarget) {
                 if (gesture || tabSlide || reducedMotion?.matches) return false;
                 const nav = document.getElementById('categoryBottomNav');
                 if (!nav || nav.classList.contains('hidden')) return false;
                 cancelPreparation();
                 discardPrepared();
-                syncPreviewTheme();
-                const current = layer(snapshot(view), window.scrollY, true);
-                const next = layer(snapshot(target), 0, true);
                 const width = window.innerWidth;
+                const scroll = window.scrollY;
+                const bottom = Math.max(0, window.innerHeight - nav.getBoundingClientRect().top);
+                const prepared = warmedTabs?.view === view ? warmedTabs : null;
+                warmedTabs = null;
+                let current = prepared?.current;
+                let next = prepared?.adjacent.get(target);
+                if (!current || !next) {
+                    syncPreviewTheme();
+                    if (!next) {
+                        prepareTarget?.();
+                        next = layer(snapshot(target), 0, true, false);
+                    }
+                    current ??= layer(snapshot(view), 0, true, false);
+                }
+                current.firstElementChild.style.top = -scroll + 'px';
+                shadow.appendChild(current);
+                shadow.appendChild(next);
                 const navZIndex = nav.style.zIndex;
                 nav.style.zIndex = '10001';
-                overlay.style.bottom = Math.max(0, window.innerHeight - nav.getBoundingClientRect().top) + 'px';
+                overlay.style.bottom = bottom + 'px';
                 tabSlide = {current, next, width, direction, nav, navZIndex, distance:0, frame:0, timer:0, finishing:false, navigating:false};
                 paintTabSlide(tabSlide);
                 overlay.style.display = 'block';
@@ -247,7 +275,8 @@ Kostentracker.module({
                 cancelAnimationFrame(slide.frame);
                 paintTabSlide(slide);
                 slide.current.getBoundingClientRect();
-                const duration = 200;
+                const remaining = Math.abs((onCommit ? slide.width : 0) - slide.distance);
+                const duration = Math.round(120 + 105 * remaining / slide.width);
                 slide.current.style.transition = slide.next.style.transition = `transform ${duration}ms cubic-bezier(.2,.7,.25,1)`;
                 slide.distance = onCommit ? slide.width : 0;
                 paintTabSlide(slide);
@@ -435,12 +464,12 @@ Kostentracker.module({
             observer.observe(document.body, {subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class','value','checked','selected']});
             observer.observe(document.documentElement, {attributes:true,attributeFilter:['data-theme','style']});
             document.addEventListener('kostentracker:travelModeChanged',() => {
-                cache.clear(); clearTabSlide(); discardPrepared(); cleanup(); schedulePreparation();
+                cache.clear(); warmedTabs = null; clearTabSlide(); discardPrepared(); cleanup(); schedulePreparation();
             });
             document.addEventListener('input',invalidatePrepared,true);
             document.addEventListener('change',invalidatePrepared,true);
             document.addEventListener('focusout',schedulePreparation,true);
-            window.addEventListener('resize',() => { clearTabSlide(); discardPrepared(); cleanup(); });
+            window.addEventListener('resize',() => { warmedTabs = null; clearTabSlide(); discardPrepared(); cleanup(); });
             window.addEventListener('pagehide',() => { clearTabSlide(); discardPrepared(); cleanup(); cancelPreparation(); });
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden) { clearTabSlide(); discardPrepared(); cleanup(); }
