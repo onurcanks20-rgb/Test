@@ -29,6 +29,7 @@ Kostentracker.module({
     "renderQuickAmountSettings",
     "renderSparenInvestieren",
     "renderUebersicht",
+    "renderStatistik",
     "renderVersicherungen",
     "renderWarnSettings",
     "setupFreizeitEnterFlow",
@@ -138,6 +139,7 @@ Kostentracker.module({
                 const datum = document.getElementById("datum");
                 if (datum) datum.value = "";
             }
+            if (id === "statistikView") dependencies.renderStatistik?.();
             // Ausgangsposition vorher für die Zurückwisch-Geste sichern.
             if (changingView) {
                 window.scrollTo(0, 0);
@@ -349,6 +351,7 @@ Kostentracker.module({
 
         function prepareTabPreviewTarget(target) {
             if (target.id === "reisen") dependencies.renderLaender();
+            else if (target.id === "statistikView") dependencies.renderStatistik?.();
             else if (target.id === "uebersichtView") dependencies.renderUebersicht();
             else if (target.id === "travelOverviewView") dependencies.renderTravelCountries();
         }
