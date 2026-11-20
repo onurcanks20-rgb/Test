@@ -314,5 +314,73 @@ Kostentracker.module({
             dependencies.renderHomeUebersicht();
         }
 
+        // Swipe only on the tab landing pages. Reuse the same actions as a
+        // tap on the bottom bar so routing and unsaved-input checks still apply.
+        const tabSwipePages = {
+            home: "home", uebersichtView: "overview", statistikView: "statistics",
+            reisen: "reisen", travelOverviewView: "reisen"
+        };
+        const tabSwipeBlocked = "dialog[open], .sheet-backdrop:not(.hidden), .swipe-selection-mode";
+        const tabSwipeIgnore = "input, textarea, select, [contenteditable], .category-add-panel, .swipe-entry-shell, .item, .home-booking-row, [data-horizontal-scroll]";
+
+        for (const [id, tab] of Object.entries(tabSwipePages)) {
+            const page = document.getElementById(id);
+            if (!page) continue;
+            let swipe = null;
+
+            page.addEventListener("touchstart", event => {
+                swipe = null;
+                if (event.touches.length !== 1 || event.defaultPrevented ||
+                    event.target.closest?.(tabSwipeIgnore) ||
+                    document.querySelector(tabSwipeBlocked) ||
+                    page.querySelector(".category-add-panel:not(.hidden), .alltag-overflow[open]")) return;
+                const {clientX: x, clientY: y, identifier} = event.touches[0];
+                // Leave the screen edges to the browser and the existing back gesture.
+                if (x <= 28 || x >= window.innerWidth - 28) return;
+                swipe = {x, y, identifier, horizontal: false};
+            }, {passive: true});
+
+            page.addEventListener("touchmove", event => {
+                if (!swipe) return;
+                const touch = event.touches[0];
+                if (event.touches.length !== 1 || touch.identifier !== swipe.identifier ||
+                    event.defaultPrevented || !event.cancelable) {
+                    swipe = null;
+                    return;
+                }
+                const dx = Math.abs(touch.clientX - swipe.x);
+                const dy = Math.abs(touch.clientY - swipe.y);
+                if (!swipe.horizontal) {
+                    if (Math.max(dx, dy) < 12) return;
+                    if (dx < dy * 1.5) { swipe = null; return; }
+                    swipe.horizontal = true;
+                }
+                event.preventDefault();
+            }, {passive: false});
+
+            page.addEventListener("touchend", event => {
+                const start = swipe;
+                swipe = null;
+                if (!start?.horizontal || event.defaultPrevented || page.classList.contains("hidden") ||
+                    document.querySelector(tabSwipeBlocked)) return;
+                if (event.cancelable) event.preventDefault();
+                const touch = event.changedTouches[0];
+                if (event.changedTouches.length !== 1 || touch.identifier !== start.identifier) return;
+                const dx = touch.clientX - start.x;
+                if (Math.abs(dx) < 64 || Math.abs(dx) < Math.abs(touch.clientY - start.y) * 1.5) return;
+
+                const nav = document.getElementById("categoryBottomNav");
+                if (!nav || nav.classList.contains("hidden")) return;
+                // In Reiseansicht the Übersicht button routes to Reisen too.
+                const travelMode = dependencies.isTravelMode?.();
+                const buttons = [...nav.querySelectorAll("[data-main-tab]")]
+                    .filter(button => !travelMode || button.dataset.mainTab !== "overview");
+                const index = buttons.findIndex(button => button.dataset.mainTab === tab);
+                if (index >= 0) buttons[index + (dx < 0 ? 1 : -1)]?.click();
+            }, {passive: false});
+
+            page.addEventListener("touchcancel", () => { swipe = null; }, {passive: true});
+        }
+
 return { monatZuZahl, safeId, show, goHome, openUebersicht, openSparenInvestieren, openGeplanteAusgaben, openStatistik, openSettings, openSettingsBudget, openSettingsQuickAdd, openSettingsWarnings, openSettingsDesign, openReisen, openVersicherungen, openHaushalt, openFreizeit, openAusgabenArchiv, closeAusgabenArchiv, openEinnahmen, openKosten, hideAllViews, toggleKostenDetails, toggleFaelligDetails };
 });
