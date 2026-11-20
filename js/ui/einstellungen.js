@@ -229,7 +229,7 @@ Kostentracker.module({
   },
   "weekPreviewSheet": {
     "title": "Wochenbudget",
-    "html": "<p>Das Budget dieser Woche bleibt fest. Ein positiver Wochenrest bleibt für diese Woche reserviert. Wenn du das Wochenbudget überschreitest, werden die kommenden Wochen sofort angepasst. Die Überschreitung ist im Gesamtbetrag bereits verrechnet und wird nicht noch einmal abgezogen. Teilwochen werden nach ihren Tagen verteilt.</p>"
+    "html": "<p>Das Budget dieser Woche bleibt fest. Ein positiver Wochenrest bleibt für diese Woche reserviert. Wenn du das Wochenbudget überschreitest, werden die kommenden Wochen sofort angepasst. Die Überschreitung ist im Gesamtbetrag bereits verrechnet und wird nicht noch einmal abgezogen. Teilwochen werden nach ihren Tagen verteilt.</p><p>Bei einem Minus siehst du den gesamten Fehlbetrag bis zum Gehalt. Die Ausgaben dieser Woche, die aufs Wochenbudget angerechnet wurden, stehen separat darunter.</p>"
   }
 };
         const appDialogs = new Map();
