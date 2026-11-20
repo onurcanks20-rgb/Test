@@ -246,6 +246,7 @@ Kostentracker.module({
 
                 div.appendChild(row);
             }
+            document.dispatchEvent(new CustomEvent('kostentracker:rowsRendered', {detail:{root:div}}));
         }
 
         function openLand(l) {
