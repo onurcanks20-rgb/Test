@@ -7,6 +7,7 @@ Kostentracker.module({
     "closeAddSheet",
     "closeCategoryAddPanels",
     "toggleCategoryAdd",
+    "updateMainNavAdd",
     "getAktuellerMonat",
     "getGehaltstag",
     "getGehaltszeitraum",
@@ -117,6 +118,7 @@ Kostentracker.module({
                 reisen: "reisen", travelOverviewView: "reisen", land: "reisen"
             }[id] || (isCategory ? "overview" : "");
             categoryNav?.classList.toggle("hidden", !activeTab);
+            dependencies.updateMainNavAdd?.(id);
             categoryNav?.querySelectorAll("[data-main-tab]").forEach(button => {
                 const active = button.dataset.mainTab === activeTab;
                 button.classList.toggle("active", active);

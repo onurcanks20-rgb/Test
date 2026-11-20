@@ -360,7 +360,31 @@ Kostentracker.module({
             });
         }
 
+        const addActionsByView = new Map([
+            ["haushaltView", ["hausAddPanel", "Haushaltsausgabe hinzufügen"]],
+            ["freizeitView", ["freizeitAddPanel", "Freizeitausgabe hinzufügen"]],
+            ["einnahmenView", ["einnahmenAddPanel", "Einnahme hinzufügen"]],
+            ["kostenView", ["kostenAddPanel", "Fixkosten hinzufügen"]],
+            ["versicherungenView", ["versAddPanel", "Versicherung hinzufügen"]],
+            ["geplanteAusgabenView", ["geplantAddPanel", "Geplante Ausgabe hinzufügen"]],
+            ["sparenInvestierenView", ["sparenInvestierenAddPanel", "Sparbetrag hinzufügen"]],
+            ["reisen", ["reisenAddPanel", "Land hinzufügen"]],
+            ["travelOverviewView", ["reisenAddPanel", "Land hinzufügen"]],
+            ["land", ["reiseAddPanel", "Reiseausgabe hinzufügen"]]
+        ]);
+        let mainNavAddAction;
+
+        function updateMainNavAdd(viewId) {
+            mainNavAddAction = addActionsByView.get(viewId);
+            document.querySelector("#categoryBottomNav .main-nav-add")
+                ?.setAttribute("aria-label", mainNavAddAction?.[1] || "Buchung hinzufügen");
+        }
+
         function openAddSheet() {
+            if (mainNavAddAction) {
+                toggleCategoryAdd(mainNavAddAction[0]);
+                return;
+            }
             renderQuickAddMenu();
             document.getElementById("addSheet")?.classList.remove("hidden");
         }
@@ -561,10 +585,6 @@ Kostentracker.module({
             sheet.classList.remove("hidden");
         }
 
-        function focusLater(id) {
-            setTimeout(() => document.getElementById(id)?.focus(), 80);
-        }
-
         let categoryAdd = null;
 
         function dismissCategoryAdd(restoreScroll = true) {
@@ -621,13 +641,12 @@ Kostentracker.module({
             dependencies.resetAddReminderForPanel(panelId);
             prepareStartQuickAdd(panelId, false);
             const firstId = dependencies.setupUniversalAddEnterFlow(panelId) || focusId;
-            if (panelId === "reisenAddPanel") {
-                panel.classList.remove("hidden");
-                focusLater(firstId);
-                return;
-            }
-
             openCategoryAdd(panel);
+            if (panelId === "reiseAddPanel" || panelId === "reisenAddPanel") {
+                setTimeout(() => {
+                    if (categoryAdd?.panel === panel) document.getElementById(firstId)?.focus({preventScroll:true});
+                }, 30);
+            }
         }
 
         function toggleFreiDetails() {
@@ -814,5 +833,5 @@ Kostentracker.module({
             dependencies.renderListe();
         }
 
-return { renderHomeQuickFavorites, openHomeQuickFavoritePicker, dismissCategoryAdd, cancelCategoryAdd, refreshReiseQuickAmounts, getQuickAddFavoriten, renderQuickAddMenu, toggleQuickAddSettingsPanel, getQuickAmounts, renderQuickAmountSettings, saveQuickAmounts, renderQuickAddSettings, toggleQuickAddFavorit, moveQuickAddOption, openAddSheet, closeAddSheet, prepareStartQuickAdd, setQuickAmount, prepareQuickEntryLayout, openStartQuickAdd, closeStartQuickAdd, closeReiseAuswahlSheet, openReiseAuswahlFromHome, focusLater, closeCategoryAddPanels, toggleCategoryAdd, toggleFreiDetails, getLetzteKategorie, merkeLetzteKategorie, applyLetzteAlltagsKategorie, focusBetragSchnell, setQuickCategory, setReiseKategorie, applyLetzteReiseKategorie, renderQuickAdd, quickAdd, toggleManual, saveQuickAdd };
+return { renderHomeQuickFavorites, openHomeQuickFavoritePicker, dismissCategoryAdd, cancelCategoryAdd, refreshReiseQuickAmounts, getQuickAddFavoriten, renderQuickAddMenu, toggleQuickAddSettingsPanel, getQuickAmounts, renderQuickAmountSettings, saveQuickAmounts, renderQuickAddSettings, toggleQuickAddFavorit, moveQuickAddOption, updateMainNavAdd, openAddSheet, closeAddSheet, prepareStartQuickAdd, setQuickAmount, prepareQuickEntryLayout, openStartQuickAdd, closeStartQuickAdd, closeReiseAuswahlSheet, openReiseAuswahlFromHome, closeCategoryAddPanels, toggleCategoryAdd, toggleFreiDetails, getLetzteKategorie, merkeLetzteKategorie, applyLetzteAlltagsKategorie, focusBetragSchnell, setQuickCategory, setReiseKategorie, applyLetzteReiseKategorie, renderQuickAdd, quickAdd, toggleManual, saveQuickAdd };
 });
