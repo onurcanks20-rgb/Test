@@ -640,6 +640,13 @@
         .week-preview-dates { margin-top:3px; font-size:12px; opacity:.62; }
         .week-preview-value { white-space:nowrap; font-size:19px; font-weight:800; }
         .week-preview-total { display:flex; justify-content:space-between; gap:12px; padding:14px 2px 4px; border-top:1px solid rgba(255,255,255,.1); font-weight:750; }
+        .week-preview-total.hidden { display:none; }
+        .week-preview-deficit { padding:14px; border-radius:16px; background:rgba(255,99,99,.12); }
+        .week-preview-deficit-value { margin-top:4px; color:#ff8e87; font-size:25px; font-weight:800; }
+        :root[data-theme="light"] .week-preview-deficit-value { color:#a9262b; }
+        .week-preview-activity { align-items:flex-start; }
+        .week-preview-activity-value { text-align:right; max-width:58%; }
+        .week-preview-deficit-note { margin:2px 2px 0; font-size:13px; line-height:1.4; opacity:.78; }
         .week-preview-empty { padding:16px 4px; opacity:.7; text-align:center; }
         .week-summary-head { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; }
         .week-summary-title { font-size:13px; opacity:.7; text-transform:uppercase; letter-spacing:.06em; }
