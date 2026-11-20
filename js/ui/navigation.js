@@ -428,7 +428,7 @@ Kostentracker.module({
             const commit = valid && distance >= 64 && distance >= Math.abs(touch.clientY - start.y) * 1.5;
             if (event.cancelable) event.preventDefault();
             if (start.animated) {
-                if (valid) dependencies.moveTabSlide?.(dx);
+                if (valid) dependencies.moveTabSlide?.(dx, false);
                 dependencies.finishTabSlide?.(commit ? () => button.click() : undefined);
             } else if (commit) button.click();
         }, {passive: false});

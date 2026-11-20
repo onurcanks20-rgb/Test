@@ -161,7 +161,7 @@ Kostentracker.module({
         const navZIndex = nav.style.zIndex;
         nav.style.zIndex = '10001';
         overlay.style.bottom = bottom + 'px';
-        tabSlide = {current, next, width, direction, nav, navZIndex, distance:0, frame:0, timer:0, finishing:false, navigating:false};
+        tabSlide = {current, next, width, direction, nav, navZIndex, distance:0, lastSample:performance.now(), velocity:0, frame:0, timer:0, finishing:false, navigating:false};
         paintTabSlide(tabSlide);
         overlay.style.display = 'block';
         return true;
@@ -173,10 +173,20 @@ Kostentracker.module({
         slide.next.style.transform = `translate3d(${offset - slide.direction * slide.width}px,0,0)`;
     }
 
-    function moveTabSlide(dx) {
+    function moveTabSlide(dx, sampleVelocity = true) {
         const slide = tabSlide;
         if (!slide || slide.finishing) return;
-        slide.distance = Math.min(slide.width, Math.max(0, dx * slide.direction));
+        const distance = Math.min(slide.width, Math.max(0, dx * slide.direction));
+        if (sampleVelocity) {
+            const now = performance.now();
+            const elapsed = Math.max(1, now - slide.lastSample);
+            const speed = (distance - slide.distance) / elapsed;
+            // Use the same time-based smoothing as the independent back gesture.
+            const weight = 1 - Math.exp(-elapsed / 24);
+            slide.velocity += (speed - slide.velocity) * weight;
+            slide.lastSample = now;
+        }
+        slide.distance = distance;
         if (!slide.frame) slide.frame = requestAnimationFrame(() => {
             slide.frame = 0;
             paintTabSlide(slide);
@@ -191,8 +201,13 @@ Kostentracker.module({
         paintTabSlide(slide);
         slide.current.getBoundingClientRect();
         const remaining = Math.abs((onCommit ? slide.width : 0) - slide.distance);
-        const duration = Math.round(120 + 105 * remaining / slide.width);
-        slide.current.style.transition = slide.next.style.transition = `transform ${duration}ms cubic-bezier(.2,.7,.25,1)`;
+        const recent = performance.now() - slide.lastSample < 90;
+        const releaseVelocity = recent ? Math.max(0, onCommit ? slide.velocity : -slide.velocity) : 0;
+        const duration = reducedMotion?.matches ? 0 : Math.round(Math.max(260, Math.min(440,
+            280 + 150 * remaining / slide.width - Math.min(90, releaseVelocity * 55))));
+        const slope = remaining > 1 ? Math.min(3, releaseVelocity * duration / remaining) : 0;
+        const easing = `cubic-bezier(.25,${(slope * .25).toFixed(3)},.25,1)`;
+        slide.current.style.transition = slide.next.style.transition = `transform ${duration}ms ${easing}`;
         slide.distance = onCommit ? slide.width : 0;
         paintTabSlide(slide);
 
