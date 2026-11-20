@@ -203,21 +203,10 @@ Kostentracker.module({
         function homeQuickFavoriteOptions() {
             const options = new Map();
             const areas = [
-                {key:"haus", label:"Haushalt", panel:"hausAddPanel", focus:"hausBetrag"},
-                {key:"freizeit", label:"Freizeit", panel:"freizeitAddPanel", focus:"freizeitBetrag"}
+                {grid:"haus", group:"haushalt", label:"Haushalt", panel:"hausAddPanel", focus:"hausBetrag"},
+                {grid:"freizeit", group:"freizeit", label:"Freizeit", panel:"freizeitAddPanel", focus:"freizeitBetrag"},
+                {grid:"reise", group:"reisen", label:"Reise"}
             ];
-            for (const area of areas) {
-                for (const button of document.querySelectorAll(`#${area.key}KategorieGrid [data-category]`)) {
-                    const category = button.dataset.category;
-                    const label = category === "Essen / Trinken" ? "Essen" :
-                        category === "Sonstiges" ? `Sonstiges · ${area.label}` : category;
-                    const icon = button.querySelector("use")?.getAttribute("href")?.replace("#alltag-", "") || "plus";
-                    options.set(`${area.key}:${category}`, {
-                        label, icon,
-                        action: () => openStartQuickAdd(area.panel, area.focus, {area:area.key, category})
-                    });
-                }
-            }
             for (const [key, label, icon] of [
                 ["haushalt","Haushalt","cart"], ["freizeit","Freizeit","activity"],
                 ["einnahmen","Einnahme","income"], ["fixkosten","Fixkosten","receipt"],
@@ -226,6 +215,20 @@ Kostentracker.module({
             ]) {
                 const option = context.session.QUICK_ADD_OPTIONEN?.[key];
                 if (option) options.set(key,{label,icon,action:option.action});
+            }
+            for (const {grid, group, label, panel, focus} of areas) {
+                for (const button of document.querySelectorAll(`#${grid}KategorieGrid [data-category]`)) {
+                    const category = button.dataset.category;
+                    const pickerLabel = grid === "freizeit" && category === "Essen / Trinken" ? "Essen" : category;
+                    const tileLabel = grid === "reise" || category === "Sonstiges" ? `${pickerLabel} · ${label}` : pickerLabel;
+                    const icon = button.querySelector("use")?.getAttribute("href")?.replace("#alltag-", "") || "plus";
+                    options.set(`${grid}:${category}`, {
+                        label: tileLabel, pickerLabel, icon, group,
+                        action: grid === "reise"
+                            ? () => openReiseAuswahlFromHome(category)
+                            : () => openStartQuickAdd(panel, focus, {area:grid, category})
+                    });
+                }
             }
             return options;
         }
@@ -262,30 +265,63 @@ Kostentracker.module({
             return true;
         }
 
+        function homeQuickFavoriteChoice(key, label, icon) {
+            const button = document.createElement("button");
+            button.className = "add-choice";
+            fillQuickChoice(button, label, icon);
+            const indicator = button.querySelector(".quick-choice-chevron");
+            indicator.classList.add("home-quick-choice-plus");
+            indicator.querySelector("use").setAttribute("href", "#alltag-plus");
+            button.addEventListener("click", () => {
+                const current = selectedHomeQuickFavorites(homeQuickFavoriteOptions());
+                if (current.includes(key) || saveHomeQuickFavorites([...current,key])) {
+                    dependencies.closeAccessibleDialog("homeQuickFavoritePicker");
+                }
+            });
+            return button;
+        }
+
         function openHomeQuickFavoritePicker() {
+            const dialog = document.getElementById("homeQuickFavoritePicker");
             const host = document.getElementById("homeQuickFavoriteChoices");
-            if (!host) return;
+            if (!host || dialog?.open) return;
+
             const options = homeQuickFavoriteOptions();
-            const favorites = selectedHomeQuickFavorites(options);
+            const favorites = new Set(selectedHomeQuickFavorites(options));
             host.replaceChildren();
-            for (const [key, {label, icon}] of options) {
-                if (favorites.includes(key)) continue;
-                const button = document.createElement("button");
-                button.className = "add-choice";
-                fillQuickChoice(button, label, icon);
-                button.addEventListener("click", () => {
-                    const current = selectedHomeQuickFavorites(homeQuickFavoriteOptions());
-                    if (current.includes(key) || saveHomeQuickFavorites([...current,key])) {
-                        dependencies.closeAccessibleDialog("homeQuickFavoritePicker");
+            for (const [key, option] of options) {
+                if (option.group) continue;
+                const subcategories = [...options].filter(([, child]) => child.group === key);
+                if (!subcategories.length) {
+                    if (!favorites.has(key)) host.appendChild(homeQuickFavoriteChoice(key, option.label, option.icon));
+                    continue;
+                }
+
+                const details = document.createElement("details");
+                details.setAttribute("name", "home-quick-favorite-category");
+                const summary = document.createElement("summary");
+                fillQuickChoice(summary, key === "reisen" ? "Reisen" : option.label, option.icon);
+                const choices = document.createElement("div");
+                choices.className = "home-quick-favorite-subcategories";
+                for (const [childKey, child] of subcategories) {
+                    if (!favorites.has(childKey)) {
+                        choices.appendChild(homeQuickFavoriteChoice(childKey, child.pickerLabel, child.icon));
                     }
-                });
-                host.appendChild(button);
+                }
+                if (!favorites.has(key)) {
+                    choices.appendChild(homeQuickFavoriteChoice(key, `${option.label} allgemein`, option.icon));
+                }
+                if (choices.children.length) {
+                    details.append(summary, choices);
+                    host.appendChild(details);
+                }
             }
             if (!host.children.length) {
                 const message = document.createElement("p");
                 message.textContent = "Alle Schnellzugriffe sind bereits hinzugefügt.";
                 host.appendChild(message);
             }
+            host.scrollTop = 0;
             dependencies.openAccessibleDialog("homeQuickFavoritePicker", "homeQuickFavoritePickerTitle");
         }
 
@@ -430,7 +466,8 @@ Kostentracker.module({
             if (favorite) {
                 const chosen = Array.from(panel.querySelectorAll("[data-category]"))
                     .find(button => button.dataset.category === favorite.category);
-                if (chosen) setQuickCategory(favorite.area, favorite.category, chosen, false);
+                if (chosen && panelId === "reiseAddPanel") setReiseKategorie(favorite.category, chosen, false);
+                else if (chosen) setQuickCategory(favorite.area, favorite.category, chosen, false);
             }
             prepareQuickEntryLayout(panelId);
             sheet.classList.remove("hidden");
@@ -463,7 +500,7 @@ Kostentracker.module({
             document.getElementById("reiseAuswahlSheet")?.classList.add("hidden");
         }
 
-        function openReiseAuswahlFromHome() {
+        function openReiseAuswahlFromHome(category) {
             closeAddSheet();
 
             const sheet = document.getElementById("reiseAuswahlSheet");
@@ -478,13 +515,16 @@ Kostentracker.module({
                 return heute >= meta.von && heute <= meta.bis;
             });
 
-            // Ist heute genau eine Reise aktiv, wird sie bei der Schnelleingabe
-            // automatisch gewaehlt und die zusaetzliche Laenderauswahl uebersprungen.
-            if (aktiveReisen.length === 1) {
-                context.session.aktuellesLand = aktiveReisen[0];
+            function openTravelExpense(land) {
+                context.session.aktuellesLand = land;
                 dependencies.updateDropdown();
-                openStartQuickAdd("reiseAddPanel", "betrag");
-                setTimeout(() => applyLetzteReiseKategorie(true), 30);
+                openStartQuickAdd("reiseAddPanel", "betrag", category ? {category} : undefined);
+                if (!category) setTimeout(() => applyLetzteReiseKategorie(true), 30);
+            }
+
+            // Eine aktive Reise wird direkt gewählt.
+            if (aktiveReisen.length === 1) {
+                openTravelExpense(aktiveReisen[0]);
                 return;
             }
 
@@ -512,10 +552,7 @@ Kostentracker.module({
                     fillQuickChoice(btn, land, "plane");
                     btn.addEventListener("click", () => {
                         closeReiseAuswahlSheet();
-                        context.session.aktuellesLand = land;
-                        dependencies.updateDropdown();
-                        openStartQuickAdd("reiseAddPanel", "betrag");
-                        setTimeout(() => applyLetzteReiseKategorie(true), 30);
+                        openTravelExpense(land);
                     });
                     choices.appendChild(btn);
                 });
