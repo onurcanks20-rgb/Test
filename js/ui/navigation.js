@@ -137,7 +137,10 @@ Kostentracker.module({
                 if (datum) datum.value = "";
             }
             // Ausgangsposition vorher für die Zurückwisch-Geste sichern.
-            if (changingView) window.scrollTo(0, 0);
+            if (changingView) {
+                window.scrollTo(0, 0);
+                document.dispatchEvent(new Event("kostentracker:main-view-shown"));
+            }
         }
 
         function goHome() {
