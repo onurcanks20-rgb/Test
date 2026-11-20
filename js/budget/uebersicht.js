@@ -24,7 +24,6 @@ Kostentracker.module({
     "isoAusDate",
     "laufendeKostenImZeitraum",
     "maybeOpenNextSalaryPrompt",
-    "reisenGesamt",
     "renderBudgetUndWochen",
     "renderHomeWarnings",
     "versicherungsZahlungenImZeitraum",
@@ -68,7 +67,7 @@ Kostentracker.module({
             const gp = dependencies.summeBetraege(dependencies.geplanteAusgabenImZeitraum(z.start, z.ende));
             const sparStatus = dependencies.berechneSparBudgetStatus(z);
             const set=(id,val)=>{const el=document.getElementById(id); if(el) el.innerHTML=dependencies.formatBetrag(val);};
-            set("overviewHaushalt",h); set("overviewFreizeit",fr); set("overviewFixkosten",f); set("overviewVersicherungen",v); set("overviewGeplant",gp); set("overviewReisen",dependencies.reisenGesamt());
+            set("overviewHaushalt",h); set("overviewFreizeit",fr); set("overviewFixkosten",f); set("overviewVersicherungen",v); set("overviewGeplant",gp);
             set("overviewSparenInvestieren", dependencies.rundeCent(sparStatus.investieren + sparStatus.gespart));
             const siSub = document.getElementById("overviewSparenInvestierenSub");
             if (siSub) siSub.innerHTML = `Investiert ${dependencies.formatBetrag(sparStatus.investieren)} · Gespart ${dependencies.formatBetrag(sparStatus.gespart)} von ${dependencies.formatBetrag(sparStatus.sparenPlan)}`;
