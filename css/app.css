@@ -2843,6 +2843,7 @@ body:has(#freshCostDialog[open], #categoryEditDialog[open], #categoryAddDialog[o
 #home.home-dashboard .home-week-budget { color:var(--home-muted);font-size:13px;line-height:1.4; }
 #home.home-dashboard .home-week-budget span { font-weight:inherit !important; }
 #home.home-dashboard .home-week-progress-row { display:flex;align-items:center;gap:10px;margin-top:13px; }
+#home.home-dashboard .home-week-progress-row.hidden { display:none; }
 #home.home-dashboard .home-week-progress { flex:1;min-width:0;height:8px;overflow:hidden;border-radius:5px;background:rgba(128,128,128,.22); }
 #home.home-dashboard .home-week-progress > span { display:block;height:100%;width:0;border-radius:inherit;background:var(--primary); }
 #home.home-dashboard .home-week-progress.over-budget > span { background:#ef5448; }
