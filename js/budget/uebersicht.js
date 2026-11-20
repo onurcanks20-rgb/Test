@@ -3,6 +3,7 @@ Kostentracker.module({
   "dependencies": [
     "resumePaymentImportedNotice",
     "refreshTravelMode",
+    "renderHomeQuickFavorites",
     "alltagCategoryIcon",
     "compareEntriesNewest",
     "formatDateGroupLabel",
@@ -109,6 +110,7 @@ Kostentracker.module({
         function renderHomeUebersicht() {
             dependencies.resumePaymentImportedNotice?.();
             renderHomeTrips();
+            dependencies.renderHomeQuickFavorites();
 
             const zeitraum = dependencies.getGehaltszeitraum();
             dependencies.renderBudgetUndWochen(zeitraum);
