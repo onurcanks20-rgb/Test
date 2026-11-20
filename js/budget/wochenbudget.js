@@ -257,7 +257,11 @@ Kostentracker.module({
 
             // Reservierte Planbuchungen verbrauchen das Wochenbudget nicht erneut.
             const wochenBudgetUebrig = Math.round((wochenBudgetStart - alltagDieseWoche) * 100) / 100;
-            set("homeWeekAmount", wochenBudgetUebrig);
+            const gesamtImMinus = verfuegbar < 0;
+            set("homeWeekAmount", gesamtImMinus ? verfuegbar : wochenBudgetUebrig);
+            document.getElementById("homeWeekAllowance")?.classList.toggle("hidden", gesamtImMinus);
+            document.getElementById("homeWeekDeficitPeriod")?.classList.toggle("hidden", !gesamtImMinus);
+            document.getElementById("homeWeekProgressRow")?.classList.toggle("hidden", gesamtImMinus);
             // Reine Darstellung der bereits berechneten Wochenwerte.
             set("homeWeekBudgetStart", wochenBudgetStart);
             const progress = document.getElementById("homeWeekProgress");
@@ -266,7 +270,10 @@ Kostentracker.module({
             const prefix = document.getElementById("homeWeekPrefix");
             const spentPercent = wochenBudgetStart > 0 ? Math.max(0, Math.round(alltagDieseWoche / wochenBudgetStart * 100)) : 0;
             const progressLabel = wochenBudgetStart > 0 ? spentPercent + " % ausgegeben" : "Kein positives Wochenbudget";
-            if (prefix) prefix.textContent = wochenBudgetUebrig >= 0 ? "Noch" : "Rest:";
+            if (prefix) {
+                prefix.classList.toggle("hidden", gesamtImMinus);
+                prefix.textContent = wochenBudgetUebrig >= 0 ? "Noch" : "Rest:";
+            }
             if (fill) fill.style.width = Math.min(100, spentPercent) + "%";
             if (progress) {
                 progress.setAttribute("aria-valuenow", String(Math.min(100, spentPercent)));
