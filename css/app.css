@@ -2803,12 +2803,12 @@ body:has(#freshCostDialog[open], #categoryEditDialog[open], #categoryAddDialog[o
 #home.home-dashboard { --home-surface:#19191b;--home-muted:#a3a3aa;--home-line:rgba(128,128,128,.18);padding-bottom:calc(72px + env(safe-area-inset-bottom)); }
 :root[data-theme="light"] #home.home-dashboard { --home-surface:#fff;--home-muted:#686870; }
 #home.home-dashboard > .container.app-shell { width:calc(100% - 32px);max-width:488px;margin:12px auto;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none; }
-#home.home-dashboard .topbar { margin:0 0 4px;gap:10px;min-height:48px;padding:6px 0; }
+#home.home-dashboard .topbar { margin:0 0 2px;gap:10px;min-height:48px;padding:4px 0; }
 #home.home-dashboard .topbar h2 { min-width:0;margin:0;font-size:26px;font-weight:700;line-height:1.2;letter-spacing:-.04em; }
 #home.home-dashboard .icon-btn { width:44px;height:44px;min-height:44px;margin:0;padding:0;background:transparent;color:var(--home-muted); }
-#home.home-dashboard .home-sync-status { margin:0 0 12px;min-height:28px;font-size:11px;line-height:1.3; }
-#home.home-dashboard .hero-card { display:block;min-height:0;align-items:stretch;justify-content:initial;margin:0 0 18px;padding:6px 0 0;border:0;border-radius:0;background:transparent;box-shadow:none;text-align:left; }
-#home.home-dashboard .hero-label { color:var(--home-muted);font-size:12px;font-weight:500;letter-spacing:.06em;opacity:1; }
+#home.home-dashboard .home-sync-status { margin:0 0 8px;min-height:28px;font-size:11px;line-height:1.3; }
+#home.home-dashboard .hero-card { display:block;min-height:0;align-items:stretch;justify-content:initial;margin:0 0 18px;padding:3px 0 0;border:0;border-radius:0;background:transparent;box-shadow:none;text-align:left; }
+#home.home-dashboard .hero-label { color:var(--text);color:color-mix(in srgb,var(--text) 78%,var(--home-muted));font-size:13px;font-weight:650;letter-spacing:.06em;opacity:1; }
 #home.home-dashboard .hero-amount { margin:7px 0 4px;font-size:clamp(32px,10.8vw,48px);font-weight:700;line-height:1.1;letter-spacing:-.04em; }
 #home.home-dashboard .hero-amount span { font-weight:700 !important;white-space:normal !important;overflow-wrap:anywhere; }
 #home.home-dashboard .link-button { display:inline-flex;align-items:center;min-height:44px;margin:0;padding:8px 0;color:var(--primary);font-size:14px;font-weight:500; }
