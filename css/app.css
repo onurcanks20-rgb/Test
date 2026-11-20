@@ -3344,10 +3344,28 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 .home-quick-favorite .quick-choice-icon { display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:color-mix(in srgb,var(--primary) 14%,transparent);color:var(--primary); }
 .home-quick-favorite .alltag-icon { width:18px;height:18px; }
 .home-quick-favorite:focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
-#homeQuickFavoriteChoices { display:flex;flex-direction:column;gap:6px; }
-#homeQuickFavoriteChoices .add-choice { display:flex;align-items:center;gap:10px;min-height:44px;margin:0;padding:6px 12px;border-radius:9px;background:var(--secondary);color:var(--text);text-align:left; }
+#homeQuickFavoritePicker { padding:0;overflow:hidden; }
+#homeQuickFavoritePicker[open] { display:flex;flex-direction:column; }
+#homeQuickFavoritePickerTitle { flex:none;margin:0;padding:18px 18px 10px;font-size:20px;outline:none; }
+#homeQuickFavoriteChoices { min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:2px 14px 10px; }
+#homeQuickFavoriteChoices :is(.add-choice,summary) {
+    display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin:0;padding:8px 10px;
+    border:0;border-radius:8px;background:transparent;color:var(--text);text-align:left;
+    font:inherit;font-size:16px;font-weight:600;cursor:pointer;
+}
+#homeQuickFavoriteChoices summary { list-style:none; }
+#homeQuickFavoriteChoices summary::-webkit-details-marker { display:none; }
+#homeQuickFavoriteChoices details[open] > summary .quick-choice-chevron { transform:rotate(90deg); }
+#homeQuickFavoriteChoices :is(.add-choice,summary):focus-visible,
+.home-quick-favorite-footer button:focus-visible { outline:2px solid var(--primary);outline-offset:-2px; }
 #homeQuickFavoriteChoices .quick-choice-icon,.home-quick-favorite .quick-choice-icon { flex-shrink:0; }
-#homeQuickFavoriteChoices .alltag-icon { width:18px;height:18px; }
-#homeQuickFavoriteChoices .quick-choice-chevron { margin-left:auto; }
+#homeQuickFavoriteChoices .alltag-icon { display:block;width:18px;height:18px; }
+#homeQuickFavoriteChoices .quick-choice-chevron { flex-shrink:0;margin-left:auto; }
+#homeQuickFavoriteChoices .home-quick-choice-plus { color:var(--primary); }
+.home-quick-favorite-subcategories { margin:0 0 6px 12px;padding:0 6px;border-radius:10px;background:rgba(128,128,128,.10); }
+#homeQuickFavoriteChoices .home-quick-favorite-subcategories .add-choice { font-size:15px;font-weight:400; }
+.home-quick-favorite-subcategories .add-choice + .add-choice { box-shadow:0 -1px rgba(128,128,128,.18); }
+.home-quick-favorite-footer { flex:none;padding:12px 16px 16px;border-top:1px solid rgba(128,128,128,.25); }
+.home-quick-favorite-footer button { width:100%;margin:0;background:rgba(128,128,128,.14);font-size:16px; }
 #homeQuickFavoriteSettings .quick-fav-actions { flex-shrink:0; }
 #homeQuickFavoriteSettings .quick-fav-row > span { min-width:0;overflow-wrap:anywhere; }
