@@ -237,7 +237,7 @@ async function submitServerPassword(event) {
   error.textContent='';
   const newPassword=authNode('serverPasswordNew').value;
   const currentPassword=authNode('serverPasswordCurrent').value;
-  if([...newPassword].length<15){error.textContent='Verwende mindestens 15 Zeichen.';return;}
+  if(!newPassword){error.textContent='Bitte ein Passwort eingeben.';return;}
   if([...newPassword].length>256){error.textContent='Verwende höchstens 256 Zeichen.';return;}
   if(passwordSet&&newPassword===currentPassword){error.textContent='Wähle ein anderes Passwort als bisher.';return;}
   if(!passwordSet&&newPassword===testServerConfig.token){error.textContent='Wähle ein anderes Passwort als den Zugangscode.';return;}
