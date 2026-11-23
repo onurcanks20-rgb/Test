@@ -30,7 +30,7 @@ Kostentracker.module({
     "parseISODate",
     "renderHomeUebersicht",
     "renderRecentAusgaben",
-    "show",
+    "show", "goHome",
     "versicherungsZahlungenImZeitraum",
     "importedEntryTime"
   ],
@@ -100,9 +100,185 @@ var testServerBusy = false, testServerTimer = null, testServerPending = false;
 const TEST_SERVER_URL = 'https://kostentracker-test.onurcanks20.workers.dev';
 var serverBackupRequired=false, serverRestorePromptSeen=false, serverLastStatus='';
 let serverSyncRevision=0,serverSyncedRevision=-1,serverSyncConfirmed=false,serverSyncError=false;
+const authNode = id=>document.getElementById(id);
+const LOGIN_MODE_KEY = 'kostenApp_test_welcome_seen';
+const PASSWORD_PROMPT_KEY = 'kostenApp_test_offer_password';
+let passwordSet = null, returnHomeAfterSignIn = false;
+
+function updateLoginMode() {
+  const signedIn=!!testServerConfig.token;
+  const usePassword=authNode('serverLoginMode')?.value==='password';
+  authNode('serverCredentials')?.classList.toggle('hidden',signedIn);
+  authNode('serverUserField')?.classList.toggle('hidden',!usePassword);
+  const field=authNode('testServerToken'), label=authNode('testServerTokenLabel');
+  if(label)label.textContent=usePassword?'Passwort':'Persönlicher Zugangscode';
+  if(field) {
+    field.autocomplete=usePassword?'current-password':'off';
+    field.placeholder=usePassword?'Passwort eingeben':'Persönlichen Zugangscode einfügen';
+  }
+  const user=authNode('serverLoginUser');
+  if(user&&testServerBoundUser){user.value=testServerBoundUser;user.readOnly=true;}
+  const account=authNode('serverSignedInUser');
+  if(account)account.textContent=testServerBoundUser?'Zugangsname · '+testServerBoundUser:'';
+  const passwordButton=authNode('serverPasswordButton');
+  if(passwordButton){
+    passwordButton.textContent=passwordSet?'Passwort ändern':'Passwort festlegen';
+    passwordButton.disabled=testServerBusy||passwordSet===null;
+  }
+}
+
+function clearLoginInput() {
+  const field=authNode('testServerToken');
+  if(field){field.value='';field.type='password';}
+  const reveal=authNode('testServerReveal');
+  if(reveal)reveal.textContent='Anzeigen';
+}
+
+function changeLoginMode() {
+  clearLoginInput();
+  updateLoginMode();
+}
+
+function continueWelcome(signIn) {
+  try {localStorage.setItem(LOGIN_MODE_KEY,'1');} catch {}
+  dependencies.closeAccessibleDialog('serverWelcomeDialog');
+  if(signIn){returnHomeAfterSignIn=true;openServerSettings();}
+}
+
+function offerInitialSignIn() {
+  if(testServerConfig.token||document.visibilityState==='hidden')return;
+  try {if(localStorage.getItem(LOGIN_MODE_KEY))return;} catch {}
+  dependencies.openAccessibleDialog('serverWelcomeDialog','serverWelcomeTitle');
+}
+
+function rememberPasswordOffer(enabled) {
+  try {
+    if(enabled)sessionStorage.setItem(PASSWORD_PROMPT_KEY,'1');
+    else sessionStorage.removeItem(PASSWORD_PROMPT_KEY);
+  } catch {}
+}
+
+function offerPasswordIfReady() {
+  if(!testServerConfig.token||passwordSet!==false||serverBackupRequired||testServerBusy)return;
+  try {if(!sessionStorage.getItem(PASSWORD_PROMPT_KEY))return;} catch {return;}
+  return openServerPassword();
+}
+
+function openServerPassword() {
+  if(!testServerConfig.token||passwordSet===null||testServerBusy)return;
+  const existing=passwordSet;
+  authNode('serverPasswordForm').reset();
+  authNode('serverPasswordError').textContent='';
+  authNode('serverPasswordTitle').textContent=existing?'Passwort ändern':'Passwort festlegen';
+  authNode('serverPasswordCurrentRow').hidden=!existing;
+  authNode('serverPasswordCurrent').required=existing;
+  authNode('serverPasswordCancel').textContent=existing?'Abbrechen':'Später';
+  authNode('serverPasswordUser').textContent='Zugangsname · '+testServerBoundUser;
+  return dependencies.openAccessibleDialog('serverPasswordDialog','serverPasswordTitle');
+}
+
+function closeServerPassword() {
+  if(testServerBusy)return;
+  rememberPasswordOffer(false);
+  authNode('serverPasswordForm').reset();
+  dependencies.closeAccessibleDialog('serverPasswordDialog');
+  finishWelcomeSignIn();
+}
+
+function finishWelcomeSignIn() {
+  if(!returnHomeAfterSignIn)return;
+  returnHomeAfterSignIn=false;
+  if(!authNode('serverSettingsView')?.classList.contains('hidden'))dependencies.goHome();
+}
+
+function applyRemoteAuth(remote) {
+  bindTestServerUser(remote);
+  passwordSet=remote.authVersion===2 ? remote.passwordSet===true : null;
+}
+
+function storeServerSession(remote, token) {
+  applyRemoteAuth(remote);
+  const config={token,userId:remote.userId};
+  localStorage.setItem('kostenApp_test_server',JSON.stringify(config));
+  testServerConfig=config;
+  clearLoginInput();
+}
+
+function expireServerSession() {
+  const oldToken=testServerConfig.token;
+  testServerConfig={};
+  try {localStorage.removeItem('kostenApp_test_server');} catch {}
+  passwordSet=null;
+  rememberPasswordOffer(false);
+  if(authNode('serverLoginMode'))authNode('serverLoginMode').value=oldToken?'password':'code';
+  clearLoginInput();
+  updateServerLoginControls();
+}
+
+const PASSWORD_ITERATIONS=600000;
+
+function passwordProofBytes(bytes) {
+  return btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+async function derivePasswordProof(password, parameters) {
+  if(!crypto?.subtle)throw new Error('Bitte die App über HTTPS öffnen.');
+  if(parameters.authVersion!==2||parameters.iterations!==PASSWORD_ITERATIONS||!/^p2_[A-Za-z0-9_-]{22}$/.test(parameters.salt))throw new Error('Bitte zuerst den neuen Testworker bereitstellen.');
+  const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);
+  const derived=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',iterations:PASSWORD_ITERATIONS,
+    salt:new TextEncoder().encode('kostentracker-password-v2:'+parameters.salt)},key,256);
+  return passwordProofBytes(derived);
+}
+
+async function submitServerPassword(event) {
+  event.preventDefault();
+  if(testServerBusy||!testServerConfig.token||passwordSet===null)return;
+  const error=authNode('serverPasswordError');
+  error.textContent='';
+  const newPassword=authNode('serverPasswordNew').value;
+  const currentPassword=authNode('serverPasswordCurrent').value;
+  if([...newPassword].length<15){error.textContent='Verwende mindestens 15 Zeichen.';return;}
+  if([...newPassword].length>256){error.textContent='Verwende höchstens 256 Zeichen.';return;}
+  if(passwordSet&&newPassword===currentPassword){error.textContent='Wähle ein anderes Passwort als bisher.';return;}
+  if(!passwordSet&&newPassword===testServerConfig.token){error.textContent='Wähle ein anderes Passwort als den Zugangscode.';return;}
+  if(newPassword!==authNode('serverPasswordRepeat').value){error.textContent='Die neuen Passwörter stimmen nicht überein.';return;}
+
+  const dialog=authNode('serverPasswordDialog');
+  const form=authNode('serverPasswordForm');
+  testServerBusy=true;
+  dialog.dataset.busy='true';
+  for(const control of form.elements)control.disabled=true;
+  updateServerLoginControls();
+  let saved=false;
+  try {
+    error.textContent='Passwort wird vorbereitet …';
+    const parameters=await testServerRequest('/api/auth/parameters');
+    const currentProof=passwordSet?await derivePasswordProof(currentPassword,parameters):undefined;
+    const salt='p2_'+passwordProofBytes(crypto.getRandomValues(new Uint8Array(16)));
+    const newProof=await derivePasswordProof(newPassword,{...parameters,salt});
+    const remote=await testServerRequest('/api/auth/password',{currentProof,newProof,salt});
+    error.textContent='';
+    storeServerSession(remote,remote.sessionToken);
+    rememberPasswordOffer(false);
+    serverStatus('Dein Passwort wurde gespeichert.');
+    saved=true;
+  }catch(e){
+    error.textContent=e.status===401||e.status===409?'Bitte melde dich erneut an.':e.message;
+  }finally{
+    dialog.dataset.busy='false';
+    for(const control of form.elements)control.disabled=false;
+    testServerBusy=false;
+    updateServerLoginControls();
+    renderHomeSyncStatus();
+    if(testServerPending){testServerPending=false;scheduleTestServerSync();}
+  }
+  if(saved)closeServerPassword();
+}
+
 function updateServerLoginControls() {
+  updateLoginMode();
   const token=document.getElementById('testServerToken'),button=document.getElementById('serverLoginButton');
-  if(button){button.textContent=testServerConfig.token&&token?.value.trim()===testServerConfig.token?'Jetzt synchronisieren':'Anmelden';button.disabled=testServerBusy;}
+  if(button){button.textContent=testServerConfig.token?'Jetzt synchronisieren':'Anmelden';button.disabled=testServerBusy;}
   if(token)token.disabled=testServerBusy;
   document.getElementById('serverRestoreNotice')?.classList.toggle('hidden',!serverBackupRequired);
   document.getElementById('serverAccountActions')?.classList.toggle('hidden',!testServerConfig.token);
@@ -144,7 +320,7 @@ function renderHomeSyncStatus() {
 function serverStatus(message) {serverLastStatus=message;const storageNote=document.getElementById('storageV2ActionStatus');if(storageNote)storageNote.textContent=message;const node=document.getElementById('testServerStatus');if(node)node.textContent=message;updateServerLoginControls();renderHomeSyncStatus();}
 function renderTestServerSettings() {
   renderServerPaymentReview();
-  const node=document.getElementById('testServerToken');if(node)node.value=testServerConfig.token||'';
+  clearLoginInput();
   serverStatus(serverBackupRequired?'Bitte deine Daten wiederherstellen, um neue Zahlungen zu übernehmen.':serverLastStatus||(testServerConfig.token?'Du bist angemeldet.':'Noch nicht angemeldet.'));
 }
 function bindTestServerUser(config) {
@@ -153,22 +329,40 @@ function bindTestServerUser(config) {
   if(!testServerBoundUser) localStorage.setItem('kostenApp_test_backup_check',config.userId);
   localStorage.setItem('kostenApp_test_user',config.userId);testServerBoundUser=config.userId;
 }
+async function currentServerSession() {
+  const remote=await testServerRequest('/api/config');
+  applyRemoteAuth(remote);
+  return remote;
+}
+
 async function saveTestServerSettings() {
-  const token=document.getElementById('testServerToken').value.trim();
-  if(token.length<32) throw new Error('Bitte deinen vollständigen persönlichen Zugangscode eingeben.');
+  if(testServerConfig.token)return currentServerSession();
+  const field=authNode('testServerToken');
+  if(authNode('serverLoginMode')?.value==='password'){
+    const password=field.value, userId=authNode('serverLoginUser').value.trim();
+    if(!/^[-a-zA-Z0-9_]{1,40}$/.test(userId)||!password)throw new Error('Bitte Zugangsname und Passwort eingeben.');
+    if(testServerBoundUser&&userId!==testServerBoundUser)throw new Error('Dieses App-Profil ist bereits an einen anderen Zugang gebunden.');
+    const parameters=await testServerRequest('/api/auth/parameters',{userId},null);
+    const proof=await derivePasswordProof(password,parameters);
+    const remote=await testServerRequest('/api/auth/login',{userId,proof},null);
+    storeServerSession(remote,remote.sessionToken);
+    return remote;
+  }
+  const token=field.value.trim();
+  if(token.length<32)throw new Error('Bitte deinen vollständigen persönlichen Zugangscode eingeben.');
   const remote=await testServerRequest('/api/config',undefined,token);
-  bindTestServerUser(remote);
-  const config={token,userId:remote.userId};localStorage.setItem('kostenApp_test_server',JSON.stringify(config));testServerConfig=config;
+  storeServerSession(remote,token);
+  if(passwordSet===false)rememberPasswordOffer(true);
   return remote;
 }
 async function testServerRequest(path,value,token=testServerConfig?.token) {
-  if(!token) throw new Error('Persönlicher Code fehlt.');
+  if(!token&&!['/api/auth/login','/api/auth/parameters'].includes(path)) throw new Error('Bitte zuerst anmelden.');
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try {
     const response=await fetch(TEST_SERVER_URL+path,{method:value===undefined?'GET':'POST',cache:'no-store',signal:controller.signal,
-      headers:{Authorization:'Bearer '+token,'X-Kostentracker-Storage':'2',...(value===undefined?{}:{'Content-Type':'application/json'})},
+      headers:{...(token?{Authorization:'Bearer '+token}:{}),'X-Kostentracker-Storage':'2',...(value===undefined?{}:{'Content-Type':'application/json'})},
       ...(value===undefined?{}:{body:JSON.stringify(value)})});
-    const data=await response.json();if(!response.ok) throw new Error(data.error||'Serverfehler '+response.status);return data;
+    const data=await response.json();if(!response.ok) throw Object.assign(new Error(data.error||'Serverfehler '+response.status),{status:response.status});return data;
   } finally {clearTimeout(timer);}
 }
 function scheduleTestServerSync() {
@@ -527,11 +721,13 @@ async function confirmBackupPreview(){
 }
 
 async function syncTestServer(saveSettings=false) {
+  if(authNode('serverPasswordDialog')?.open){testServerPending=true;return;}
   if(testServerBusy){testServerPending=true;return;}
   if(dependencies.hasUnsavedInputs?.()){serverStatus('Deine Eingabe bleibt offen. Synchronisierung folgt nach dem Abschließen.');clearTimeout(testServerTimer);testServerTimer=setTimeout(()=>syncTestServer(false),5000);return;}
+  const hadSession=!!testServerConfig.token;
   try {
     testServerBusy=true;serverStatus('Daten werden synchronisiert …');
-    if(saveSettings)await saveTestServerSettings();else{if(!testServerConfig?.token){serverStatus('Noch nicht angemeldet.');return;}bindTestServerUser(await testServerRequest('/api/config'));}
+    if(saveSettings)await saveTestServerSettings();else{if(!testServerConfig?.token){serverStatus('Noch nicht angemeldet.');return;}await currentServerSession();}
     const db=storageV2();context.storage.setItem(context.storage.key,JSON.stringify(context.repository.view));await db.flush();
     const state=await testServerRequest('/api/v2/status');
     if((localStorage.getItem('kostenApp_test_backup_check')===testServerBoundUser||!db.status().hadLegacy&&!db.status().confirmedServer)&&(state.ready||state.legacy)){
@@ -561,8 +757,8 @@ async function syncTestServer(saveSettings=false) {
     await pullV2();await db.markServerReady();if(!dependencies.hasUnsavedInputs?.()){dependencies.renderHomeUebersicht();dependencies.refreshReiseImportedViews();}
     if(!db.status().pending&&!db.status().conflicts.length){await testServerRequest('/api/v2/backup',{manual:false});await db.archiveLegacy();serverSyncedRevision=serverSyncRevision;serverSyncConfirmed=true;serverSyncError=false;serverStatus('Du bist angemeldet. Deine Daten sind aktuell.'+(count?' '+count+' neue Zahlungen übernommen.':''));}
     else{serverSyncConfirmed=false;serverStatus(db.status().conflicts.length?'Bitte die Änderungen unter Datenspeicher abgleichen.':'Weitere Änderungen werden übertragen.');if(!db.status().conflicts.length)testServerPending=true;}
-  }catch(error){serverSyncError=true;serverStatus('Noch nicht synchronisiert: '+(error.name==='AbortError'?'Zeitüberschreitung. Deine lokalen Änderungen bleiben gespeichert.':error.message));}
-  finally{testServerBusy=false;updateServerLoginControls();renderHomeSyncStatus();if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
+  }catch(error){if(hadSession&&error.status===401)expireServerSession();serverSyncError=true;serverStatus('Noch nicht synchronisiert: '+(error.name==='AbortError'?'Zeitüberschreitung. Deine lokalen Änderungen bleiben gespeichert.':error.message));}
+  finally{testServerBusy=false;updateServerLoginControls();renderHomeSyncStatus();if(!offerPasswordIfReady()&&saveSettings&&testServerConfig.token&&!serverBackupRequired)finishWelcomeSignIn();if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
 }
 function pushKeyBytes(value) {return Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4)),c=>c.charCodeAt(0));}
 async function activateTestServerPush() {
@@ -573,7 +769,7 @@ async function activateTestServerPush() {
     // Request permission directly in the tap, before a network request.
     const permission=Notification.permission==='default'?await Notification.requestPermission():Notification.permission;
     if(permission!=='granted') throw new Error('Mitteilungen sind nicht erlaubt.');
-    const config=await saveTestServerSettings();serverStatus('Push wird eingerichtet …');
+    const config=await currentServerSession();serverStatus('Push wird eingerichtet …');
     if(!config.publicKey) throw new Error('Push-Schlüssel fehlen noch im Server.');
     const registration=await ensureTestServiceWorker(),desiredKey=pushKeyBytes(config.publicKey);
     let sub=await registration.pushManager.getSubscription();
@@ -589,14 +785,14 @@ async function activateTestServerPush() {
   } catch(error) {serverStatus(error.message);}
   finally {testServerBusy=false;updateServerLoginControls();renderHomeSyncStatus();if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
 }
-function toggleTestServerCode() {const node=document.getElementById('testServerToken'),button=document.getElementById('testServerReveal');if(!node)return;node.type=node.type==='password'?'text':'password';if(button)button.textContent=node.type==='text'?'Code verbergen':'Code anzeigen';}
+function toggleTestServerCode() {const node=document.getElementById('testServerToken'),button=document.getElementById('testServerReveal');if(!node)return;node.type=node.type==='password'?'text':'password';if(button)button.textContent=node.type==='text'?'Verbergen':'Anzeigen';}
 async function restoreTestServerBackup(confirmed=false) {
   if(testServerBusy){serverStatus('Bitte den laufenden Vorgang kurz abwarten.');return;}
   if(!confirmed||!document.getElementById('serverRestoreDialog')?.open){showServerRestorePrompt(true);return;}
   testServerBusy=true;serverStatus('Deine Daten werden wiederhergestellt …');
   const errorNode=document.getElementById('serverRestoreError');if(errorNode)errorNode.textContent='';
   try {
-    await saveTestServerSettings();
+    await currentServerSession();
     const status=await testServerRequest('/api/v2/status');
     if(status.ready){const snapshot=await readV2Snapshot();await storageV2().resetToServer(snapshot.records,snapshot.cursor);}
     else{const saved=await testServerRequest('/api/backup');if(!saved.data?.Haushalt||!saved.data?.Einstellungen)throw Error('Keine gültige Sicherung vorhanden.');await storageV2().replace(saved.data);}
@@ -618,7 +814,14 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 const startServerConnection=()=>{renderTestServerSettings();if(testServerConfig.token) syncTestServer(false);};
 if(document.readyState==='complete')startServerConnection();else window.addEventListener('load',startServerConnection,{once:true});
 document.addEventListener('kostentracker:boot-complete',syncPaymentReviewGate);
+document.addEventListener('kostentracker:boot-complete',offerInitialSignIn);
+authNode('serverPasswordDialog')?.addEventListener('close',()=>{
+  rememberPasswordOffer(false);
+  authNode('serverPasswordForm')?.reset();
+  finishWelcomeSignIn();
+  if(testServerPending){testServerPending=false;scheduleTestServerSync();}
+});
 
 
-return { prepareStorageSettings, closeBackupPreview, confirmBackupPreview, exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+return { continueWelcome, changeLoginMode, openServerPassword, closeServerPassword, submitServerPassword, prepareStorageSettings, closeBackupPreview, confirmBackupPreview, exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
 });
