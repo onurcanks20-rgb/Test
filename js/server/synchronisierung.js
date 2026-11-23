@@ -238,6 +238,60 @@ async function derivePasswordProof(password, parameters) {
   return passwordProofBytes(derived);
 }
 
+function openServerRecovery() {
+  if(testServerBusy)return;
+  authNode('serverRecoveryForm').reset();
+  authNode('serverRecoveryError').textContent='';
+  dependencies.openAccessibleDialog('serverRecoveryDialog','serverRecoveryTitle');
+}
+
+function closeServerRecovery() {
+  if(testServerBusy)return;
+  authNode('serverRecoveryForm').reset();
+  dependencies.closeAccessibleDialog('serverRecoveryDialog');
+}
+
+async function submitServerRecovery(event) {
+  event.preventDefault();
+  if(testServerBusy)return;
+  const form=authNode('serverRecoveryForm'), dialog=authNode('serverRecoveryDialog');
+  const error=authNode('serverRecoveryError');
+  const code=authNode('serverRecoveryCode').value.trim();
+  const password=authNode('serverRecoveryNew').value;
+  error.textContent='';
+  if(code.length<32||code.length>256){error.textContent='Bitte den vollständigen ursprünglichen Zugangscode eingeben.';return;}
+  if(!password||[...password].length>256){error.textContent='Bitte ein Passwort mit 1 bis 256 Zeichen eingeben.';return;}
+  if(password!==authNode('serverRecoveryRepeat').value){error.textContent='Die neuen Passwörter stimmen nicht überein.';return;}
+  if(password===code){error.textContent='Wähle ein anderes Passwort als den Zugangscode.';return;}
+  testServerBusy=true;dialog.dataset.busy='true';
+  for(const control of form.elements)control.disabled=true;
+  updateServerLoginControls();
+  error.textContent='Zugang wird geprüft …';
+  let saved=false;
+  try{
+    const parameters=await testServerRequest('/api/auth/recovery-info',{expectedUserId:testServerBoundUser},code);
+    if(testServerBoundUser&&parameters.userId!==testServerBoundUser)throw new Error('Der Code gehört zu einem anderen Konto.');
+    error.textContent='Neues Passwort wird vorbereitet …';
+    const newProof=await derivePasswordProof(password,parameters);
+    const remote=await testServerRequest('/api/auth/recover',{
+      expectedUserId:parameters.userId,generation:parameters.generation,salt:parameters.salt,newProof
+    },code);
+    storeServerSession(remote,remote.sessionToken);
+    rememberPasswordOffer(false);
+    serverStatus('Dein Passwort wurde zurückgesetzt. Dein Zugangsname ist '+serverLoginName+'.');
+    error.textContent='';saved=true;
+  }catch(e){error.textContent=e.message;}
+  finally{
+    testServerBusy=false;dialog.dataset.busy='false';
+    for(const control of form.elements)control.disabled=false;
+    updateServerLoginControls();renderHomeSyncStatus();
+  }
+  if(saved){
+    closeServerRecovery();
+    await syncTestServer(true);
+  }else if(testServerPending){testServerPending=false;scheduleTestServerSync();}
+}
+
 function openServerUsername() {
   if(!testServerConfig.token||passwordSet===null||testServerBusy)return;
   authNode('serverUsernameForm').reset();
@@ -776,7 +830,7 @@ async function confirmBackupPreview(){
 }
 
 async function syncTestServer(saveSettings=false) {
-  if(authNode('serverPasswordDialog')?.open||authNode('serverUsernameDialog')?.open){testServerPending=true;return;}
+  if(authNode('serverPasswordDialog')?.open||authNode('serverUsernameDialog')?.open||authNode('serverRecoveryDialog')?.open){testServerPending=true;return;}
   if(testServerBusy){testServerPending=true;return;}
   if(dependencies.hasUnsavedInputs?.()){serverStatus('Deine Eingabe bleibt offen. Synchronisierung folgt nach dem Abschließen.');clearTimeout(testServerTimer);testServerTimer=setTimeout(()=>syncTestServer(false),5000);return;}
   const hadSession=!!testServerConfig.token;
@@ -870,6 +924,10 @@ const startServerConnection=()=>{renderTestServerSettings();if(testServerConfig.
 if(document.readyState==='complete')startServerConnection();else window.addEventListener('load',startServerConnection,{once:true});
 document.addEventListener('kostentracker:boot-complete',syncPaymentReviewGate);
 document.addEventListener('kostentracker:boot-complete',offerInitialSignIn);
+authNode('serverRecoveryDialog')?.addEventListener('close',()=>{
+  authNode('serverRecoveryForm')?.reset();
+  if(testServerPending){testServerPending=false;scheduleTestServerSync();}
+});
 authNode('serverUsernameDialog')?.addEventListener('close',()=>{
   authNode('serverUsernameForm')?.reset();
   if(testServerPending){testServerPending=false;scheduleTestServerSync();}
@@ -882,5 +940,5 @@ authNode('serverPasswordDialog')?.addEventListener('close',()=>{
 });
 
 
-return { openServerUsername, closeServerUsername, submitServerUsername, continueWelcome, changeLoginMode, openServerPassword, closeServerPassword, submitServerPassword, prepareStorageSettings, closeBackupPreview, confirmBackupPreview, exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+return { openServerRecovery, closeServerRecovery, submitServerRecovery, openServerUsername, closeServerUsername, submitServerUsername, continueWelcome, changeLoginMode, openServerPassword, closeServerPassword, submitServerPassword, prepareStorageSettings, closeBackupPreview, confirmBackupPreview, exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
 });
