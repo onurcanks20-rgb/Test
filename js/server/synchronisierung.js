@@ -103,6 +103,7 @@ let serverSyncRevision=0,serverSyncedRevision=-1,serverSyncConfirmed=false,serve
 const authNode = id=>document.getElementById(id);
 const LOGIN_MODE_KEY = 'kostenApp_test_welcome_seen';
 const PASSWORD_PROMPT_KEY = 'kostenApp_test_offer_password';
+let serverLoginName=testServerConfig.loginName||testServerBoundUser;
 let passwordSet = null, returnHomeAfterSignIn = false;
 
 function updateLoginMode() {
@@ -117,9 +118,11 @@ function updateLoginMode() {
     field.placeholder=usePassword?'Passwort eingeben':'Persönlichen Zugangscode einfügen';
   }
   const user=authNode('serverLoginUser');
-  if(user&&testServerBoundUser){user.value=testServerBoundUser;user.readOnly=true;}
+  if(user&&serverLoginName&&document.activeElement!==user)user.value=serverLoginName;
   const account=authNode('serverSignedInUser');
-  if(account)account.textContent=testServerBoundUser?'Zugangsname · '+testServerBoundUser:'';
+  if(account)account.textContent=serverLoginName?'Zugangsname · '+serverLoginName:'';
+  const nameButton=authNode('serverUsernameButton');
+  if(nameButton)nameButton.disabled=testServerBusy||passwordSet===null;
   const passwordButton=authNode('serverPasswordButton');
   if(passwordButton){
     passwordButton.textContent=passwordSet?'Passwort ändern':'Passwort festlegen';
@@ -173,7 +176,7 @@ function openServerPassword() {
   authNode('serverPasswordCurrentRow').hidden=!existing;
   authNode('serverPasswordCurrent').required=existing;
   authNode('serverPasswordCancel').textContent=existing?'Abbrechen':'Später';
-  authNode('serverPasswordUser').textContent='Zugangsname · '+testServerBoundUser;
+  authNode('serverPasswordUser').textContent='Zugangsname · '+serverLoginName;
   return dependencies.openAccessibleDialog('serverPasswordDialog','serverPasswordTitle');
 }
 
@@ -193,12 +196,17 @@ function finishWelcomeSignIn() {
 
 function applyRemoteAuth(remote) {
   bindTestServerUser(remote);
+  serverLoginName=remote.loginName||remote.userId;
+  if(testServerConfig.token&&testServerConfig.loginName!==serverLoginName){
+    testServerConfig={...testServerConfig,loginName:serverLoginName};
+    localStorage.setItem('kostenApp_test_server',JSON.stringify(testServerConfig));
+  }
   passwordSet=remote.authVersion===2 ? remote.passwordSet===true : null;
 }
 
 function storeServerSession(remote, token) {
   applyRemoteAuth(remote);
-  const config={token,userId:remote.userId};
+  const config={token,userId:remote.userId,loginName:serverLoginName};
   localStorage.setItem('kostenApp_test_server',JSON.stringify(config));
   testServerConfig=config;
   clearLoginInput();
@@ -228,6 +236,54 @@ async function derivePasswordProof(password, parameters) {
   const derived=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',iterations:PASSWORD_ITERATIONS,
     salt:new TextEncoder().encode('kostentracker-password-v2:'+parameters.salt)},key,256);
   return passwordProofBytes(derived);
+}
+
+function openServerUsername() {
+  if(!testServerConfig.token||passwordSet===null||testServerBusy)return;
+  authNode('serverUsernameForm').reset();
+  authNode('serverUsernameNew').value=serverLoginName||testServerBoundUser||'';
+  authNode('serverUsernameError').textContent='';
+  authNode('serverUsernamePasswordRow').hidden=!passwordSet;
+  authNode('serverUsernamePassword').required=passwordSet;
+  dependencies.openAccessibleDialog('serverUsernameDialog','serverUsernameTitle');
+}
+
+function closeServerUsername() {
+  if(testServerBusy)return;
+  authNode('serverUsernameForm').reset();
+  dependencies.closeAccessibleDialog('serverUsernameDialog');
+}
+
+async function submitServerUsername(event) {
+  event.preventDefault();
+  if(testServerBusy||!testServerConfig.token||passwordSet===null)return;
+  const form=authNode('serverUsernameForm'), dialog=authNode('serverUsernameDialog');
+  const error=authNode('serverUsernameError');
+  const username=authNode('serverUsernameNew').value.trim();
+  const password=authNode('serverUsernamePassword').value;
+  if(!/^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/.test(username)){
+    error.textContent='Verwende 3 bis 40 Zeichen: Buchstaben, Zahlen, Punkt, Bindestrich oder Unterstrich.';return;
+  }
+  testServerBusy=true;dialog.dataset.busy='true';
+  for(const control of form.elements)control.disabled=true;
+  updateServerLoginControls();
+  error.textContent='Zugangsname wird gespeichert …';
+  let saved=false;
+  try{
+    const parameters=passwordSet?await testServerRequest('/api/auth/parameters'):null;
+    const currentProof=passwordSet?await derivePasswordProof(password,parameters):undefined;
+    const remote=await testServerRequest('/api/auth/username',{username,currentProof});
+    applyRemoteAuth(remote);
+    serverStatus('Dein Zugangsname wurde gespeichert.');
+    error.textContent='';saved=true;
+  }catch(e){error.textContent=e.message;}
+  finally{
+    testServerBusy=false;dialog.dataset.busy='false';
+    for(const control of form.elements)control.disabled=false;
+    updateServerLoginControls();renderHomeSyncStatus();
+    if(testServerPending){testServerPending=false;scheduleTestServerSync();}
+  }
+  if(saved)closeServerUsername();
 }
 
 async function submitServerPassword(event) {
@@ -340,8 +396,7 @@ async function saveTestServerSettings() {
   const field=authNode('testServerToken');
   if(authNode('serverLoginMode')?.value==='password'){
     const password=field.value, userId=authNode('serverLoginUser').value.trim();
-    if(!/^[-a-zA-Z0-9_]{1,40}$/.test(userId)||!password)throw new Error('Bitte Zugangsname und Passwort eingeben.');
-    if(testServerBoundUser&&userId!==testServerBoundUser)throw new Error('Dieses App-Profil ist bereits an einen anderen Zugang gebunden.');
+    if(!userId||userId.length>40||!password)throw new Error('Bitte Zugangsname und Passwort eingeben.');
     const parameters=await testServerRequest('/api/auth/parameters',{userId},null);
     const proof=await derivePasswordProof(password,parameters);
     const remote=await testServerRequest('/api/auth/login',{userId,proof},null);
@@ -721,7 +776,7 @@ async function confirmBackupPreview(){
 }
 
 async function syncTestServer(saveSettings=false) {
-  if(authNode('serverPasswordDialog')?.open){testServerPending=true;return;}
+  if(authNode('serverPasswordDialog')?.open||authNode('serverUsernameDialog')?.open){testServerPending=true;return;}
   if(testServerBusy){testServerPending=true;return;}
   if(dependencies.hasUnsavedInputs?.()){serverStatus('Deine Eingabe bleibt offen. Synchronisierung folgt nach dem Abschließen.');clearTimeout(testServerTimer);testServerTimer=setTimeout(()=>syncTestServer(false),5000);return;}
   const hadSession=!!testServerConfig.token;
@@ -815,6 +870,10 @@ const startServerConnection=()=>{renderTestServerSettings();if(testServerConfig.
 if(document.readyState==='complete')startServerConnection();else window.addEventListener('load',startServerConnection,{once:true});
 document.addEventListener('kostentracker:boot-complete',syncPaymentReviewGate);
 document.addEventListener('kostentracker:boot-complete',offerInitialSignIn);
+authNode('serverUsernameDialog')?.addEventListener('close',()=>{
+  authNode('serverUsernameForm')?.reset();
+  if(testServerPending){testServerPending=false;scheduleTestServerSync();}
+});
 authNode('serverPasswordDialog')?.addEventListener('close',()=>{
   rememberPasswordOffer(false);
   authNode('serverPasswordForm')?.reset();
@@ -823,5 +882,5 @@ authNode('serverPasswordDialog')?.addEventListener('close',()=>{
 });
 
 
-return { continueWelcome, changeLoginMode, openServerPassword, closeServerPassword, submitServerPassword, prepareStorageSettings, closeBackupPreview, confirmBackupPreview, exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+return { openServerUsername, closeServerUsername, submitServerUsername, continueWelcome, changeLoginMode, openServerPassword, closeServerPassword, submitServerPassword, prepareStorageSettings, closeBackupPreview, confirmBackupPreview, exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
 });
