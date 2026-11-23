@@ -106,6 +106,126 @@ const PASSWORD_PROMPT_KEY = 'kostenApp_test_offer_password';
 let serverLoginName=testServerConfig.loginName||testServerBoundUser;
 let passwordSet = null, returnHomeAfterSignIn = false;
 
+let deviceReportsToken='',deviceReportAt=0,devicesAvailable=false;
+
+function currentDeviceIdentity() {
+  let id=storageV2().status().deviceId;
+  if(!id){
+    try{id=localStorage.getItem('kostenApp_test_device_id');}catch{}
+    if(!id){id=crypto.randomUUID();try{localStorage.setItem('kostenApp_test_device_id',id);}catch{}}
+  }
+  const agent=navigator.userAgent||'';
+  const platform=/iPhone/i.test(agent)?'iPhone':/iPad/i.test(agent)||/Macintosh/i.test(agent)&&navigator.maxTouchPoints>1?'iPad':/Android/i.test(agent)?'Android':/Windows/i.test(agent)?'Windows-PC':/Macintosh|Mac OS/i.test(agent)?'Mac':/Linux/i.test(agent)?'Linux':'Gerät';
+  const browser=/Edg\//.test(agent)?'Edge':/Firefox\//.test(agent)?'Firefox':/CriOS|Chrome\//.test(agent)?'Chrome':/Safari\//.test(agent)?'Safari':'App';
+  return {id,name:platform+' · '+browser};
+}
+
+async function currentDeviceSubscription() {
+  try{
+    const registration=await navigator.serviceWorker?.getRegistration();
+    return await registration?.pushManager?.getSubscription() || null;
+  }catch{return null;}
+}
+
+async function reportCurrentDevice(force=false) {
+  const token=testServerConfig.token;
+  if(!devicesAvailable||!token?.startsWith('kt2_'))return;
+  if(!force&&deviceReportsToken===token&&Date.now()-deviceReportAt<300000)return;
+  const subscription=await currentDeviceSubscription();
+  const device={...currentDeviceIdentity(),endpoint:subscription?.endpoint};
+  await testServerRequest('/api/auth/device',{device});
+  deviceReportsToken=token;deviceReportAt=Date.now();
+}
+
+function finishLocalLogout(message) {
+  clearTimeout(testServerTimer);testServerTimer=null;testServerPending=false;
+  deviceReportsToken='';deviceReportAt=0;
+  serverBackupRequired=false;serverSyncConfirmed=false;serverSyncError=false;
+  serverLastStatus='';returnHomeAfterSignIn=false;
+  expireServerSession();
+  for(const id of ['serverDevicesDialog','serverRestoreDialog'])dependencies.closeAccessibleDialog(id);
+  serverStatus(message||'Auf diesem Gerät abgemeldet. Deine Buchungen bleiben auf diesem Gerät gespeichert.');
+}
+
+async function logoutCurrentDevice() {
+  if(testServerBusy||!testServerConfig.token)return;
+  if(!confirm('Auf diesem Gerät abmelden?\n\nDeine Buchungen und noch nicht übertragenen Änderungen bleiben auf diesem Gerät gespeichert.'))return;
+  testServerBusy=true;updateServerLoginControls();
+  let signedOut=false;
+  try{
+    if(navigator.onLine!==false){
+      await reportCurrentDevice(true);
+      await testServerRequest('/api/auth/logout',{});
+    }
+    signedOut=true;
+  }catch(error){
+    if(error.status===401)signedOut=true;
+    else serverStatus('Abmelden fehlgeschlagen: '+error.message);
+  }finally{testServerBusy=false;updateServerLoginControls();}
+  if(signedOut){
+    finishLocalLogout(navigator.onLine===false?'Auf diesem Gerät abgemeldet. Die Serversitzung konnte offline nicht beendet werden.':undefined);
+    const subscription=await currentDeviceSubscription();
+    if(subscription)await withPushTimeout(subscription.unsubscribe(),5000,'Push-Abmeldung dauert länger.').catch(()=>{});
+  }
+}
+
+function deviceDate(timestamp) {
+  return new Intl.DateTimeFormat('de-DE',{dateStyle:'short',timeStyle:'short'}).format(new Date(timestamp));
+}
+
+async function renderAccountDevices() {
+  const host=authNode('serverDevicesList');
+  const result=await testServerRequest('/api/auth/devices');
+  if(!authNode('serverDevicesDialog').open)return;
+  host.replaceChildren();
+  const entries=Array.isArray(result.devices)?result.devices:[];
+  if(!entries.length){
+    const empty=document.createElement('p');empty.className='settings-note';
+    empty.textContent='Hier erscheinen deine Geräte, sobald du dich mit deinem Passwort anmeldest.';
+    host.appendChild(empty);
+  }
+  for(const device of entries){
+    const card=document.createElement('article');card.className='settings-page-card';
+    const title=document.createElement('h3');title.textContent=device.name+(device.current?' · Dieses Gerät':'');
+    const details=document.createElement('p');details.className='settings-note';
+    details.textContent=device.lastSeen?'Zuletzt aktiv · '+deviceDate(device.lastSeen):'Geräteangaben werden beim nächsten Öffnen aktualisiert.';
+    const button=document.createElement('button');button.type='button';button.className='neutral-button';
+    button.textContent=device.current?'Dieses Gerät abmelden':'Abmelden';
+    button.addEventListener('click',()=>device.current?logoutCurrentDevice():revokeAccountDeviceFromUI(device));
+    card.append(title,details,button);host.appendChild(card);
+  }
+}
+
+async function openServerDevices() {
+  if(testServerBusy||!testServerConfig.token||!devicesAvailable)return;
+  authNode('serverDevicesError').textContent='Geräte werden geladen …';
+  authNode('serverDevicesList').replaceChildren();
+  if(!dependencies.openAccessibleDialog('serverDevicesDialog','serverDevicesTitle'))return;
+  testServerBusy=true;updateServerLoginControls();
+  try{await reportCurrentDevice(true);await renderAccountDevices();authNode('serverDevicesError').textContent='';}
+  catch(error){authNode('serverDevicesError').textContent=error.message;}
+  finally{
+    testServerBusy=false;updateServerLoginControls();
+    if(!authNode('serverDevicesDialog').open&&testServerPending){testServerPending=false;scheduleTestServerSync();}
+  }
+}
+
+async function revokeAccountDeviceFromUI(device) {
+  if(testServerBusy)return;
+  if(!confirm(device.name+' abmelden? Auf diesem Gerät ist danach eine erneute Anmeldung nötig.'))return;
+  const dialog=authNode('serverDevicesDialog');
+  testServerBusy=true;dialog.dataset.busy='true';updateServerLoginControls();
+  authNode('serverDevicesError').textContent='Gerät wird abgemeldet …';
+  let current=false;
+  try{
+    const result=await testServerRequest('/api/auth/devices/revoke',{id:device.id});
+    current=!!result.current;
+    if(!current){await renderAccountDevices();authNode('serverDevicesError').textContent='Gerät abgemeldet.';}
+  }catch(error){authNode('serverDevicesError').textContent=error.message;}
+  finally{testServerBusy=false;dialog.dataset.busy='false';updateServerLoginControls();}
+  if(current)finishLocalLogout();
+}
+
 function updateLoginMode() {
   const signedIn=!!testServerConfig.token;
   const usePassword=authNode('serverLoginMode')?.value==='password';
@@ -121,6 +241,9 @@ function updateLoginMode() {
   if(user&&serverLoginName&&document.activeElement!==user)user.value=serverLoginName;
   const account=authNode('serverSignedInUser');
   if(account)account.textContent=serverLoginName?'Zugangsname · '+serverLoginName:'';
+  const logout=authNode('serverLogoutButton'), devices=authNode('serverDevicesButton');
+  if(logout)logout.disabled=testServerBusy;
+  if(devices)devices.disabled=testServerBusy||!devicesAvailable;
   const nameButton=authNode('serverUsernameButton');
   if(nameButton)nameButton.disabled=testServerBusy||passwordSet===null;
   const passwordButton=authNode('serverPasswordButton');
@@ -202,6 +325,7 @@ function finishWelcomeSignIn() {
 
 function applyRemoteAuth(remote) {
   bindTestServerUser(remote);
+  if(remote.devicesVersion!==undefined)devicesAvailable=remote.devicesVersion===1;
   serverLoginName=remote.loginName||remote.userId;
   if(testServerConfig.token&&testServerConfig.loginName!==serverLoginName){
     testServerConfig={...testServerConfig,loginName:serverLoginName};
@@ -220,11 +344,12 @@ function storeServerSession(remote, token) {
 
 function expireServerSession() {
   const oldToken=testServerConfig.token;
+  const hadPassword=passwordSet!==false||oldToken?.startsWith('kt2_');
   testServerConfig={};
   try {localStorage.removeItem('kostenApp_test_server');} catch {}
   passwordSet=null;
   rememberPasswordOffer(false);
-  if(authNode('serverLoginMode'))authNode('serverLoginMode').value=oldToken?'password':'code';
+  if(authNode('serverLoginMode'))authNode('serverLoginMode').value=hadPassword?'password':'code';
   clearLoginInput();
   updateServerLoginControls();
 }
@@ -280,7 +405,7 @@ async function submitServerRecovery(event) {
     error.textContent='Neues Passwort wird vorbereitet …';
     const newProof=await derivePasswordProof(password,parameters);
     const remote=await testServerRequest('/api/auth/recover',{
-      expectedUserId:parameters.userId,generation:parameters.generation,salt:parameters.salt,newProof
+      expectedUserId:parameters.userId,generation:parameters.generation,salt:parameters.salt,newProof,device:currentDeviceIdentity()
     },code);
     storeServerSession(remote,remote.sessionToken);
     rememberPasswordOffer(false);
@@ -376,7 +501,7 @@ async function submitServerPassword(event) {
     const currentProof=passwordSet?await derivePasswordProof(currentPassword,parameters):undefined;
     const salt='p2_'+passwordProofBytes(crypto.getRandomValues(new Uint8Array(16)));
     const newProof=await derivePasswordProof(newPassword,{...parameters,salt});
-    const remote=await testServerRequest('/api/auth/password',{currentProof,newProof,salt,username});
+    const remote=await testServerRequest('/api/auth/password',{currentProof,newProof,salt,username,device:currentDeviceIdentity()});
     error.textContent='';
     storeServerSession(remote,remote.sessionToken);
     rememberPasswordOffer(false);
@@ -455,6 +580,7 @@ function bindTestServerUser(config) {
 async function currentServerSession() {
   const remote=await testServerRequest('/api/config');
   applyRemoteAuth(remote);
+  await reportCurrentDevice();
   return remote;
 }
 
@@ -466,7 +592,7 @@ async function saveTestServerSettings() {
     if(!userId||userId.length>40||!password)throw new Error('Bitte Zugangsname und Passwort eingeben.');
     const parameters=await testServerRequest('/api/auth/parameters',{userId},null);
     const proof=await derivePasswordProof(password,parameters);
-    const remote=await testServerRequest('/api/auth/login',{userId,proof},null);
+    const remote=await testServerRequest('/api/auth/login',{userId,proof,device:currentDeviceIdentity()},null);
     storeServerSession(remote,remote.sessionToken);
     return remote;
   }
@@ -843,7 +969,7 @@ async function confirmBackupPreview(){
 }
 
 async function syncTestServer(saveSettings=false) {
-  if(authNode('serverPasswordDialog')?.open||authNode('serverUsernameDialog')?.open||authNode('serverRecoveryDialog')?.open){testServerPending=true;return;}
+  if(authNode('serverPasswordDialog')?.open||authNode('serverUsernameDialog')?.open||authNode('serverRecoveryDialog')?.open||authNode('serverDevicesDialog')?.open){testServerPending=true;return;}
   if(testServerBusy){testServerPending=true;return;}
   if(dependencies.hasUnsavedInputs?.()){serverStatus('Deine Eingabe bleibt offen. Synchronisierung folgt nach dem Abschließen.');clearTimeout(testServerTimer);testServerTimer=setTimeout(()=>syncTestServer(false),5000);return;}
   const hadSession=!!testServerConfig.token;
@@ -902,7 +1028,7 @@ async function activateTestServerPush() {
       }
     }
     if(!sub) sub=await withPushTimeout(registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:desiredKey}),15000,'Push-Anmeldung dauert zu lange. Bitte erneut versuchen.');
-    await testServerRequest('/api/subscribe',sub.toJSON());serverStatus('Dieses Gerät ist für echte Server-Push-Nachrichten angemeldet.');
+    await testServerRequest('/api/subscribe',sub.toJSON());await reportCurrentDevice(true);serverStatus('Dieses Gerät ist für echte Server-Push-Nachrichten angemeldet.');
     await renderPushTestStatus();
   } catch(error) {serverStatus(error.message);}
   finally {testServerBusy=false;updateServerLoginControls();renderHomeSyncStatus();if(testServerPending){testServerPending=false;scheduleTestServerSync();}}
@@ -937,6 +1063,9 @@ const startServerConnection=()=>{renderTestServerSettings();if(testServerConfig.
 if(document.readyState==='complete')startServerConnection();else window.addEventListener('load',startServerConnection,{once:true});
 document.addEventListener('kostentracker:boot-complete',syncPaymentReviewGate);
 document.addEventListener('kostentracker:boot-complete',offerInitialSignIn);
+authNode('serverDevicesDialog')?.addEventListener('close',()=>{
+  if(testServerPending&&!testServerBusy){testServerPending=false;scheduleTestServerSync();}
+});
 authNode('serverRecoveryDialog')?.addEventListener('close',()=>{
   authNode('serverRecoveryForm')?.reset();
   if(testServerPending){testServerPending=false;scheduleTestServerSync();}
@@ -953,5 +1082,5 @@ authNode('serverPasswordDialog')?.addEventListener('close',()=>{
 });
 
 
-return { openServerRecovery, closeServerRecovery, submitServerRecovery, openServerUsername, closeServerUsername, submitServerUsername, continueWelcome, changeLoginMode, openServerPassword, closeServerPassword, submitServerPassword, prepareStorageSettings, closeBackupPreview, confirmBackupPreview, exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+return { openServerDevices, logoutCurrentDevice, openServerRecovery, closeServerRecovery, submitServerRecovery, openServerUsername, closeServerUsername, submitServerUsername, continueWelcome, changeLoginMode, openServerPassword, closeServerPassword, submitServerPassword, prepareStorageSettings, closeBackupPreview, confirmBackupPreview, exportStorageMigrationBackup, renderStorageV2, resolveStorageConflict, renderServerBackupHistory, createServerBackup, restoreHistoricalBackup, simulatePaymentConfirmation, renderHomeSyncStatus, updateServerLoginControls, showServerRestorePrompt, closeServerRestorePrompt, pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, reviewCategories, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
 });
