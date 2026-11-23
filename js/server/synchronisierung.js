@@ -125,7 +125,7 @@ function updateLoginMode() {
   if(nameButton)nameButton.disabled=testServerBusy||passwordSet===null;
   const passwordButton=authNode('serverPasswordButton');
   if(passwordButton){
-    passwordButton.textContent=passwordSet?'Passwort ändern':'Passwort festlegen';
+    passwordButton.textContent=passwordSet?'Passwort ändern':'Zugang einrichten';
     passwordButton.disabled=testServerBusy||passwordSet===null;
   }
 }
@@ -172,7 +172,13 @@ function openServerPassword() {
   const existing=passwordSet;
   authNode('serverPasswordForm').reset();
   authNode('serverPasswordError').textContent='';
-  authNode('serverPasswordTitle').textContent=existing?'Passwort ändern':'Passwort festlegen';
+  authNode('serverPasswordTitle').textContent=existing?'Passwort ändern':'Zugang einrichten';
+  authNode('serverPasswordUsernameRow').hidden=existing;
+  authNode('serverPasswordUsername').disabled=existing;
+  authNode('serverPasswordUsername').required=!existing;
+  authNode('serverPasswordUsername').value=serverLoginName||testServerBoundUser||'';
+  authNode('serverPasswordUser').hidden=!existing;
+  authNode('serverPasswordSave').textContent=existing?'Passwort speichern':'Speichern und weiter';
   authNode('serverPasswordCurrentRow').hidden=!existing;
   authNode('serverPasswordCurrent').required=existing;
   authNode('serverPasswordCancel').textContent=existing?'Abbrechen':'Später';
@@ -347,6 +353,10 @@ async function submitServerPassword(event) {
   error.textContent='';
   const newPassword=authNode('serverPasswordNew').value;
   const currentPassword=authNode('serverPasswordCurrent').value;
+  const username=passwordSet?undefined:authNode('serverPasswordUsername').value.trim();
+  if(username!==undefined&&!/^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/.test(username)){
+    error.textContent='Verwende für den Zugangsnamen 3 bis 40 Zeichen: Buchstaben, Zahlen, Punkt, Bindestrich oder Unterstrich.';return;
+  }
   if(!newPassword){error.textContent='Bitte ein Passwort eingeben.';return;}
   if([...newPassword].length>256){error.textContent='Verwende höchstens 256 Zeichen.';return;}
   if(passwordSet&&newPassword===currentPassword){error.textContent='Wähle ein anderes Passwort als bisher.';return;}
@@ -366,14 +376,14 @@ async function submitServerPassword(event) {
     const currentProof=passwordSet?await derivePasswordProof(currentPassword,parameters):undefined;
     const salt='p2_'+passwordProofBytes(crypto.getRandomValues(new Uint8Array(16)));
     const newProof=await derivePasswordProof(newPassword,{...parameters,salt});
-    const remote=await testServerRequest('/api/auth/password',{currentProof,newProof,salt});
+    const remote=await testServerRequest('/api/auth/password',{currentProof,newProof,salt,username});
     error.textContent='';
     storeServerSession(remote,remote.sessionToken);
     rememberPasswordOffer(false);
-    serverStatus('Dein Passwort wurde gespeichert.');
+    serverStatus(username===undefined?'Dein Passwort wurde gespeichert.':'Dein Zugang wurde eingerichtet. Dein Zugangsname ist '+serverLoginName+'.');
     saved=true;
   }catch(e){
-    error.textContent=e.status===401||e.status===409?'Bitte melde dich erneut an.':e.message;
+    error.textContent=e.status===401?'Bitte melde dich erneut an.':e.message;
   }finally{
     dialog.dataset.busy='false';
     for(const control of form.elements)control.disabled=false;
@@ -382,7 +392,10 @@ async function submitServerPassword(event) {
     renderHomeSyncStatus();
     if(testServerPending){testServerPending=false;scheduleTestServerSync();}
   }
-  if(saved)closeServerPassword();
+  if(saved){
+    if(username!==undefined)returnHomeAfterSignIn=true;
+    closeServerPassword();
+  }
 }
 
 function updateServerLoginControls() {
